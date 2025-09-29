@@ -1,0 +1,389 @@
+import React, { useState } from 'react';
+import { ArrowLeft, Heart, Lightbulb, Target, MessageCircle, Star, BookOpen, ExternalLink } from 'lucide-react';
+import { Button } from '../UI/Button';
+import { Card } from '../UI/Card';
+import { useAppContext } from '../../context/AppContext';
+import { AIStrategyResponse } from '../../types';
+
+interface BehaviorStrategyResponseProps {
+  response: AIStrategyResponse;
+  onStrategySelect: (strategy: string, confidence: number) => void;
+  onBack: () => void;
+}
+
+export const BehaviorStrategyResponse: React.FC<BehaviorStrategyResponseProps> = ({
+  response,
+  onStrategySelect,
+  onBack
+}) => {
+  const [selectedStrategy, setSelectedStrategy] = useState<string>('');
+  const [confidence, setConfidence] = useState<number>(5);
+  const [showFamilyNote, setShowFamilyNote] = useState(false);
+  const { setCurrentView } = useAppContext();
+
+  const strategies = [
+    {
+      id: 'aligned',
+      title: 'Aligned Strategy',
+      content: response.alignedStrategy,
+      icon: Target,
+      primary: true
+    },
+    {
+      id: 'test',
+      title: "Here's Another Way",
+      content: response.testOption,
+      icon: Lightbulb,
+      primary: false
+    }
+  ];
+
+  const handleStrategySelect = (strategyId: string) => {
+    setSelectedStrategy(strategyId);
+  };
+
+  const handleConfirm = () => {
+    if (selectedStrategy) {
+      const strategy = strategies.find(s => s.id === selectedStrategy);
+      onStrategySelect(strategy?.content || '', confidence);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-white">
+      <div className="max-w-4xl mx-auto pt-8 pb-16 px-6">
+        {/* Header */}
+        <div className="mb-8">
+          <Button
+            variant="ghost"
+            onClick={onBack}
+            icon={ArrowLeft}
+            className="mb-6 -ml-2"
+          >
+            Back
+          </Button>
+          
+          <div className="text-center">
+            <h1 className="text-2xl font-bold text-[#1A1A1A] mb-2">
+              Here's your personalized strategy
+            </h1>
+            <p className="text-gray-600">
+              Choose the approach that feels right for your situation
+            </p>
+          </div>
+        </div>
+
+        <div className="space-y-8">
+          {/* Warm Acknowledgment */}
+          <Card className="p-8 bg-gradient-to-r from-green-50 to-blue-50 border-green-200">
+            <div className="flex items-start space-x-4">
+              <div className="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                <Heart className="w-5 h-5 text-green-600" />
+              </div>
+              <div>
+                <p className="text-gray-700 leading-relaxed font-medium">
+                  {response.warmAcknowledgment}
+                </p>
+              </div>
+            </div>
+          </Card>
+
+          {/* Observed Behavior & Context */}
+          <Card className="p-8">
+            <div className="grid md:grid-cols-2 gap-6">
+              <div>
+                <h4 className="font-medium text-[#1A1A1A] mb-2">Observed Behavior:</h4>
+                <p className="text-gray-700">{response.observedBehavior}</p>
+              </div>
+              <div>
+                <h4 className="font-medium text-[#1A1A1A] mb-2">Context/Trigger:</h4>
+                <p className="text-gray-700">{response.contextTrigger}</p>
+              </div>
+            </div>
+          </Card>
+
+          {/* Conceptualization */}
+          <Card className="p-8">
+            <div className="flex items-start space-x-4">
+              <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                <Heart className="w-5 h-5 text-blue-600" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-[#1A1A1A] mb-3">
+                  Understanding What's Happening
+                </h3>
+                <p className="text-gray-700 leading-relaxed">
+                  {response.conceptualization}
+                </p>
+              </div>
+            </div>
+          </Card>
+
+          {/* Core Needs & Development */}
+          <Card className="p-8">
+            <div className="flex items-start space-x-4">
+              <div className="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                <Target className="w-5 h-5 text-purple-600" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-[#1A1A1A] mb-3">
+                  Core Needs & Developmental Stage
+                </h3>
+                <div className="text-gray-700 leading-relaxed whitespace-pre-line">
+                  {response.coreNeedsAndDevelopment}
+                </div>
+              </div>
+            </div>
+          </Card>
+
+          {/* Attachment Support */}
+          <Card className="p-8">
+            <div className="flex items-start space-x-4">
+              <div className="w-10 h-10 bg-pink-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                <Heart className="w-5 h-5 text-pink-600" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-[#1A1A1A] mb-3">
+                  Connection & Support
+                </h3>
+                <p className="text-gray-700 leading-relaxed">
+                  {response.attachmentSupport}
+                </p>
+              </div>
+            </div>
+          </Card>
+
+          {/* Practical Strategies */}
+          <Card className="p-8">
+            <div className="flex items-start space-x-4">
+              <div className="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                <Lightbulb className="w-5 h-5 text-green-600" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-[#1A1A1A] mb-4">
+                  Practical Strategies
+                </h3>
+                <div className="space-y-4">
+                  {response.practicalStrategies?.map((strategy, index) => (
+                    <div key={index} className="bg-[#F8F6F4] p-4 rounded-lg">
+                      <p className="text-gray-700 leading-relaxed">
+                        {strategy}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </Card>
+
+          {/* Implementation Guidance */}
+          <Card className="p-8">
+            <div className="flex items-start space-x-4">
+              <div className="w-10 h-10 bg-orange-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                <Target className="w-5 h-5 text-orange-600" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-[#1A1A1A] mb-3">
+                  How to Use These Strategies
+                </h3>
+                <p className="text-gray-700 leading-relaxed">
+                  {response.implementationGuidance}
+                </p>
+              </div>
+            </div>
+          </Card>
+
+          {/* Strategies */}
+          <Card className="p-8 bg-[#F8F6F4]">
+            <h3 className="text-lg font-semibold text-[#1A1A1A] mb-4">
+              Choose Your Approach
+            </h3>
+            <p className="text-gray-600 mb-6">
+              Select the strategy that feels most manageable for you right now:
+            </p>
+            
+            <div className="space-y-4">
+              {response.practicalStrategies?.slice(0, 2).map((strategy, index) => (
+                <Card
+                  key={index}
+                  hoverable
+                  selected={selectedStrategy === `strategy-${index}`}
+                  onClick={() => handleStrategySelect(`strategy-${index}`)}
+                  className="p-4"
+                >
+                  <p className="text-gray-700 leading-relaxed">
+                    {strategy}
+                  </p>
+                </Card>
+              ))}
+            </div>
+          </Card>
+
+          {/* Why Strategies Work */}
+          <Card className="p-8">
+            <div className="flex items-start space-x-4">
+              <div className="w-10 h-10 bg-yellow-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                <Lightbulb className="w-5 h-5 text-yellow-600" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-[#1A1A1A] mb-3">
+                  Why These Strategies Work
+                </h3>
+                <div className="text-gray-700 leading-relaxed whitespace-pre-line">
+                  {response.whyStrategiesWork}
+                </div>
+              </div>
+            </div>
+          </Card>
+
+          {/* Future-Readiness Benefit */}
+          <Card className="p-8 bg-gradient-to-r from-green-50 to-blue-50 border-green-200">
+            <div className="flex items-start space-x-4">
+              <div className="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                <Target className="w-5 h-5 text-green-600" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-[#1A1A1A] mb-3">
+                  Long-term Benefits
+                </h3>
+                <p className="text-gray-700 leading-relaxed">
+                  {response.futureReadinessBenefit}
+                </p>
+              </div>
+            </div>
+          </Card>
+
+          {/* Family Communication */}
+          {response.familyScript && (
+            <Card className="p-8">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-[#1A1A1A] flex items-center">
+                  <MessageCircle className="w-5 h-5 mr-2" />
+                  Family Communication Script
+                </h3>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowFamilyNote(!showFamilyNote)}
+                >
+                  {showFamilyNote ? 'Hide' : 'Show'}
+                </Button>
+              </div>
+              
+              {showFamilyNote && (
+                <div className="bg-[#F8F6F4] rounded-xl p-6 border border-[#E6E2DD]">
+                  <p className="text-gray-700 leading-relaxed italic">
+                    "{response.familyScript}"
+                  </p>
+                </div>
+              )}
+            </Card>
+          )}
+
+          {/* Strategy Selection */}
+          {selectedStrategy && (
+            <Card className="p-8 bg-[#F8F6F4]">
+              <h3 className="text-lg font-semibold text-[#1A1A1A] mb-6">
+                How confident do you feel about trying this strategy?
+              </h3>
+              
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-600">Not confident</span>
+                  <span className="text-sm text-gray-600">Very confident</span>
+                </div>
+                
+                <div className="relative">
+                  <input
+                    type="range"
+                    min="1"
+                    max="10"
+                    value={confidence}
+                    onChange={(e) => setConfidence(parseInt(e.target.value))}
+                    className="w-full h-2 bg-[#E6E2DD] rounded-lg appearance-none cursor-pointer"
+                    style={{
+                      background: `linear-gradient(to right, #C44E38 0%, #C44E38 ${confidence * 10}%, #E6E2DD ${confidence * 10}%, #E6E2DD 100%)`
+                    }}
+                  />
+                  <div className="flex justify-between mt-2">
+                    {Array.from({length: 10}).map((_, i) => (
+                      <div key={i} className="flex flex-col items-center">
+                        <div className={`w-2 h-2 rounded-full ${i < confidence ? 'bg-[#C44E38]' : 'bg-[#E6E2DD]'}`} />
+                        <span className="text-xs text-gray-500 mt-1">{i + 1}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                
+                <div className="text-center">
+                  <div className="flex items-center justify-center space-x-1 mb-4">
+                    {Array.from({length: Math.floor(confidence / 2)}).map((_, i) => (
+                      <Star key={i} className="w-4 h-4 text-yellow-400 fill-current" />
+                    ))}
+                    <span className="text-lg font-medium text-[#1A1A1A] ml-2">
+                      {confidence}/10
+                    </span>
+                  </div>
+                  
+                  <Button
+                    onClick={handleConfirm}
+                    size="lg"
+                    className="px-12"
+                  >
+                    I'll Try This Strategy
+                  </Button>
+                  
+                  <p className="text-sm text-gray-600 mt-4">
+                    You've got this. Try it and see how it goes.
+                  </p>
+                </div>
+              </div>
+            </Card>
+          )}
+        </div>
+
+        {/* Cross-promotion to Library/LumiEd */}
+        <Card className="p-6 bg-gradient-to-r from-blue-50 to-green-50 border-blue-200">
+          <div className="flex items-start space-x-4">
+            <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center flex-shrink-0">
+              <BookOpen className="w-5 h-5 text-blue-600" />
+            </div>
+            <div className="flex-1">
+              <h3 className="text-lg font-semibold text-[#1A1A1A] mb-2">
+                Want More Strategies Like This?
+              </h3>
+              <p className="text-gray-700 mb-4">
+                Explore our curated library of behavior strategies, implementation guides, and family resources.
+              </p>
+              <div className="flex space-x-3">
+                <Button
+                  onClick={() => setCurrentView('library')}
+                  variant="outline"
+                  size="sm"
+                  icon={BookOpen}
+                >
+                  Browse Free Resources
+                </Button>
+                <Button
+                  onClick={() => setCurrentView('lumied-upsell')}
+                  variant="outline"
+                  size="sm"
+                  icon={ExternalLink}
+                >
+                  Unlock Full Toolkit
+                </Button>
+              </div>
+            </div>
+          </div>
+        </Card>
+        {!selectedStrategy && (
+          <div className="text-center mt-8">
+            <p className="text-sm text-gray-600">
+              Choose a strategy above to continue
+            </p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};

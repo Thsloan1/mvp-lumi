@@ -1,0 +1,366 @@
+import React, { useState, useMemo } from 'react';
+import { Search, Filter, Download, ExternalLink, Star, Lock } from 'lucide-react';
+import { Button } from '../UI/Button';
+import { Card } from '../UI/Card';
+import { Input } from '../UI/Input';
+import { Select } from '../UI/Select';
+import { useAppContext } from '../../context/AppContext';
+import { Resource, ResourceSearch } from '../../types';
+import { STARTER_LIBRARY, PREMIUM_RESOURCES, RESOURCE_CATEGORIES, RESOURCE_TYPES, SETTINGS } from '../../data/starterLibrary';
+import { GRADE_BAND_OPTIONS } from '../../data/constants';
+
+export const ResourceLibrary: React.FC = () => {
+  const { currentUser, setCurrentView } = useAppContext();
+  const [searchParams, setSearchParams] = useState<ResourceSearch>({
+    query: '',
+    ageGroup: '',
+    category: '',
+    type: '',
+    setting: '',
+    language: ''
+  });
+  const [showFilters, setShowFilters] = useState(false);
+
+  // Combine starter library with premium resources for display
+  const allResources = [...STARTER_LIBRARY, ...PREMIUM_RESOURCES];
+
+  const filteredResources = useMemo(() => {
+    return allResources.filter(resource => {
+      // Text search
+      if (searchParams.query && !resource.title.toLowerCase().includes(searchParams.query.toLowerCase()) &&
+          !resource.description.toLowerCase().includes(searchParams.query.toLowerCase())) {
+        return false;
+      }
+
+      // Age group filter
+      if (searchParams.ageGroup && !resource.ageGroups.includes(searchParams.ageGroup)) {
+        return false;
+      }
+
+      // Category filter
+      if (searchParams.category && resource.category !== searchParams.category) {
+        return false;
+      }
+
+      // Type filter
+      if (searchParams.type && resource.type !== searchParams.type) {
+        return false;
+      }
+
+      // Setting filter
+      if (searchParams.setting && !resource.settings.includes(searchParams.setting)) {
+        return false;
+      }
+
+      // Language filter
+      if (searchParams.language && resource.language !== searchParams.language && resource.language !== 'bilingual') {
+        return false;
+      }
+
+      return true;
+    });
+  }, [searchParams, allResources]);
+
+  const handleSearchChange = (field: keyof ResourceSearch, value: string) => {
+    setSearchParams(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleResourceAction = (resource: Resource) => {
+    if (resource.isPremium) {
+      // Show LumiEd upsell
+      setCurrentView('lumied-upsell');
+    } else {
+      // Track engagement and download/view
+      console.log('Accessing resource:', resource.title);
+      // In real implementation, this would track analytics and provide download
+    }
+  };
+
+  const clearFilters = () => {
+    setSearchParams({
+      query: '',
+      ageGroup: '',
+      category: '',
+      type: '',
+      setting: '',
+      language: ''
+    });
+  };
+
+  const ageGroupOptions = GRADE_BAND_OPTIONS.map(option => ({
+    value: option,
+    label: option
+  }));
+
+  const categoryOptions = RESOURCE_CATEGORIES.map(cat => ({
+    value: cat.id,
+    label: cat.label
+  }));
+
+  const typeOptions = RESOURCE_TYPES.map(type => ({
+    value: type.id,
+    label: type.label
+  }));
+
+  const settingOptions = SETTINGS.map(setting => ({
+    value: setting.id,
+    label: setting.label
+  }));
+
+  const languageOptions = [
+    { value: 'english', label: 'English' },
+    { value: 'spanish', label: 'Spanish' },
+    { value: 'bilingual', label: 'Bilingual' }
+  ];
+
+  return (
+    <div className="min-h-screen bg-white">
+      <div className="max-w-7xl mx-auto px-6 py-8">
+        {/* Header */}
+        <div className="mb-8">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h1 className="text-3xl font-bold text-[#1A1A1A] mb-2">
+                Resource Library
+              </h1>
+              <p className="text-gray-600">
+                Curated strategies and guides to support your classroom practice
+              </p>
+            </div>
+            <div className="flex items-center space-x-3">
+              <div className="bg-[#F8F6F4] px-3 py-1 rounded-full">
+                <span className="text-sm font-medium text-[#C44E38]">
+                  {STARTER_LIBRARY.length} Free Resources
+                </span>
+              </div>
+              <Button
+                variant="outline"
+                onClick={() => setCurrentView('lumied-upsell')}
+                icon={ExternalLink}
+              >
+                Explore LumiEd
+              </Button>
+            </div>
+          </div>
+
+          {/* Search and Filters */}
+          <div className="space-y-4">
+            <div className="flex items-center space-x-4">
+              <div className="flex-1">
+                <Input
+                  value={searchParams.query}
+                  onChange={(value) => handleSearchChange('query', value)}
+                  placeholder="Search resources..."
+                />
+              </div>
+              <Button
+                variant="outline"
+                onClick={() => setShowFilters(!showFilters)}
+                icon={Filter}
+              >
+                Filters
+              </Button>
+              {Object.values(searchParams).some(value => value) && (
+                <Button
+                  variant="ghost"
+                  onClick={clearFilters}
+                >
+                  Clear All
+                </Button>
+              )}
+            </div>
+
+            {showFilters && (
+              <Card className="p-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                  <Select
+                    label="Age Group"
+                    value={searchParams.ageGroup || ''}
+                    onChange={(value) => handleSearchChange('ageGroup', value)}
+                    options={ageGroupOptions}
+                    placeholder="All ages"
+                  />
+                  <Select
+                    label="Category"
+                    value={searchParams.category || ''}
+                    onChange={(value) => handleSearchChange('category', value)}
+                    options={categoryOptions}
+                    placeholder="All categories"
+                  />
+                  <Select
+                    label="Type"
+                    value={searchParams.type || ''}
+                    onChange={(value) => handleSearchChange('type', value)}
+                    options={typeOptions}
+                    placeholder="All types"
+                  />
+                  <Select
+                    label="Setting"
+                    value={searchParams.setting || ''}
+                    onChange={(value) => handleSearchChange('setting', value)}
+                    options={settingOptions}
+                    placeholder="All settings"
+                  />
+                  <Select
+                    label="Language"
+                    value={searchParams.language || ''}
+                    onChange={(value) => handleSearchChange('language', value)}
+                    options={languageOptions}
+                    placeholder="All languages"
+                  />
+                </div>
+              </Card>
+            )}
+          </div>
+        </div>
+
+        {/* Results */}
+        <div className="mb-6">
+          <p className="text-gray-600">
+            Showing {filteredResources.length} resources
+            {searchParams.query && ` for "${searchParams.query}"`}
+          </p>
+        </div>
+
+        {/* Resource Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredResources.map((resource) => {
+            const category = RESOURCE_CATEGORIES.find(cat => cat.id === resource.category);
+            const type = RESOURCE_TYPES.find(t => t.id === resource.type);
+            
+            return (
+              <Card key={resource.id} className="p-6 h-full flex flex-col">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex items-center space-x-2">
+                    <span className="text-lg">{category?.icon}</span>
+                    <span className="text-xs font-medium text-[#C44E38] uppercase tracking-wide">
+                      {type?.label}
+                    </span>
+                  </div>
+                  {resource.isPremium && (
+                    <div className="flex items-center space-x-1 bg-yellow-100 px-2 py-1 rounded-full">
+                      <Lock className="w-3 h-3 text-yellow-600" />
+                      <span className="text-xs font-medium text-yellow-600">Premium</span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex-1">
+                  <h3 className="text-lg font-semibold text-[#1A1A1A] mb-2">
+                    {resource.title}
+                  </h3>
+                  <p className="text-sm text-gray-600 mb-4 line-clamp-3">
+                    {resource.description}
+                  </p>
+
+                  <div className="space-y-2 mb-4">
+                    <div className="flex flex-wrap gap-1">
+                      {resource.ageGroups.slice(0, 2).map((age, index) => (
+                        <span
+                          key={index}
+                          className="px-2 py-1 bg-[#F8F6F4] text-xs text-gray-700 rounded-full"
+                        >
+                          {age.split(' ')[0]}
+                        </span>
+                      ))}
+                      {resource.ageGroups.length > 2 && (
+                        <span className="px-2 py-1 bg-[#F8F6F4] text-xs text-gray-700 rounded-full">
+                          +{resource.ageGroups.length - 2} more
+                        </span>
+                      )}
+                    </div>
+                    
+                    <div className="flex items-center justify-between text-xs text-gray-500">
+                      <span>{resource.language === 'bilingual' ? '🌐 Bilingual' : resource.language}</span>
+                      <span>{resource.settings.join(', ')}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="pt-4 border-t border-[#E6E2DD]">
+                  {resource.isPremium ? (
+                    <Button
+                      onClick={() => handleResourceAction(resource)}
+                      variant="outline"
+                      className="w-full"
+                      icon={ExternalLink}
+                    >
+                      View in LumiEd
+                    </Button>
+                  ) : (
+                    <div className="space-y-2">
+                      <Button
+                        onClick={() => handleResourceAction(resource)}
+                        className="w-full"
+                        icon={Download}
+                      >
+                        Access Resource
+                      </Button>
+                      {resource.familyCompanionId && (
+                        <Button
+                          onClick={() => {
+                            const companion = STARTER_LIBRARY.find(r => r.id === resource.familyCompanionId);
+                            if (companion) handleResourceAction(companion);
+                          }}
+                          variant="outline"
+                          size="sm"
+                          className="w-full"
+                        >
+                          + Family Companion
+                        </Button>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </Card>
+            );
+          })}
+        </div>
+
+        {filteredResources.length === 0 && (
+          <div className="text-center py-12">
+            <div className="w-16 h-16 bg-[#F8F6F4] rounded-full flex items-center justify-center mx-auto mb-4">
+              <Search className="w-8 h-8 text-gray-400" />
+            </div>
+            <h3 className="text-lg font-medium text-[#1A1A1A] mb-2">
+              No resources found
+            </h3>
+            <p className="text-gray-600 mb-6">
+              Try adjusting your search or filters to find what you're looking for.
+            </p>
+            <Button onClick={clearFilters}>
+              Clear Filters
+            </Button>
+          </div>
+        )}
+
+        {/* LumiEd Promotion */}
+        <Card className="mt-12 p-8 bg-gradient-to-r from-[#F8F6F4] to-white border-[#C44E38] border-2">
+          <div className="text-center">
+            <h3 className="text-xl font-bold text-[#1A1A1A] mb-2">
+              Want More Resources?
+            </h3>
+            <p className="text-gray-600 mb-6">
+              Unlock 100+ comprehensive toolkits, guides, and family resources with LumiEd
+            </p>
+            <div className="flex items-center justify-center space-x-4">
+              <Button
+                onClick={() => setCurrentView('lumied-upsell')}
+                size="lg"
+                icon={ExternalLink}
+              >
+                Explore LumiEd
+              </Button>
+              <Button
+                variant="outline"
+                size="lg"
+              >
+                Learn More
+              </Button>
+            </div>
+          </div>
+        </Card>
+      </div>
+    </div>
+  );
+};
