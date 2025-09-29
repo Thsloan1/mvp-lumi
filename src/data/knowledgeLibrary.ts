@@ -575,6 +575,12 @@ export class KnowledgeLibrary {
     console.log(`📚 Strategy template added: ${template.name}`);
   }
 
+  // Add new framework
+  addFramework(framework: TheoreticalFramework): void {
+    this.frameworks.push(framework);
+    console.log(`📚 Framework added: ${framework.name}`);
+  }
+
   // Update strategy template
   updateStrategyTemplate(id: string, updates: Partial<StrategyTemplate>): boolean {
     const index = this.templates.findIndex(t => t.id === id);

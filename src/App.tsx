@@ -171,8 +171,15 @@ const AppContent: React.FC = () => {
         return <EmailVerification />;
       case 'forgot-password':
         return <ForgotPassword />;
-     case 'knowledge-library-manager':
-       return <KnowledgeLibraryManager />;
+      case 'developer-app-manager':
+        return <DeveloperAppManager />;
+      default:
+        // Handle dynamic child profile detail routes
+        if (currentView.startsWith('child-profile-detail-')) {
+          const childId = currentView.replace('child-profile-detail-', '');
+          return <ChildProfileDetail childId={childId} />;
+        }
+        return <WelcomeScreen />;
     }
   }
 };

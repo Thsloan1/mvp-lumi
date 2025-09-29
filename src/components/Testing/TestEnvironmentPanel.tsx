@@ -275,12 +275,12 @@ export const TestEnvironmentPanel: React.FC = () => {
                 Import
               </Button>
               <Button
-                onClick={() => setCurrentView('knowledge-library-manager')}
+                onClick={() => setCurrentView('developer-app-manager')}
                 variant="outline"
                 size="sm"
                 className="text-indigo-600 border-indigo-200"
               >
-                Knowledge Library
+                Dev Manager
               </Button>
             </div>
           </div>
