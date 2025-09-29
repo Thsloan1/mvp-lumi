@@ -27,8 +27,7 @@ interface PendingInvitation {
 }
 
 export const ManageEducators: React.FC = () => {
-  const { setCurrentView, organizationApi, handleApiError } = useAppContext();
-  const { setCurrentView, getOrganizationStats, inviteEducators } = useAppContext();
+  const { setCurrentView, organizationApi, handleApiError, getOrganizationStats, inviteEducators } = useAppContext();
   const [educators, setEducators] = useState<Educator[]>([]);
   const [pendingInvitations, setPendingInvitations] = useState<PendingInvitation[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
