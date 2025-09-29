@@ -10,6 +10,8 @@ export const InvitedOnboarding: React.FC = () => {
   const organizationInfo = {
     name: "Sunshine Elementary School",
     plan: "Organization Plan",
+    schoolDistrict: "Sunshine School District",
+    county: "Orange County",
     features: [
       "Full access to Lumi's behavior coaching platform",
       "Organization-wide analytics and insights",
@@ -35,6 +37,15 @@ export const InvitedOnboarding: React.FC = () => {
         </div>
 
         <Card className="p-8 mb-8">
+          <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6">
+            <h4 className="font-medium text-blue-900 mb-2">Organization Details</h4>
+            <div className="text-sm text-blue-800 space-y-1">
+              <p><strong>School:</strong> {organizationInfo.name}</p>
+              <p><strong>District:</strong> {organizationInfo.schoolDistrict}</p>
+              <p><strong>County:</strong> {organizationInfo.county}</p>
+            </div>
+          </div>
+
           <h2 className="text-xl font-semibold text-[#1A1A1A] mb-6">
             What you have access to:
           </h2>
@@ -53,7 +64,7 @@ export const InvitedOnboarding: React.FC = () => {
               Next: Complete Your Profile
             </h3>
             <p className="text-gray-600 text-sm">
-              We'll ask you a few questions about your teaching style and classroom to personalize your Lumi experience. This takes about 3-5 minutes.
+              We'll ask you a few questions about your background, teaching style and classroom to personalize your Lumi experience. This takes about 5-7 minutes.
             </p>
           </div>
         </Card>

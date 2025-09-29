@@ -5,6 +5,8 @@ import { ProgressDots } from '../UI/ProgressDots';
 import { useAppContext } from '../../context/AppContext';
 import { ErrorLogger } from '../../utils/errorLogger';
 import { AboutYouStep } from './steps/AboutYouStep';
+import { SchoolInfoStep } from './steps/SchoolInfoStep';
+import { EducatorBackgroundStep } from './steps/EducatorBackgroundStep';
 import { ClassroomStep } from './steps/ClassroomStep';
 import { EnvironmentStep } from './steps/EnvironmentStep';
 import { TeachingStyleStep } from './steps/TeachingStyleStep';
@@ -14,11 +16,18 @@ export const OnboardingWizard: React.FC = () => {
   const { setCurrentView, currentUser, updateOnboarding } = useAppContext();
   const [currentStep, setCurrentStep] = useState(0);
   const [onboardingData, setOnboardingData] = useState({
-    firstName: '',
-    lastName: '',
+    firstName: currentUser?.fullName?.split(' ')[0] || '',
+    lastName: currentUser?.fullName?.split(' ').slice(1).join(' ') || '',
     profilePhotoUrl: '',
     preferredLanguage: 'english',
     learningStyle: '',
+    schoolName: '',
+    roomNumber: '',
+    schoolDistrict: '',
+    county: '',
+    yearsOfExperience: '',
+    highestEducation: '',
+    role: '',
     classroomName: '',
     gradeBand: '',
     studentCount: '',
@@ -33,6 +42,8 @@ export const OnboardingWizard: React.FC = () => {
 
   const steps = [
     { component: AboutYouStep, title: 'About You' },
+    { component: SchoolInfoStep, title: 'School Information' },
+    { component: EducatorBackgroundStep, title: 'Your Background' },
     { component: ClassroomStep, title: 'Your Classroom' },
     { component: EnvironmentStep, title: 'Classroom Environment' },
     { component: TeachingStyleStep, title: 'Teaching Style' },
@@ -102,12 +113,16 @@ export const OnboardingWizard: React.FC = () => {
       case 0: // About You
         return onboardingData.firstName && onboardingData.lastName && 
                onboardingData.preferredLanguage && onboardingData.learningStyle;
-      case 1: // Classroom
+      case 1: // School Info
+        return onboardingData.schoolName && onboardingData.county;
+      case 2: // Educator Background
+        return onboardingData.yearsOfExperience && onboardingData.highestEducation && onboardingData.role;
+      case 3: // Classroom
         return onboardingData.classroomName && onboardingData.gradeBand && 
                onboardingData.studentCount && onboardingData.teacherStudentRatio;
-      case 2: // Environment
+      case 4: // Environment
         return onboardingData.stressors.length > 0;
-      case 3: // Teaching Style
+      case 5: // Teaching Style
         return onboardingData.teachingStyle;
       default:
         return true;

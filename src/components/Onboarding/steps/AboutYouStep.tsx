@@ -56,23 +56,6 @@ export const AboutYouStep: React.FC<AboutYouStepProps> = ({ data, updateData }) 
               label="First Name"
               value={data.firstName}
               onChange={(value) => handleInputChange('firstName', value)}
-              placeholder="Enter your first name"
-              required
-            />
-            <Input
-              label="Last Name"
-              value={data.lastName}
-              onChange={(value) => handleInputChange('lastName', value)}
-              placeholder="Enter your last name"
-              required
-            />
-          </div>
-
-          <Select
-            label="Preferred Platform Language"
-            value={data.preferredLanguage}
-            onChange={(value) => handleInputChange('preferredLanguage', value)}
-            options={languageOptions}
             required
           />
         </div>

@@ -71,6 +71,7 @@ export const SchoolInfoStep: React.FC<SchoolInfoStepProps> = ({ data, updateData
             value={data.county}
             onChange={(value) => handleInputChange('county', value)}
             placeholder="Enter county"
+            required
           />
         </div>
       </Card>

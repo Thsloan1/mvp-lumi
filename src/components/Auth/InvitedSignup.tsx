@@ -11,7 +11,8 @@ export const InvitedSignup: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
     inviteCode: '',
-    fullName: '',
+    firstName: '',
+    lastName: '',
     email: '', // Will be pre-filled from invite
     password: ''
   });
@@ -49,6 +50,14 @@ export const InvitedSignup: React.FC = () => {
           invitedBy: response.invitation.inviterName
         });
         setFormData(prev => ({ ...prev, email: response.invitation.email }));
+        
+        // Auto-populate names if provided by admin
+        if (response.invitation.firstName) {
+          setFormData(prev => ({ ...prev, firstName: response.invitation.firstName }));
+        }
+        if (response.invitation.lastName) {
+          setFormData(prev => ({ ...prev, lastName: response.invitation.lastName }));
+        }
       } else {
         handleApiError({ message: response.error }, { action: 'validateInvitationFromUrl' });
       }
@@ -87,8 +96,12 @@ export const InvitedSignup: React.FC = () => {
       newErrors.inviteCode = 'Invite code is required';
     }
     
-    if (!formData.fullName.trim()) {
-      newErrors.fullName = 'Full name is required';
+    if (!formData.firstName.trim()) {
+      newErrors.firstName = 'First name is required';
+    }
+    
+    if (!formData.lastName.trim()) {
+      newErrors.lastName = 'Last name is required';
     }
     
     const passwordError = validatePassword(formData.password);
@@ -111,7 +124,8 @@ export const InvitedSignup: React.FC = () => {
       }
 
       await acceptInvitation(token, {
-        fullName: formData.fullName,
+        firstName: formData.firstName,
+        lastName: formData.lastName,
         password: formData.password,
         inviteCode: formData.inviteCode
       });
@@ -196,14 +210,24 @@ export const InvitedSignup: React.FC = () => {
               helperText="Check your email invitation for the invite code"
             />
 
-            <Input
-              label="Full Name"
-              value={formData.fullName}
-              onChange={(value) => handleInputChange('fullName', value)}
-              placeholder="Enter your full name"
-              required
-              error={errors.fullName}
-            />
+            <div className="grid grid-cols-2 gap-4">
+              <Input
+                label="First Name"
+                value={formData.firstName}
+                onChange={(value) => handleInputChange('firstName', value)}
+                placeholder="Enter your first name"
+                required
+                error={errors.firstName}
+              />
+              <Input
+                label="Last Name"
+                value={formData.lastName}
+                onChange={(value) => handleInputChange('lastName', value)}
+                placeholder="Enter your last name"
+                required
+                error={errors.lastName}
+              />
+            </div>
 
             <Input
               label="Email"
