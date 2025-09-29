@@ -63,7 +63,7 @@ export const WelcomeScreen: React.FC = () => {
             <Button
               onClick={() => setCurrentView('landing')}
               variant="ghost"
-              className="text-[#B2C6E5] hover:text-[#C44E38]"
+              className="text-gray-500 hover:text-[#C44E38]"
             >
               ← Back to Landing Page
             </Button>

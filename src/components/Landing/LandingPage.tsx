@@ -261,16 +261,15 @@ export const LandingPage: React.FC = () => {
                 icon={ArrowRight}
                 iconPosition="right"
               >
-                Sign Up for Lumi Now!
+                Get Started
               </Button>
               <Button
-                onClick={() => scrollToSection('how-it-works')}
+                onClick={() => setCurrentView('signin')}
                 variant="outline"
                 size="lg"
                 className="px-8 py-4 text-lg"
-                icon={Play}
               >
-                Watch 2-Minute Demo
+                Sign In
               </Button>
             </div>
           </div>
@@ -785,7 +784,7 @@ export const LandingPage: React.FC = () => {
                 icon={ArrowRight}
                 iconPosition="right"
               >
-                Sign Up for Lumi Today!
+                Get Started Free
               </Button>
               <Button
                 onClick={() => setCurrentView('signin')}

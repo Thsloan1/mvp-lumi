@@ -212,6 +212,13 @@ export const EducatorSignup: React.FC = () => {
             >
               Sign in
             </button>
+            {' '}or{' '}
+            <button
+              onClick={() => setCurrentView('landing')}
+              className="text-[#B2C6E5] font-medium hover:underline"
+            >
+              back to home
+            </button>
           </p>
         </div>
       </div>
