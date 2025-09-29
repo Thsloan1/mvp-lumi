@@ -169,19 +169,11 @@ app.put('/api/user/onboarding', authenticateToken, (req, res) => {
       updatedAt: new Date().toISOString()
     };
 
-    // Create classroom if provided
-    if (classroomData) {
-      const classroom = {
-        id: Date.now().toString(),
-        ...classroomData,
-        educatorId: req.user.id,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      };
-      classrooms.push(classroom);
-    }
+    console.log('User onboarding completed:', users[userIndex].fullName);
+    
     res.json({ user: { ...users[userIndex], password: undefined } });
   } catch (error) {
+    console.error('Onboarding error:', error);
     res.status(500).json({ error: 'Server error' });
   }
 });

@@ -42,6 +42,9 @@ interface AppContextType {
     warning: (title: string, message?: string) => void;
     info: (title: string, message?: string) => void;
   };
+  
+  // User management
+  setCurrentUser: (user: User | null) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -168,8 +171,14 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     try {
       const updatedUser = await AuthService.updateOnboarding(data);
       setCurrentUser(updatedUser);
+      
+      // Create classroom if provided in onboarding data
+      if (data.classroomData) {
+        await createClassroom(data.classroomData);
+      }
+      
       success('Profile updated!', 'Your preferences have been saved');
-      setCurrentView('dashboard');
+      setCurrentView('onboarding-complete');
     } catch (err: any) {
       error('Update failed', err.message);
       throw err;
@@ -275,6 +284,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     updateClassroom,
     currentView,
     setCurrentView,
+    setCurrentUser,
     toast: {
       success,
       error,

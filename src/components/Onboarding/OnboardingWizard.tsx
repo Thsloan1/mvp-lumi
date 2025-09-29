@@ -68,9 +68,14 @@ export const OnboardingWizard: React.FC = () => {
       }
     };
     
-    updateOnboarding(updateData).catch(() => {
-      // Error handling is done in updateOnboarding
-    });
+    updateOnboarding(updateData)
+      .then(() => {
+        // Success - user will be redirected by updateOnboarding
+      })
+      .catch((error) => {
+        console.error('Onboarding failed:', error);
+        // Error toast is shown by updateOnboarding
+      });
   };
 
   const isStepValid = () => {
