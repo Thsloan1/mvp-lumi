@@ -149,12 +149,16 @@ const AppContent: React.FC = () => {
 
 function App() {
   return (
-    <AppProvider>
-      <div className="min-h-screen bg-gray-50">
-        <AppContent />
-        <ToastContainer />
-      </div>
-    </AppProvider>
+    <ErrorBoundary>
+      <AccessibilityProvider>
+        <AppProvider>
+          <div className="min-h-screen bg-gray-50" id="main-content">
+            <AppContent />
+            <ToastContainer />
+          </div>
+        </AppProvider>
+      </AccessibilityProvider>
+    </ErrorBoundary>
   );
 }
 

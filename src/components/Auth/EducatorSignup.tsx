@@ -4,6 +4,7 @@ import { Button } from '../UI/Button';
 import { Input } from '../UI/Input';
 import { Card } from '../UI/Card';
 import { useAppContext } from '../../context/AppContext';
+import { ErrorLogger } from '../../utils/errorLogger';
 
 export const EducatorSignup: React.FC = () => {
   const { setCurrentView, signup } = useAppContext();
@@ -45,6 +46,7 @@ export const EducatorSignup: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    ErrorLogger.logUserAction('signup_form_submit', { email: formData.email });
     
     const newErrors: Record<string, string> = {};
     
@@ -63,6 +65,7 @@ export const EducatorSignup: React.FC = () => {
     }
     
     if (Object.keys(newErrors).length > 0) {
+      ErrorLogger.warning('Signup form validation failed', { errors: newErrors });
       setErrors(newErrors);
       return;
     }
@@ -70,6 +73,7 @@ export const EducatorSignup: React.FC = () => {
     setLoading(true);
     try {
       await signup(formData.fullName, formData.email, formData.password);
+      // User will be redirected to email verification by signup function
     } catch (error) {
       // Error is handled by signup function in context
     } finally {

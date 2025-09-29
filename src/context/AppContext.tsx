@@ -3,6 +3,7 @@ import { User, Classroom, BehaviorLog, ClassroomLog, Child } from '../types';
 import { useToast } from '../hooks/useToast';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { AuthService } from '../services/authService';
+import { ErrorLogger } from '../utils/errorLogger';
 
 interface AppContextType {
   // Auth
@@ -37,7 +38,6 @@ interface AppContextType {
   createClassroomLog: (data: any) => Promise<any>;
   createChild: (data: any) => Promise<any>;
   createClassroom: (data: any) => Promise<any>;
-  updateClassroom: (id: string, data: any) => Promise<any>;
   updateClassroom: (id: string, data: any) => Promise<any>;
   setChildren: (children: Child[]) => void;
   setClassrooms: (classrooms: Classroom[]) => void;
@@ -182,16 +182,20 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   }, [currentUser]);
 
   const initializeUser = async () => {
+    ErrorLogger.info('App initialization started');
     try {
       const user = await AuthService.getCurrentUser();
       setCurrentUser(user);
       
       if (user && user.onboardingStatus === 'incomplete') {
+        ErrorLogger.logOnboardingEvent('redirect_to_onboarding', undefined, { userId: user.id });
         setCurrentView('onboarding-start');
       } else if (user) {
+        ErrorLogger.info('User authenticated, redirecting to dashboard', { userId: user.id });
         setCurrentView('dashboard');
       }
     } catch (error) {
+      ErrorLogger.error('Failed to initialize user', { error: error.message });
       console.error('Failed to initialize user:', error);
     } finally {
       setIsLoading(false);
@@ -222,17 +226,21 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   };
 
   const signin = async (email: string, password: string) => {
+    ErrorLogger.logAuthEvent('signin_attempt', { email });
     try {
       const result = await AuthService.signin({ email, password });
       setCurrentUser(result.user);
+      ErrorLogger.logAuthEvent('signin_success', { userId: result.user.id });
       success('Welcome back!', 'Successfully signed in');
       
       if (result.user.onboardingStatus === 'incomplete') {
+        ErrorLogger.logOnboardingEvent('redirect_after_signin', undefined, { userId: result.user.id });
         setCurrentView('onboarding-start');
       } else {
         setCurrentView('dashboard');
       }
     } catch (err: any) {
+      ErrorLogger.logAuthEvent('signin_error', { email, error: err.message });
       error('Sign in failed', err.message);
       throw err;
     }
@@ -243,7 +251,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
       const result = await AuthService.signup({ fullName, email, password });
       setCurrentUser(result.user);
       success('Account created!', 'Welcome to Lumi');
-      setCurrentView('onboarding-start');
+      setCurrentView('email-verification');
     } catch (err: any) {
       error('Sign up failed', err.message);
       throw err;
@@ -262,18 +270,22 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   };
 
   const updateOnboarding = async (data: any) => {
+    ErrorLogger.logOnboardingEvent('completion_attempt', undefined, { userId: currentUser?.id });
     try {
       const updatedUser = await AuthService.updateOnboarding(data);
       setCurrentUser(updatedUser);
       
       // Create classroom if provided in onboarding data
       if (data.classroomData) {
+        ErrorLogger.info('Creating classroom during onboarding', { classroomName: data.classroomData.name });
         await createClassroom(data.classroomData);
       }
       
+      ErrorLogger.logOnboardingEvent('completed', undefined, { userId: updatedUser.id });
       success('Profile updated!', 'Your preferences have been saved');
       setCurrentView('onboarding-complete');
     } catch (err: any) {
+      ErrorLogger.logOnboardingEvent('completion_error', undefined, { userId: currentUser?.id, error: err.message });
       error('Update failed', err.message);
       throw err;
     }

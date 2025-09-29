@@ -182,4 +182,32 @@ export class ErrorLogger {
     this.logs = [];
     localStorage.removeItem('lumi_error_logs');
   }
+  
+  // Setup global error handlers
+  private static setupGlobalErrorHandlers() {
+    // Catch unhandled JavaScript errors
+    window.addEventListener('error', (event) => {
+      this.error('Unhandled JavaScript Error', {
+        message: event.message,
+        filename: event.filename,
+        lineno: event.lineno,
+        colno: event.colno
+      }, event.error);
+    });
+    
+    // Catch unhandled promise rejections
+    window.addEventListener('unhandledrejection', (event) => {
+      this.error('Unhandled Promise Rejection', {
+        reason: event.reason?.toString()
+      });
+    });
+    
+    // Log page navigation
+    window.addEventListener('beforeunload', () => {
+      this.info('Page Unload', {
+        url: window.location.href,
+        duration: Date.now() - performance.timing.navigationStart
+      });
+    });
+  }
 }

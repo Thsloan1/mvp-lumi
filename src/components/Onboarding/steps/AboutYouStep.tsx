@@ -3,6 +3,7 @@ import { Input } from '../../UI/Input';
 import { Select } from '../../UI/Select';
 import { Card } from '../../UI/Card';
 import { LEARNING_STYLE_OPTIONS } from '../../../data/constants';
+import { ProfilePhotoUpload } from '../../Profile/ProfilePhotoUpload';
 
 interface AboutYouStepProps {
   data: any;
@@ -14,6 +15,9 @@ export const AboutYouStep: React.FC<AboutYouStepProps> = ({ data, updateData }) 
     updateData((prev: any) => ({ ...prev, [field]: value }));
   };
 
+  const handlePhotoUpdate = (photoUrl: string) => {
+    updateData((prev: any) => ({ ...prev, profilePhotoUrl: photoUrl }));
+  };
   const languageOptions = [
     { value: 'english', label: 'English' },
     { value: 'spanish', label: 'Spanish' },
@@ -37,6 +41,16 @@ export const AboutYouStep: React.FC<AboutYouStepProps> = ({ data, updateData }) 
 
       <Card className="p-8">
         <div className="space-y-6">
+          <ProfilePhotoUpload
+            currentPhotoUrl={data.profilePhotoUrl}
+            onPhotoUpdate={handlePhotoUpdate}
+          />
+
+          <ProfilePhotoUpload
+            currentPhotoUrl={data.profilePhotoUrl}
+            onPhotoUpdate={(photoUrl) => updateData((prev: any) => ({ ...prev, profilePhotoUrl: photoUrl }))}
+          />
+          
           <div className="grid grid-cols-2 gap-4">
             <Input
               label="First Name"

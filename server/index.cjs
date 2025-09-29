@@ -17,6 +17,8 @@ let behaviorLogs = [];
 let classroomLogs = [];
 let children = [];
 let classrooms = [];
+let verificationCodes = new Map();
+let resetCodes = new Map();
 
 // JWT Secret
 const JWT_SECRET = process.env.JWT_SECRET || 'lumi-secret-key-change-in-production';
@@ -86,17 +88,10 @@ app.post('/api/auth/signup', async (req, res) => {
       role: 'educator',
       preferredLanguage: 'english',
       onboardingStatus: 'incomplete',
-      emailVerified: false,
       createdAt: new Date().toISOString()
     };
 
     users.push(user);
-    
-    // Generate verification code
-    const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
-    verificationCodes.set(email, verificationCode);
-    
-    console.log(`📧 Verification code for ${email}: ${verificationCode}`);
 
     // Generate token
     const token = jwt.sign(
@@ -156,6 +151,142 @@ app.get('/api/auth/me', authenticateToken, (req, res) => {
     return res.status(404).json({ error: 'User not found' });
   }
   res.json({ user: { ...user, password: undefined } });
+});
+
+// Email verification routes
+app.post('/api/auth/verify-email', authenticateToken, (req, res) => {
+  try {
+    const { code } = req.body;
+    const user = users.find(u => u.id === req.user.id);
+    
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    const storedCode = verificationCodes.get(user.email);
+    if (!storedCode || storedCode !== code) {
+      return res.status(400).json({ error: 'Invalid verification code' });
+    }
+    
+    // Mark email as verified
+    user.emailVerified = true;
+    verificationCodes.delete(user.email);
+    
+    res.json({ user: { ...user, password: undefined } });
+  } catch (error) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+app.post('/api/auth/resend-verification', authenticateToken, (req, res) => {
+  try {
+    const user = users.find(u => u.id === req.user.id);
+    
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    if (user.emailVerified) {
+      return res.status(400).json({ error: 'Email already verified' });
+    }
+    
+    // Generate new verification code
+    const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+    verificationCodes.set(user.email, verificationCode);
+    
+    console.log(`📧 New verification code for ${user.email}: ${verificationCode}`);
+    
+    res.json({ message: 'Verification code sent' });
+  } catch (error) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Password reset routes
+app.post('/api/auth/forgot-password', (req, res) => {
+  try {
+    const { email } = req.body;
+    
+    if (!email) {
+      return res.status(400).json({ error: 'Email is required' });
+    }
+    
+    const user = users.find(u => u.email === email);
+    if (!user) {
+      // Don't reveal if email exists for security
+      return res.json({ message: 'If the email exists, a reset code has been sent' });
+    }
+    
+    // Generate reset code
+    const resetCode = Math.floor(100000 + Math.random() * 900000).toString();
+    resetCodes.set(email, resetCode);
+    
+    console.log(`🔑 Password reset code for ${email}: ${resetCode}`);
+    
+    res.json({ message: 'If the email exists, a reset code has been sent' });
+  } catch (error) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+app.post('/api/auth/reset-password', async (req, res) => {
+  try {
+    const { email, code, newPassword } = req.body;
+    
+    if (!email || !code || !newPassword) {
+      return res.status(400).json({ error: 'Email, code, and new password are required' });
+    }
+    
+    const storedCode = resetCodes.get(email);
+    if (!storedCode || storedCode !== code) {
+      return res.status(400).json({ error: 'Invalid reset code' });
+    }
+    
+    const user = users.find(u => u.email === email);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    // Validate new password
+    if (newPassword.length < 8) {
+      return res.status(400).json({ error: 'Password must be at least 8 characters' });
+    }
+    
+    const hasUppercase = /[A-Z]/.test(newPassword);
+    const hasNumber = /\d/.test(newPassword);
+    if (!hasUppercase || !hasNumber) {
+      return res.status(400).json({ error: 'Password must include a capital letter and number' });
+    }
+    
+    // Hash new password
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    user.password = hashedPassword;
+    
+    // Clear reset code
+    resetCodes.delete(email);
+    
+    res.json({ message: 'Password reset successfully' });
+  } catch (error) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Profile photo upload
+app.post('/api/user/photo', authenticateToken, (req, res) => {
+  try {
+    // In a real implementation, this would handle file upload to cloud storage
+    // For MVP, we'll simulate a successful upload
+    const photoUrl = `https://api.dicebear.com/7.x/initials/svg?seed=${req.user.id}`;
+    
+    const userIndex = users.findIndex(u => u.id === req.user.id);
+    if (userIndex !== -1) {
+      users[userIndex].profilePhotoUrl = photoUrl;
+    }
+    
+    res.json({ photoUrl });
+  } catch (error) {
+    res.status(500).json({ error: 'Upload failed' });
+  }
 });
 
 // User Routes

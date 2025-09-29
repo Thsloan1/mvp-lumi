@@ -52,6 +52,20 @@ export const OnboardingWizard: React.FC = () => {
   };
 
   const handleComplete = () => {
+    ErrorLogger.logOnboardingEvent('completion_initiated', steps.length - 1, { 
+      userId: currentUser?.id,
+      onboardingData: {
+        hasClassroom: !!onboardingData.classroomName,
+        stressorCount: onboardingData.stressors?.length || 0,
+        gradeBand: onboardingData.gradeBand
+      }
+    });
+    
+    logOnboardingEvent('completed', steps.length - 1, {
+      totalSteps: steps.length,
+      completedData: onboardingData
+    });
+    
     const updateData = {
       fullName: `${onboardingData.firstName} ${onboardingData.lastName}`,
       preferredLanguage: onboardingData.preferredLanguage,
