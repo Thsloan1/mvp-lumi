@@ -72,12 +72,12 @@ export const FamilyNotesManager: React.FC = () => {
                 variant="outline"
                 onClick={() => setCurrentView('lumied-upsell')}
               >
-              >
                 Get Premium Scripts
               </Button>
               <Button
                 onClick={() => setCurrentView('family-script-generator')}
                 icon={MessageCircle}
+              >
                 Generate Custom Script
               </Button>
             </div>
