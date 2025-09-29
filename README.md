@@ -197,6 +197,90 @@ VITE_ENVIRONMENT=production npm run build
 - Organization data isolation
 - Audit logging for compliance
 
+## 📚 Knowledge Library Management
+
+### Accessing the Knowledge Library Manager
+
+The Knowledge Library Manager allows you to update Lumi's core clinical foundations:
+
+#### **For Admin Users:**
+1. Login as admin user
+2. Go to Admin Dashboard
+3. Click "Knowledge Library" in Quick Actions
+4. Access the comprehensive management interface
+
+#### **For Test Environment:**
+1. Open Test Panel (purple button)
+2. Click "Knowledge Library" button
+3. Direct access to management interface
+
+### **What You Can Manage:**
+
+#### **1. Theoretical Frameworks:**
+- **Attachment Theory** - Core principles for connection-based strategies
+- **IECMH** - Infant & Early Childhood Mental Health approaches
+- **Developmental Neuroscience** - Brain-based understanding of behavior
+- **Trauma-Informed Care** - Safety and choice-focused interventions
+- **SEL** - Social-Emotional Learning competencies
+- **Culturally Responsive** - Honoring family and cultural strengths
+
+#### **2. Strategy Templates:**
+- **Connection Before Direction** - Attachment-based approach
+- **Quiet Partnership** - Co-regulation strategies
+- **First-Then Structure** - Executive function support
+- **Calm Down Together** - Group regulation techniques
+- **Choice Within Structure** - Autonomy-supporting approaches
+
+#### **3. Language Guidelines:**
+- **Plain Language** - Nonjudgmental, accessible communication
+- **Skill Building** - Growth-focused rather than compliance-focused
+- **Developmental Normal** - Normalizing variability and avoiding pathologizing
+- **Shared Responsibility** - "We" framing for collaboration
+- **Connection First** - Prioritizing safety before skill practice
+- **Cultural Respect** - Honoring family practices and strengths
+
+### **Knowledge Library Features:**
+
+#### **✅ Framework Management:**
+- Edit core principles and product guidelines
+- Update AI hooks and language patterns
+- Modify avoidance patterns and contraindications
+- Version control with change tracking
+
+#### **✅ Strategy Template System:**
+- Create new evidence-based strategy templates
+- Map strategies to specific frameworks
+- Define age groups, contexts, and severity levels
+- Include implementation variations and benefits
+
+#### **✅ Language Guidelines:**
+- Maintain preferred vs. avoided language patterns
+- Update cultural responsiveness guidelines
+- Modify tone and framing rules
+- Ensure consistency across all AI outputs
+
+#### **✅ Import/Export Capabilities:**
+- **Export** complete knowledge base for backup
+- **Import** updated frameworks from research teams
+- **Version control** with dated backups
+- **Collaboration** with clinical experts and researchers
+
+### **Clinical Foundation Updates:**
+
+The Knowledge Library Manager allows authorized users to:
+
+1. **Update Research Integration** - Incorporate latest developmental science
+2. **Refine AI Responses** - Improve strategy generation quality
+3. **Enhance Cultural Responsiveness** - Add new language patterns
+4. **Expand Framework Coverage** - Include additional theoretical approaches
+5. **Improve Language Guidelines** - Ensure trauma-informed, strengths-based communication
+
+### **Quality Assurance:**
+- All changes are logged with timestamps and user attribution
+- Framework updates automatically propagate to AI strategy generation
+- Language guideline changes immediately affect all new outputs
+- Export/import system ensures backup and collaboration capabilities
+
 ## 📱 Mobile Support
 
 - Responsive design for all screen sizes
