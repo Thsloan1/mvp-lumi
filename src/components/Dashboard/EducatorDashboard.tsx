@@ -7,7 +7,18 @@ import { EngagementTracker } from '../Analytics/EngagementTracker';
 import { AnalyticsEngine, ChildInsight, ClassroomInsight, UnifiedInsight } from '../../utils/analyticsEngine';
 
 export const EducatorDashboard: React.FC = () => {
-  const { currentUser, behaviorLogs, classroomLogs, children, classrooms, setCurrentView } = useAppContext();
+  const { 
+    currentUser, 
+    behaviorLogs, 
+    behaviorLogsLoading,
+    classroomLogs, 
+    classroomLogsLoading,
+    children, 
+    childrenLoading,
+    classrooms, 
+    classroomsLoading,
+    setCurrentView 
+  } = useAppContext();
 
   // Generate unified insights
   const currentClassroom = classrooms[0]; // For MVP, use first classroom

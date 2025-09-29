@@ -1,22 +1,38 @@
 import React, { createContext, useContext, ReactNode } from 'react';
 import { User, Classroom, BehaviorLog, ClassroomLog, Child } from '../types';
-import { useLocalStorage } from '../hooks/useLocalStorage';
 import { useErrorHandler } from '../hooks/useErrorHandler';
 import { OrganizationApi, InvitationApi } from '../services/apiClient';
+import { useBehaviorLogs, useClassroomLogs, useChildren, useClassrooms } from '../hooks/useApiData';
+import { useLocalStorage } from '../hooks/useLocalStorage';
 
 interface AppContextType {
   currentUser: User | null;
   setCurrentUser: (user: User | null) => void;
   classrooms: Classroom[];
-  setClassrooms: (classrooms: Classroom[]) => void;
+  classroomsLoading: boolean;
+  createClassroom: (data: any) => Promise<any>;
+  updateClassroom: (id: string, data: any) => Promise<any>;
+  refetchClassrooms: () => void;
   children: Child[];
-  setChildren: (children: Child[]) => void;
+  childrenLoading: boolean;
+  createChild: (data: any) => Promise<any>;
+  updateChild: (id: string, data: any) => Promise<any>;
+  deleteChild: (id: string) => Promise<void>;
+  refetchChildren: () => void;
   behaviorLogs: BehaviorLog[];
-  setBehaviorLogs: (logs: BehaviorLog[]) => void;
+  behaviorLogsLoading: boolean;
+  createBehaviorLog: (data: any) => Promise<any>;
+  updateBehaviorLog: (id: string, data: any) => Promise<any>;
+  deleteBehaviorLog: (id: string) => Promise<void>;
+  refetchBehaviorLogs: () => void;
   classroomLogs: ClassroomLog[];
-  setClassroomLogs: (logs: ClassroomLog[]) => void;
+  classroomLogsLoading: boolean;
+  createClassroomLog: (data: any) => Promise<any>;
+  refetchClassroomLogs: () => void;
   currentView: string;
   setCurrentView: (view: string) => void;
+  hasLumiEdAccess: boolean;
+  setHasLumiEdAccess: (access: boolean) => void;
   // Error handling
   errors: any[];
   addError: (error: any) => void;
@@ -44,11 +60,8 @@ interface AppProviderProps {
 
 export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   const [currentUser, setCurrentUser] = useLocalStorage<User | null>('lumi_current_user', null);
-  const [classrooms, setClassrooms] = useLocalStorage<Classroom[]>('lumi_classrooms', []);
-  const [childrenList, setChildrenList] = useLocalStorage<Child[]>('lumi_children', []);
-  const [behaviorLogs, setBehaviorLogs] = useLocalStorage<BehaviorLog[]>('lumi_behavior_logs', []);
-  const [classroomLogs, setClassroomLogs] = useLocalStorage<ClassroomLog[]>('lumi_classroom_logs', []);
   const [currentView, setCurrentView] = useLocalStorage<string>('lumi_current_view', 'welcome');
+  const [hasLumiEdAccess, setHasLumiEdAccess] = useLocalStorage<boolean>('lumi_lumied_access', false);
   
   const { errors, addError, removeError, clearErrors, handleApiError } = useErrorHandler();
   
@@ -56,17 +69,64 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   const organizationApi = new OrganizationApi({ onError: addError });
   const invitationApi = new InvitationApi({ onError: addError });
 
+  // Use API hooks for real data
+  const {
+    behaviorLogs,
+    loading: behaviorLogsLoading,
+    createBehaviorLog,
+    updateBehaviorLog,
+    deleteBehaviorLog,
+    refetch: refetchBehaviorLogs
+  } = useBehaviorLogs();
+
+  const {
+    classroomLogs,
+    loading: classroomLogsLoading,
+    createClassroomLog,
+    refetch: refetchClassroomLogs
+  } = useClassroomLogs();
+
+  const {
+    children,
+    loading: childrenLoading,
+    createChild,
+    updateChild,
+    deleteChild,
+    refetch: refetchChildren
+  } = useChildren();
+
+  const {
+    classrooms,
+    loading: classroomsLoading,
+    createClassroom,
+    updateClassroom,
+    refetch: refetchClassrooms
+  } = useClassrooms();
+
   const value: AppContextType = {
     currentUser,
     setCurrentUser,
     classrooms,
-    setClassrooms,
-    children: childrenList,
-    setChildren: setChildrenList,
+    classroomsLoading,
+    createClassroom,
+    updateClassroom,
+    refetchClassrooms,
+    children,
+    childrenLoading,
+    createChild,
+    updateChild,
+    deleteChild,
+    refetchChildren,
     behaviorLogs,
-    setBehaviorLogs,
+    behaviorLogsLoading,
+    createBehaviorLog,
+    updateBehaviorLog,
+    deleteBehaviorLog,
+    refetchBehaviorLogs,
     classroomLogs,
-    setClassroomLogs,
+    classroomLogsLoading,
+    createClassroomLog,
+    refetchClassroomLogs,
     currentView,
     setCurrentView,
     hasLumiEdAccess,

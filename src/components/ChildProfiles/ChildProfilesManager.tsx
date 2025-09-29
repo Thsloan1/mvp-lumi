@@ -34,26 +34,28 @@ export const ChildProfilesManager: React.FC = () => {
 
   const handleCreateChild = () => {
     if (newChildData.name.trim()) {
-      const newChild: Child = {
-        id: Date.now().toString(),
+      const childData = {
         name: newChildData.name.trim(),
         gradeBand: newChildData.gradeBand,
-        classroomId: 'default-classroom',
         developmentalNotes: newChildData.developmentalNotes,
         hasIEP: newChildData.hasIEP,
-        hasIFSP: newChildData.hasIFSP,
-        createdAt: new Date(),
-        updatedAt: new Date()
+        hasIFSP: newChildData.hasIFSP
       };
-      setChildren([...children, newChild]);
-      setNewChildData({
-        name: '',
-        gradeBand: 'Preschool (4-5 years old)',
-        developmentalNotes: '',
-        hasIEP: false,
-        hasIFSP: false
-      });
-      setShowNewChildForm(false);
+      
+      createChild(childData)
+        .then(() => {
+          setNewChildData({
+            name: '',
+            gradeBand: 'Preschool (4-5 years old)',
+            developmentalNotes: '',
+            hasIEP: false,
+            hasIFSP: false
+          });
+          setShowNewChildForm(false);
+        })
+        .catch(error => {
+          console.error('Failed to create child:', error);
+        });
     }
   };
 

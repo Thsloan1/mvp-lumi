@@ -42,10 +42,14 @@ export const ClassroomProfileManager: React.FC = () => {
 
   const handleSave = () => {
     if (currentClassroom && editData) {
-      const updatedClassroom = { ...currentClassroom, ...editData };
-      setClassrooms([updatedClassroom]);
-      setIsEditing(false);
-      setEditData({});
+      updateClassroom(currentClassroom.id, editData)
+        .then(() => {
+          setIsEditing(false);
+          setEditData({});
+        })
+        .catch(error => {
+          console.error('Failed to update classroom:', error);
+        });
     }
   };
 

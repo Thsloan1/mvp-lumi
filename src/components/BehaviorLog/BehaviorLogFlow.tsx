@@ -245,24 +245,27 @@ export const BehaviorLogFlow: React.FC = () => {
   };
 
   const handleStrategySelect = (strategy: string, confidence: number) => {
-    const newBehaviorLog: BehaviorLog = {
-      id: Date.now().toString(),
+    const behaviorLogData = {
       childId: behaviorData.childId,
-      educatorId: currentUser?.id || '',
       behaviorDescription: behaviorData.behaviorDescription,
       context: behaviorData.context,
       timeOfDay: behaviorData.timeOfDay,
-      severity: behaviorData.severity as 'low' | 'medium' | 'high',
-      educatorMood: behaviorData.educatorMood as any,
-      stressors: [], // This would be populated from classroom context
+      severity: behaviorData.severity.toUpperCase(),
+      educatorMood: behaviorData.educatorMood ? behaviorData.educatorMood.toUpperCase() : null,
+      stressors: [],
       aiResponse: aiResponse,
       selectedStrategy: strategy,
-      confidenceRating: confidence,
-      createdAt: new Date()
+      confidenceRating: confidence
     };
 
-    setBehaviorLogs([...behaviorLogs, newBehaviorLog]);
-    setCurrentView('dashboard');
+    // Save to database
+    createBehaviorLog(behaviorLogData)
+      .then(() => {
+        setCurrentView('dashboard');
+      })
+      .catch(error => {
+        console.error('Failed to save behavior log:', error);
+      });
   };
 
   const isStepValid = () => {

@@ -127,24 +127,27 @@ export const ClassroomLogFlow: React.FC = () => {
   };
 
   const handleStrategySelect = (strategy: string, selfConfidence: number, strategyConfidence: number) => {
-    const newClassroomLog: ClassroomLog = {
-      id: Date.now().toString(),
-      educatorId: currentUser?.id || '',
-      classroomId: 'default-classroom', // This would come from context
+    const classroomLogData = {
+      classroomId: classrooms[0]?.id || 'default-classroom',
       challengeDescription: classroomData.challengeDescription,
       context: classroomData.context,
-      severity: classroomData.severity as 'low' | 'medium' | 'high',
-      educatorMood: classroomData.educatorMood as any,
+      severity: classroomData.severity.toUpperCase(),
+      educatorMood: classroomData.educatorMood ? classroomData.educatorMood.toUpperCase() : null,
       stressors: classroomData.stressors,
       aiResponse: aiResponse,
       selectedStrategy: strategy,
       confidenceSelfRating: selfConfidence,
-      confidenceStrategyRating: strategyConfidence,
-      createdAt: new Date()
+      confidenceStrategyRating: strategyConfidence
     };
 
-    setClassroomLogs([...classroomLogs, newClassroomLog]);
-    setCurrentView('dashboard');
+    // Save to database
+    createClassroomLog(classroomLogData)
+      .then(() => {
+        setCurrentView('dashboard');
+      })
+      .catch(error => {
+        console.error('Failed to save classroom log:', error);
+      });
   };
 
   const isStepValid = () => {
