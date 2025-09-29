@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Code, Database, Settings, Download, Upload, RefreshCw, Play, Book, Zap, FileText, ArrowLeft, BarChart3, Users, TrendingUp, AlertTriangle, Eye, Filter } from 'lucide-react';
+import { Code, Database, Settings, Download, Upload, RefreshCw, Play, Book, Zap, FileText, ArrowLeft, BarChart3, Users, TrendingUp, AlertTriangle, Eye, Filter, X } from 'lucide-react';
 import { Button } from '../UI/Button';
 import { Card } from '../UI/Card';
 import { Input } from '../UI/Input';
@@ -7,7 +7,7 @@ import { Select } from '../UI/Select';
 import { knowledgeLibrary, TheoreticalFramework, StrategyTemplate, LanguageGuideline } from '../../data/knowledgeLibrary';
 import { testDataManager } from '../../data/testData';
 import { getCurrentEnvironment, ENVIRONMENTS } from '../../config/environments';
-import { AnalyticsEngine } from '../../utils/analyticsEngine';
+import { AnalyticsEngine, DeveloperAnalyticsEngine } from '../../utils/analyticsEngine';
 import { useAppContext } from '../../context/AppContext';
 
 export const DeveloperAppManager: React.FC = () => {
@@ -56,7 +56,33 @@ export const DeveloperAppManager: React.FC = () => {
   const handleImportKnowledgeBase = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-              <div className="flex justify-between">
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const data = JSON.parse(e.target?.result as string);
+          knowledgeLibrary.importKnowledgeBase(data);
+          alert('Knowledge base imported successfully!');
+        } catch (error) {
+          alert('Error importing knowledge base. Please check the file format.');
+        }
+      };
+      reader.readAsText(file);
+    }
+  };
+
+  const handleUpdateFramework = (id: string, updates: Partial<TheoreticalFramework>) => {
+    // Implementation for updating framework
+    console.log('Updating framework:', id, updates);
+  };
+
+  const generateAnalytics = () => {
+    const allUsers = testDataManager.getUsers();
+    const allOrganizations = testDataManager.getOrganizations();
+    const allBehaviorLogs = testDataManager.getBehaviorLogs();
+    const allClassroomLogs = testDataManager.getClassroomLogs();
+    const allChildren = testDataManager.getChildren();
+    const allClassrooms = testDataManager.getClassrooms();
+
     // Use the comprehensive analytics engine
     const appLevel = DeveloperAnalyticsEngine.generateAppLevelAnalytics(
       allUsers, allOrganizations, allBehaviorLogs, allClassroomLogs, allChildren, allClassrooms
@@ -65,7 +91,7 @@ export const DeveloperAppManager: React.FC = () => {
     const insights = DeveloperAnalyticsEngine.generatePlatformInsights(
       allUsers, allOrganizations, allBehaviorLogs, allClassroomLogs
     );
-                <span className="text-gray-600">Strategy Templates:</span>
+
     return {
       appLevel,
       frameworkUsage: insights.trends.frameworkAdoption,
@@ -74,9 +100,76 @@ export const DeveloperAppManager: React.FC = () => {
       patterns: insights.patterns,
       benchmarks: insights.benchmarks
     };
-                <span className="font-medium text-[#1A1A1A]">{knowledgeBase.templates.length}</span>
-              </div>
-              <div className="flex justify-between">
+  };
+
+  const generateOrganizationAnalytics = (orgId: string) => {
+    return DeveloperAnalyticsEngine.generateOrganizationAnalytics(
+      orgId,
+      testDataManager.getOrganizations(),
+      testDataManager.getUsers(),
+      testDataManager.getBehaviorLogs(),
+      testDataManager.getClassroomLogs()
+    );
+  };
+
+  const renderOverview = () => (
+    <div className="space-y-8">
+      {/* App Status */}
+      <Card className="p-6">
+        <h3 className="text-lg font-semibold text-[#1A1A1A] mb-6">
+          Application Status
+        </h3>
+        
+        <div className="grid md:grid-cols-3 gap-6">
+          <div className="text-center">
+            <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
+              <Code className="w-6 h-6 text-green-600" />
+            </div>
+            <h4 className="font-medium text-[#1A1A1A] mb-1">Environment</h4>
+            <p className="text-sm text-gray-600">{currentEnv.name}</p>
+          </div>
+          
+          <div className="text-center">
+            <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
+              <Database className="w-6 h-6 text-blue-600" />
+            </div>
+            <h4 className="font-medium text-[#1A1A1A] mb-1">Data Status</h4>
+            <p className="text-sm text-gray-600">Connected</p>
+          </div>
+          
+          <div className="text-center">
+            <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-3">
+              <Zap className="w-6 h-6 text-purple-600" />
+            </div>
+            <h4 className="font-medium text-[#1A1A1A] mb-1">AI Engine</h4>
+            <p className="text-sm text-gray-600">Active</p>
+          </div>
+        </div>
+      </Card>
+
+      {/* Knowledge Base Stats */}
+      <Card className="p-6">
+        <h3 className="text-lg font-semibold text-[#1A1A1A] mb-6">
+          Knowledge Base Statistics
+        </h3>
+        
+        <div className="grid md:grid-cols-3 gap-6">
+          <div>
+            <div className="flex justify-between">
+              <span className="text-gray-600">Theoretical Frameworks:</span>
+              <span className="font-medium text-[#1A1A1A]">{knowledgeBase.frameworks.length}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-600">Strategy Templates:</span>
+              <span className="font-medium text-[#1A1A1A]">{knowledgeBase.templates.length}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-600">Language Guidelines:</span>
+              <span className="font-medium text-[#1A1A1A]">{knowledgeBase.guidelines.length}</span>
+            </div>
+          </div>
+        </div>
+      </Card>
 
       {/* Production Readiness */}
       <Card className="p-6">
@@ -504,19 +597,54 @@ export const DeveloperAppManager: React.FC = () => {
                   p-4 border rounded-xl
                   ${currentEnv.name === env.name ? 'border-[#C44E38] bg-[#C44E38] bg-opacity-5' : 'border-[#E6E2DD]'}
                 `}>
-    return DeveloperAnalyticsEngine.generateOrganizationAnalytics(
                   <div className="flex items-center justify-between mb-2">
-      orgId,
+                    <h5 className="font-medium text-[#1A1A1A]">{env.name}</h5>
+                    {currentEnv.name === env.name && (
+                      <span className="px-2 py-1 bg-[#C44E38] text-white text-xs rounded-full">
+                        Current
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-sm text-gray-600 mb-2">{env.description}</p>
+                  <div className="text-xs text-gray-500">
+                    API: {env.apiUrl}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </Card>
+    </div>
+  );
+
+  return (
+    <div className="min-h-screen bg-[#F8F6F4]">
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-[#1A1A1A] mb-2">
+            Developer App Manager
+          </h1>
+          <p className="text-gray-600">
+            Comprehensive development tools for Lumi's AI-powered behavior support platform
+          </p>
+        </div>
+
+        {/* Navigation */}
+        <div className="mb-8">
+          <nav className="flex space-x-8 border-b border-[#E6E2DD]">
+            {tabs.map((tab) => {
+              const IconComponent = tab.icon;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id as any)}
                   className={`
-      testDataManager.getOrganizations(),
                     flex items-center space-x-2 py-4 px-1 border-b-2 font-medium text-sm transition-colors
-      testDataManager.getUsers(),
                     ${activeTab === tab.id
-      testDataManager.getBehaviorLogs(),
                       ? 'border-purple-600 text-purple-600'
-      testDataManager.getClassroomLogs()
                       : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-    );
                     }
                   `}
                 >
