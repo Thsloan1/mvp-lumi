@@ -447,9 +447,9 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     } catch (err: any) {
       error('Password change failed', err.message);
       throw err;
-      throw err;
     }
   };
+
   const createBehaviorLog = async (data: any) => {
     try {
       const result = await AuthService.apiRequest('/api/behavior-logs', {
