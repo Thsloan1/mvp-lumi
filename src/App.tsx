@@ -13,7 +13,6 @@ import { OrganizationPayment } from './components/Auth/OrganizationPayment';
 import { InviteEducators } from './components/Auth/InviteEducators';
 import { OrganizationComplete } from './components/Auth/OrganizationComplete';
 import { InvitedSignup } from './components/Auth/InvitedSignup';
-import { InvitedOnboarding } from './components/Auth/InvitedOnboarding';
 import { SubscriptionPlan } from './components/Auth/SubscriptionPlan';
 import { PaymentScreen } from './components/Auth/PaymentScreen';
 import { OnboardingWizard } from './components/Onboarding/OnboardingWizard';
@@ -151,14 +150,12 @@ const AppContent: React.FC = () => {
 
 function App() {
   return (
-    <ErrorBoundary>
-      <SessionProvider>
-        <AppProvider>
-          <AppContent />
-        </AppProvider>
-      </SessionProvider>
-    </ErrorBoundary>
-  );
+    <AppProvider>
+      <div className="min-h-screen bg-gray-50">
+        <AppContent />
+        <ToastContainer />
+      </div>
+    </AppProvider>
 }
 
 export default App;

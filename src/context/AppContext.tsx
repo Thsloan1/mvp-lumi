@@ -1,5 +1,4 @@
 import React, { createContext, useContext, ReactNode } from 'react';
-import { useSession, signOut } from 'next-auth/react';
 import { User, Classroom, BehaviorLog, ClassroomLog, Child } from '../types';
 import { useToast } from '../hooks/useToast';
 import { useBehaviorLogs, useClassroomLogs, useChildren, useClassrooms } from '../hooks/useApiData';
@@ -52,7 +51,6 @@ interface AppProviderProps {
 }
 
 export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
-  const { data: session, status } = useSession();
   const [currentView, setCurrentView] = useLocalStorage<string>('lumi_current_view', 'welcome');
   
   const { success, error, warning, info } = useToast();
@@ -70,9 +68,9 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
 
   const value: AppContextType = {
     currentUser,
-    isAuthenticated,
-    isLoading,
-    signOut,
+    user: null,
+    isAuthenticated: false,
+    isLoading: false,
     classrooms,
     setClassrooms,
     children: apiChildren,
