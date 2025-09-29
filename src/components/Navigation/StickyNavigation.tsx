@@ -26,10 +26,10 @@ export const StickyNavigation: React.FC = () => {
       view: 'library'
     },
     {
-      id: 'lumied',
-      label: 'Lumi Ed',
+      id: 'lumied-preview',
+      label: 'LumiEd',
       icon: Lock,
-      view: 'lumied-upsell',
+      view: 'lumied-preview',
       locked: true
     },
     {
