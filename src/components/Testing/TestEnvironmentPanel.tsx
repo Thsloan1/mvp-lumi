@@ -59,7 +59,7 @@ export const DeveloperPortal: React.FC = () => {
     { id: 'tech-stack', label: 'Tech Stack & Fixes', icon: Wrench }
   ];
 
-  const testUsers = [
+  const STATIC_TEST_USERS = [
     { value: 'educator-1', label: 'Sarah Johnson (Educator - Complete)' },
     { value: 'educator-2', label: 'Maria Rodriguez (Educator - Spanish)' },
     { value: 'admin-1', label: 'Dr. Michael Chen (Admin)' },
@@ -390,7 +390,7 @@ export const DeveloperPortal: React.FC = () => {
           <Select
             value={selectedTestUser}
             onChange={setSelectedTestUser}
-            options={testUsers}
+            options={STATIC_TEST_USERS}
             placeholder="Select test user"
           />
           <Button
