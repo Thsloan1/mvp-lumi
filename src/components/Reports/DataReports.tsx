@@ -4,6 +4,7 @@ import { Button } from '../UI/Button';
 import { Card } from '../UI/Card';
 import { Select } from '../UI/Select';
 import { useAppContext } from '../../context/AppContext';
+import { AnalyticsEngine, ChildInsight, ClassroomInsight, UnifiedInsight } from '../../utils/analyticsEngine';
 
 export const DataReports: React.FC = () => {
   const { behaviorLogs, classroomLogs, children, currentUser } = useAppContext();
@@ -84,6 +85,18 @@ export const DataReports: React.FC = () => {
   const behaviorTrends = getBehaviorTrends();
   const severityDistribution = getSeverityDistribution();
 
+  // Generate insights
+  const childInsights = children.map(child => 
+    AnalyticsEngine.generateChildInsights(child.id, behaviorLogs, child)
+  ).filter(insight => insight.totalLogs > 0);
+
+  const unifiedInsights = AnalyticsEngine.generateUnifiedInsights(
+    behaviorLogs,
+    classroomLogs,
+    children,
+    []
+  );
+
   const renderOverviewReport = () => (
     <div className="space-y-8">
       {/* Summary Cards */}
@@ -136,6 +149,65 @@ export const DataReports: React.FC = () => {
           </div>
         </Card>
       </div>
+
+      {/* Unified Insights */}
+      {unifiedInsights.length > 0 && (
+        <Card className="p-6">
+          <h3 className="text-lg font-semibold text-[#1A1A1A] mb-6">
+            Nested Insights - Child & Classroom Patterns
+          </h3>
+          
+          <div className="space-y-6">
+            {unifiedInsights.map((insight, index) => (
+              <div key={index} className="p-6 bg-gradient-to-r from-blue-50 to-green-50 rounded-xl border border-blue-200">
+                <div className="flex items-start justify-between mb-4">
+                  <h4 className="text-xl font-bold text-[#1A1A1A]">{insight.pattern}</h4>
+                  <span className={`
+                    px-3 py-1 rounded-full text-sm font-medium
+                    ${insight.classroomLevel.severity === 'high' ? 'bg-red-100 text-red-700' :
+                      insight.classroomLevel.severity === 'medium' ? 'bg-yellow-100 text-yellow-700' :
+                      'bg-green-100 text-green-700'}
+                  `}>
+                    {insight.classroomLevel.severity} severity
+                  </span>
+                </div>
+                
+                <div className="grid md:grid-cols-2 gap-6 mb-4">
+                  <div className="bg-blue-50 p-4 rounded-lg">
+                    <h5 className="font-semibold text-blue-900 mb-2">Individual Child Level</h5>
+                    <div className="space-y-1 text-sm text-blue-800">
+                      <p><strong>{insight.childLevel.affectedChildren}</strong> children affected</p>
+                      <p><strong>{insight.childLevel.frequency}</strong> total incidents</p>
+                      <p><strong>Contexts:</strong> {insight.childLevel.contexts.join(', ')}</p>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-green-50 p-4 rounded-lg">
+                    <h5 className="font-semibold text-green-900 mb-2">Classroom Stressor Level</h5>
+                    <div className="space-y-1 text-sm text-green-800">
+                      <p><strong>{insight.classroomLevel.affectedClassrooms}</strong> classrooms impacted</p>
+                      <p><strong>Stressor rank:</strong> #{insight.classroomLevel.stressorRank}</p>
+                      <p><strong>Severity:</strong> {insight.classroomLevel.severity} impact</p>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="bg-white p-4 rounded-lg border border-gray-200">
+                  <h5 className="font-semibold text-[#1A1A1A] mb-2">Recommendations</h5>
+                  <ul className="space-y-1">
+                    {insight.recommendations.map((rec, recIndex) => (
+                      <li key={recIndex} className="text-sm text-gray-700 flex items-start">
+                        <div className="w-1.5 h-1.5 bg-[#C44E38] rounded-full mt-2 mr-2 flex-shrink-0" />
+                        {rec}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
 
       {/* Behavior Context Trends */}
       <Card className="p-6">
@@ -208,19 +280,91 @@ export const DataReports: React.FC = () => {
   const renderChildReport = () => {
     if (!selectedChild) {
       return (
+        <div className="space-y-8">
+          <Card className="p-12 text-center">
+            <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-[#1A1A1A] mb-2">
+              Select a Child
+            </h3>
+            <p className="text-gray-600">
+              Choose a child from the dropdown to view their detailed report
+            </p>
+          </Card>
+
+          {/* Child Insights Overview */}
+          {childInsights.length > 0 && (
+            <Card className="p-6">
+              <h3 className="text-lg font-semibold text-[#1A1A1A] mb-6">
+                All Children - Pattern Overview
+              </h3>
+              
+              <div className="grid gap-4">
+                {childInsights.map((insight) => (
+                  <div key={insight.childId} className="p-4 bg-[#F8F6F4] rounded-xl">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                          <Users className="w-4 h-4 text-blue-600" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-[#1A1A1A]">{insight.childName}</p>
+                          <p className="text-sm text-gray-600">{insight.totalLogs} behavior logs</p>
+                        </div>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setSelectedChild(insight.childId)}
+                      >
+                        View Details
+                      </Button>
+                    </div>
+                    
+                    <div className="grid md:grid-cols-3 gap-4 text-sm">
+                      <div>
+                        <p className="text-gray-600">Most frequent trigger:</p>
+                        <p className="font-medium text-[#1A1A1A]">
+                          {insight.patterns.mostFrequentContext.replace(/_/g, ' ')}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-gray-600">Confidence trend:</p>
+                        <p className="font-medium text-[#1A1A1A]">
+                          {insight.patterns.confidenceTrend}/10
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-gray-600">Effective strategies:</p>
+                        <p className="font-medium text-[#1A1A1A]">
+                          {insight.patterns.effectiveStrategies.length} identified
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          )}
+        </div>
+      );
+    }
+
+    const selectedChildInsight = childInsights.find(insight => insight.childId === selectedChild);
+    const child = children.find(c => c.id === selectedChild);
+    
+    if (!selectedChildInsight || !child) {
+      return (
         <Card className="p-12 text-center">
           <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-[#1A1A1A] mb-2">
-            Select a Child
+            No Data Available
           </h3>
           <p className="text-gray-600">
-            Choose a child from the dropdown to view their detailed report
+            This child doesn't have any behavior logs yet
           </p>
         </Card>
       );
     }
-
-    const childData = getChildData(selectedChild);
     
     return (
       <div className="space-y-8">
@@ -233,46 +377,49 @@ export const DataReports: React.FC = () => {
               </div>
               <div>
                 <h3 className="text-xl font-semibold text-[#1A1A1A]">
-                  {childData.child?.name}
+                  {selectedChildInsight.childName}
                 </h3>
-                <p className="text-gray-600">{childData.child?.gradeBand}</p>
+                <p className="text-gray-600">{child.gradeBand}</p>
               </div>
             </div>
             <div className="text-right">
-              <p className="text-2xl font-bold text-[#1A1A1A]">{childData.totalLogs}</p>
+              <p className="text-2xl font-bold text-[#1A1A1A]">{selectedChildInsight.totalLogs}</p>
               <p className="text-sm text-gray-600">Total logs</p>
             </div>
           </div>
           
-          <div className="grid md:grid-cols-3 gap-6">
+          <div className="grid md:grid-cols-4 gap-6">
             <div>
-              <h4 className="font-medium text-[#1A1A1A] mb-2">Common Contexts</h4>
-              <div className="space-y-1">
-                {childData.contexts.slice(0, 3).map((context, index) => (
-                  <span key={index} className="inline-block px-2 py-1 bg-[#F8F6F4] text-xs rounded-full mr-1">
-                    {context.replace(/_/g, ' ')}
-                  </span>
-                ))}
-              </div>
-            </div>
-            
-            <div>
-              <h4 className="font-medium text-[#1A1A1A] mb-2">Avg Confidence</h4>
-              <p className="text-lg font-semibold text-[#C44E38]">
-                {Math.round(childData.avgConfidence * 10) / 10}/10
+              <h4 className="font-medium text-[#1A1A1A] mb-2">Most Frequent Trigger</h4>
+              <p className="text-sm text-[#C44E38] font-medium">
+                {selectedChildInsight.patterns.mostFrequentTrigger.replace(/_/g, ' ')}
               </p>
             </div>
             
             <div>
-              <h4 className="font-medium text-[#1A1A1A] mb-2">Special Needs</h4>
+              <h4 className="font-medium text-[#1A1A1A] mb-2">Confidence Trend</h4>
+              <p className="text-sm text-[#C44E38] font-medium">
+                {selectedChildInsight.patterns.confidenceTrend}/10
+              </p>
+            </div>
+            
+            <div>
+              <h4 className="font-medium text-[#1A1A1A] mb-2">Effective Strategies</h4>
+              <p className="text-sm text-[#C44E38] font-medium">
+                {selectedChildInsight.patterns.effectiveStrategies.length} identified
+              </p>
+            </div>
+
+            <div>
+              <h4 className="font-medium text-[#1A1A1A] mb-2">Support Plans</h4>
               <div className="flex space-x-2">
-                {childData.child?.hasIEP && (
+                {child.hasIEP && (
                   <span className="px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded-full">IEP</span>
                 )}
-                {childData.child?.hasIFSP && (
+                {child.hasIFSP && (
                   <span className="px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full">IFSP</span>
                 )}
-                {!childData.child?.hasIEP && !childData.child?.hasIFSP && (
+                {!child.hasIEP && !child.hasIFSP && (
                   <span className="text-sm text-gray-600">None</span>
                 )}
               </div>
@@ -280,42 +427,82 @@ export const DataReports: React.FC = () => {
           </div>
         </Card>
 
-        {/* Recent Behavior Logs */}
+        {/* Detailed Pattern Analysis */}
         <Card className="p-6">
           <h3 className="text-lg font-semibold text-[#1A1A1A] mb-6">
-            Recent Behavior Logs
+            Pattern Analysis
           </h3>
           
-          <div className="space-y-4">
-            {childData.recentLogs.map((log, index) => (
-              <div key={index} className="p-4 bg-[#F8F6F4] rounded-xl">
-                <div className="flex items-start justify-between mb-2">
-                  <div className="flex items-center space-x-2">
-                    <div className={`
-                      w-3 h-3 rounded-full
-                      ${log.severity === 'low' ? 'bg-green-500' :
-                        log.severity === 'medium' ? 'bg-yellow-500' : 'bg-red-500'}
-                    `} />
-                    <span className="text-sm font-medium text-[#1A1A1A]">
-                      {log.context.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                    </span>
+          <div className="grid md:grid-cols-2 gap-6">
+            <div>
+              <h4 className="font-medium text-[#1A1A1A] mb-3">Trigger Patterns</h4>
+              <div className="space-y-3">
+                {selectedChildInsight.triggers.slice(0, 5).map((trigger, index) => (
+                  <div key={index} className="flex items-center justify-between">
+                    <span className="text-sm text-gray-700">{trigger.name.replace(/_/g, ' ')}</span>
+                    <div className="flex items-center space-x-2">
+                      <div className="w-16 bg-[#E6E2DD] rounded-full h-2">
+                        <div 
+                          className="bg-blue-500 h-2 rounded-full"
+                          style={{ width: `${(trigger.frequency / selectedChildInsight.triggers[0]?.frequency || 1) * 100}%` }}
+                        />
+                      </div>
+                      <span className="text-sm font-medium text-[#1A1A1A] w-6">
+                        {trigger.frequency}
+                      </span>
+                    </div>
                   </div>
-                  <span className="text-xs text-gray-500">
-                    {new Date(log.createdAt).toLocaleDateString()}
-                  </span>
-                </div>
-                <p className="text-sm text-gray-700 mb-2">
-                  {log.behaviorDescription}
-                </p>
-                {log.selectedStrategy && (
-                  <p className="text-xs text-blue-600">
-                    Strategy: {log.selectedStrategy.substring(0, 80)}...
-                  </p>
-                )}
+                ))}
               </div>
-            ))}
+            </div>
+            
+            <div>
+              <h4 className="font-medium text-[#1A1A1A] mb-3">Time Patterns</h4>
+              <div className="space-y-3">
+                {selectedChildInsight.timePatterns.map((pattern, index) => (
+                  <div key={index} className="flex items-center justify-between">
+                    <span className="text-sm text-gray-700 capitalize">{pattern.timeOfDay}</span>
+                    <div className="flex items-center space-x-2">
+                      <div className="w-16 bg-[#E6E2DD] rounded-full h-2">
+                        <div 
+                          className="bg-green-500 h-2 rounded-full"
+                          style={{ width: `${(pattern.frequency / selectedChildInsight.timePatterns[0]?.frequency || 1) * 100}%` }}
+                        />
+                      </div>
+                      <span className="text-sm font-medium text-[#1A1A1A] w-6">
+                        {pattern.frequency}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </Card>
+
+        {/* Effective Strategies */}
+        {selectedChildInsight.patterns.effectiveStrategies.length > 0 && (
+          <Card className="p-6">
+            <h3 className="text-lg font-semibold text-[#1A1A1A] mb-6">
+              Most Effective Strategies
+            </h3>
+            
+            <div className="space-y-4">
+              {selectedChildInsight.patterns.effectiveStrategies.map((strategy, index) => (
+                <div key={index} className="p-4 bg-green-50 border border-green-200 rounded-xl">
+                  <div className="flex items-start space-x-3">
+                    <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                      <span className="text-sm font-bold text-green-600">{index + 1}</span>
+                    </div>
+                    <p className="text-sm text-green-800 leading-relaxed">
+                      {strategy}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Card>
+        )}
       </div>
     );
   };

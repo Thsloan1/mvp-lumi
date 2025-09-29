@@ -41,7 +41,8 @@ const AppContent: React.FC = () => {
   // Show sticky navigation for main app views (not auth/onboarding)
   const showStickyNav = [
     'dashboard', 'behavior-log', 'classroom-log', 'child-profiles', 'classroom-profile',
-    'library', 'reports', 'family-notes', 'profile-settings', 'child-profile-detail'
+    'library', 'reports', 'family-notes', 'profile-settings', 'child-profile-detail',
+    'admin-dashboard', 'manage-educators', 'organization-settings', 'organization-analytics'
   ].includes(currentView);
   return (
     <div className="relative">
