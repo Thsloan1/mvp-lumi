@@ -7,6 +7,7 @@ import { Select } from '../UI/Select';
 import { useAppContext } from '../../context/AppContext';
 import { Child, BehaviorLog } from '../../types';
 import { generateComprehensiveFamilyScript } from '../../utils/familyScriptGenerator';
+import { safeLocalStorageGet, safeLocalStorageSet } from '../../utils/jsonUtils';
 
 interface FamilyScriptGeneratorProps {
   child?: Child;
@@ -174,7 +175,7 @@ ${currentUser?.fullName}`;
     }
     
     // Save to local storage for demo
-    const savedScripts = JSON.parse(localStorage.getItem('lumi_family_scripts') || '[]');
+    const savedScripts = safeLocalStorageGet('lumi_family_scripts', []);
     const newScript = {
       id: Date.now().toString(),
       childName: scriptData.childName,
@@ -184,7 +185,7 @@ ${currentUser?.fullName}`;
       createdAt: new Date().toISOString()
     };
     savedScripts.push(newScript);
-    localStorage.setItem('lumi_family_scripts', JSON.stringify(savedScripts));
+    safeLocalStorageSet('lumi_family_scripts', savedScripts);
     
     // Show success feedback
     alert('Script saved successfully!');

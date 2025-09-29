@@ -4,6 +4,7 @@ import { Button } from '../UI/Button';
 import { Card } from '../UI/Card';
 import { Input } from '../UI/Input';
 import { useAppContext } from '../../context/AppContext';
+import { safeLocalStorageGet } from '../../utils/jsonUtils';
 
 export const OrganizationPayment: React.FC = () => {
   const { setCurrentView, createOrganization } = useAppContext();
@@ -30,7 +31,7 @@ export const OrganizationPayment: React.FC = () => {
     
     try {
       // Get organization plan data
-      const planData = JSON.parse(localStorage.getItem('lumi_org_plan') || '{}');
+      const planData = safeLocalStorageGet('lumi_org_plan', {});
       
       // Create organization
       await createOrganization({

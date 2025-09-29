@@ -4,6 +4,7 @@ import { Button } from '../UI/Button';
 import { Card } from '../UI/Card';
 import { Input } from '../UI/Input';
 import { useAppContext } from '../../context/AppContext';
+import { safeLocalStorageSet } from '../../utils/jsonUtils';
 
 export const OrganizationPlan: React.FC = () => {
   const { setCurrentView, createOrganization } = useAppContext();
@@ -25,11 +26,11 @@ export const OrganizationPlan: React.FC = () => {
 
   const handleContinue = () => {
     // Store organization plan data for payment step
-    localStorage.setItem('lumi_org_plan', JSON.stringify({
+    safeLocalStorageSet('lumi_org_plan', {
       seatCount,
       billingCycle,
       totalPrice: billingCycle === 'annual' ? totalPrice * 12 : totalPrice
-    }));
+    });
     setCurrentView('organization-payment');
   };
 

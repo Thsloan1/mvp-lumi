@@ -5,6 +5,7 @@ import { Card } from '../UI/Card';
 import { Input } from '../UI/Input';
 import { useAppContext } from '../../context/AppContext';
 import { ReflectionPrompt } from '../../types';
+import { safeLocalStorageGet, safeLocalStorageSet } from '../../utils/jsonUtils';
 
 interface ReflectionPromptsProps {
   behaviorLogId?: string;
@@ -107,9 +108,9 @@ export const ReflectionPrompts: React.FC<ReflectionPromptsProps> = ({
 
     // Save reflection to localStorage for demo
     try {
-      const existingReflections = JSON.parse(localStorage.getItem('lumi_reflections') || '[]');
+      const existingReflections = safeLocalStorageGet('lumi_reflections', []);
       existingReflections.push(reflection);
-      localStorage.setItem('lumi_reflections', JSON.stringify(existingReflections));
+      safeLocalStorageSet('lumi_reflections', existingReflections);
     } catch (error) {
       console.error('Failed to save reflection:', error);
     }
