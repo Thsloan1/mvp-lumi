@@ -15,6 +15,7 @@ datasource db {
 enum Role {
   EDUCATOR
   ADMIN
+  OWNER
 }
 
 enum Language {
@@ -54,6 +55,7 @@ enum SubscriptionStatus {
   PAST_DUE
   INCOMPLETE
   TRIALING
+  EXPIRED
 }
 
 enum ResourceType {
@@ -80,6 +82,18 @@ enum EngagementAction {
   REFLECTION
 }
 
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  EXPIRED
+  CANCELLED
+}
+
+enum OrganizationRole {
+  OWNER
+  ADMIN
+  EDUCATOR
+}
 // Core Models
 model User {
   id                String            @id @default(cuid())
@@ -94,19 +108,98 @@ model User {
   subscriptionPlan  SubscriptionPlan?
   subscriptionStatus SubscriptionStatus?
   stripeCustomerId  String?
+  organizationId    String?
+  organizationRole  OrganizationRole? @default(EDUCATOR)
   createdAt         DateTime          @default(now())
   updatedAt         DateTime          @updatedAt
 
   // Relations
+  organization      Organization?     @relation("OrganizationMembers", fields: [organizationId], references: [id], onDelete: SetNull)
+  ownedOrganization Organization?     @relation("OrganizationOwner")
   classrooms        Classroom[]
   behaviorLogs      BehaviorLog[]
   classroomLogs     ClassroomLog[]
   engagementMetrics EngagementMetrics[]
   reflectionPrompts ReflectionPrompt[]
+  sentInvitations   Invitation[]      @relation("InvitationSender")
 
   @@map("users")
 }
 
+model Organization {
+  id                String            @id @default(cuid())
+  name              String
+  type              String            // school, district, childcare_center, nonprofit, other
+  ownerId           String            @unique
+  subscriptionId    String?           @unique
+  settings          Json?             // Organization-wide settings
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  // Relations
+  owner             User              @relation("OrganizationOwner", fields: [ownerId], references: [id], onDelete: Restrict)
+  members           User[]            @relation("OrganizationMembers")
+  subscription      Subscription?     @relation("OrganizationSubscription")
+  invitations       Invitation[]
+  ownershipHistory  OwnershipHistory[]
+
+  @@map("organizations")
+}
+
+model Subscription {
+  id                String            @id @default(cuid())
+  organizationId    String            @unique
+  plan              String            // basic, pro, district
+  maxSeats          Int
+  activeSeats       Int               @default(0)
+  status            SubscriptionStatus @default(TRIALING)
+  stripeSubscriptionId String?
+  currentPeriodStart DateTime?
+  currentPeriodEnd  DateTime?
+  cancelAtPeriodEnd Boolean           @default(false)
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  // Relations
+  organization      Organization      @relation("OrganizationSubscription", fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@map("subscriptions")
+}
+
+model Invitation {
+  id                String            @id @default(cuid())
+  email             String
+  organizationId    String
+  invitedBy         String
+  status            InvitationStatus  @default(PENDING)
+  token             String            @unique // For secure invitation links
+  expiresAt         DateTime
+  acceptedAt        DateTime?
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  // Relations
+  organization      Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  inviter           User              @relation("InvitationSender", fields: [invitedBy], references: [id], onDelete: Cascade)
+
+  @@unique([email, organizationId]) // Prevent duplicate invites for same email/org
+  @@map("invitations")
+}
+
+model OwnershipHistory {
+  id                String            @id @default(cuid())
+  organizationId    String
+  previousOwnerId   String
+  newOwnerId        String
+  transferredBy     String
+  reason            String?
+  createdAt         DateTime          @default(now())
+
+  // Relations
+  organization      Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@map("ownership_history")
+}
 model Classroom {
   id                   String   @id @default(cuid())
   name                 String
