@@ -56,106 +56,27 @@ export const DeveloperAppManager: React.FC = () => {
   const handleImportKnowledgeBase = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        try {
-          const data = JSON.parse(e.target?.result as string);
-          knowledgeLibrary.importKnowledgeBase(data);
-          console.log('📚 Knowledge base imported successfully');
-          alert('Knowledge base imported successfully!');
-        } catch (error) {
-          console.error('Error importing knowledge base:', error);
-          alert('Error importing knowledge base. Please check the file format.');
-        }
-      };
-      reader.readAsText(file);
-    }
-  };
-
-  const handleUpdateFramework = (id: string, updates: Partial<TheoreticalFramework>) => {
-    const success = knowledgeLibrary.updateFramework(id, updates);
-    if (success) {
-      setEditingFramework(null);
-      alert('Framework updated successfully!');
-    }
-  };
-
-  const handleAddFramework = () => {
-    if (newFramework.id && newFramework.name && newFramework.coreIdea) {
-      const framework: TheoreticalFramework = {
-        id: newFramework.id,
-        name: newFramework.name,
-        coreIdea: newFramework.coreIdea,
-        productPrinciples: newFramework.productPrinciples || [],
-        aiHooks: newFramework.aiHooks || [],
-        languagePatterns: newFramework.languagePatterns || [],
-        avoidancePatterns: newFramework.avoidancePatterns || []
-      };
-      
-      knowledgeLibrary.addFramework(framework);
-      setNewFramework({
-        id: '',
-        name: '',
-        coreIdea: '',
-        productPrinciples: [],
-        aiHooks: [],
-        languagePatterns: [],
-        avoidancePatterns: []
-      });
-      alert('Framework added successfully!');
-    }
-  };
-
-  const renderOverview = () => (
-    <div className="space-y-8">
-      {/* App Status */}
-      <Card className="p-6">
-        <h3 className="text-lg font-semibold text-[#1A1A1A] mb-6">
-          Lumi Application Status
-        </h3>
-        
-        <div className="grid md:grid-cols-2 gap-6">
-          <div>
-            <h4 className="font-medium text-[#1A1A1A] mb-3">Environment</h4>
-            <div className="space-y-2">
               <div className="flex justify-between">
-                <span className="text-gray-600">Current:</span>
-                <span className="font-medium text-[#1A1A1A]">{currentEnv.name}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">Mock Data:</span>
-                <span className={`font-medium ${currentEnv.features.mockData ? 'text-green-600' : 'text-red-600'}`}>
-                  {currentEnv.features.mockData ? 'Enabled' : 'Disabled'}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">Analytics:</span>
-                <span className={`font-medium ${currentEnv.features.analytics ? 'text-green-600' : 'text-red-600'}`}>
-                  {currentEnv.features.analytics ? 'Enabled' : 'Disabled'}
-                </span>
-              </div>
-            </div>
-          </div>
-          
-          <div>
-            <h4 className="font-medium text-[#1A1A1A] mb-3">Knowledge Base Stats</h4>
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <span className="text-gray-600">Frameworks:</span>
-                <span className="font-medium text-[#1A1A1A]">{knowledgeBase.frameworks.length}</span>
-              </div>
-              <div className="flex justify-between">
+    // Use the comprehensive analytics engine
+    const appLevel = DeveloperAnalyticsEngine.generateAppLevelAnalytics(
+      allUsers, allOrganizations, allBehaviorLogs, allClassroomLogs, allChildren, allClassrooms
+    );
+    
+    const insights = DeveloperAnalyticsEngine.generatePlatformInsights(
+      allUsers, allOrganizations, allBehaviorLogs, allClassroomLogs
+    );
                 <span className="text-gray-600">Strategy Templates:</span>
+    return {
+      appLevel,
+      frameworkUsage: insights.trends.frameworkAdoption,
+      outliers: insights.outliers,
+      trends: insights.trends,
+      patterns: insights.patterns,
+      benchmarks: insights.benchmarks
+    };
                 <span className="font-medium text-[#1A1A1A]">{knowledgeBase.templates.length}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-600">Language Guidelines:</span>
-                <span className="font-medium text-[#1A1A1A]">{knowledgeBase.guidelines.length}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </Card>
 
       {/* Production Readiness */}
       <Card className="p-6">
@@ -583,93 +504,19 @@ export const DeveloperAppManager: React.FC = () => {
                   p-4 border rounded-xl
                   ${currentEnv.name === env.name ? 'border-[#C44E38] bg-[#C44E38] bg-opacity-5' : 'border-[#E6E2DD]'}
                 `}>
+    return DeveloperAnalyticsEngine.generateOrganizationAnalytics(
                   <div className="flex items-center justify-between mb-2">
-                    <h5 className="font-medium text-[#1A1A1A]">{env.name}</h5>
-                    {currentEnv.name === env.name && (
-                      <span className="px-2 py-1 bg-[#C44E38] text-white text-xs rounded-full">
-                        Current
-                      </span>
-                    )}
-                  </div>
-                  <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <p className="text-gray-600">Mock Data: {env.features.mockData ? '✓' : '✗'}</p>
-                      <p className="text-gray-600">Analytics: {env.features.analytics ? '✓' : '✗'}</p>
-                    </div>
-                    <div>
-                      <p className="text-gray-600">Payments: {env.features.payments ? '✓' : '✗'}</p>
-                      <p className="text-gray-600">Email: {env.features.emailDelivery ? '✓' : '✗'}</p>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </Card>
-
-      {/* Feature Flags */}
-      <Card className="p-6">
-        <h3 className="text-lg font-semibold text-[#1A1A1A] mb-6">
-          Feature Flags & Configuration
-        </h3>
-        
-        <div className="space-y-4">
-          <div className="bg-[#F8F6F4] rounded-xl p-4">
-            <h4 className="font-medium text-[#1A1A1A] mb-3">Environment Variables</h4>
-            <div className="space-y-2 text-sm font-mono">
-              <div>VITE_ENVIRONMENT={currentEnv.name.toLowerCase()}</div>
-              <div>VITE_ENABLE_MOCK_DATA={currentEnv.features.mockData.toString()}</div>
-              <div>VITE_ENABLE_ANALYTICS={currentEnv.features.analytics.toString()}</div>
-              <div>VITE_ENABLE_PAYMENTS={currentEnv.features.payments.toString()}</div>
-            </div>
-          </div>
-        </div>
-      </Card>
-    </div>
-  );
-
-  return (
-    <div className="min-h-screen bg-white">
-      <div className="max-w-7xl mx-auto px-6 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="flex items-center space-x-3 mb-2">
-                <div className="w-10 h-10 bg-purple-600 rounded-xl flex items-center justify-center">
-                  <Code className="w-6 h-6 text-white" />
-                </div>
-                <h1 className="text-3xl font-bold text-[#1A1A1A]">
-                  Developer App Manager
-                </h1>
-              </div>
-              <p className="text-gray-600">
-                Manage Lumi's core clinical foundations, AI knowledge base, and development tools
-              </p>
-            </div>
-            <div className="bg-purple-100 px-4 py-2 rounded-xl">
-              <span className="text-sm font-medium text-purple-800">
-                Environment: {currentEnv.name}
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* Tabs */}
-        <div className="border-b border-[#E6E2DD] mb-8">
-          <nav className="flex space-x-8">
-            {tabs.map((tab) => {
-              const IconComponent = tab.icon;
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id as any)}
+      orgId,
                   className={`
+      testDataManager.getOrganizations(),
                     flex items-center space-x-2 py-4 px-1 border-b-2 font-medium text-sm transition-colors
+      testDataManager.getUsers(),
                     ${activeTab === tab.id
+      testDataManager.getBehaviorLogs(),
                       ? 'border-purple-600 text-purple-600'
+      testDataManager.getClassroomLogs()
                       : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+    );
                     }
                   `}
                 >
