@@ -53,11 +53,7 @@ export const OnboardingWizard: React.FC = () => {
   };
 
   const handleComplete = () => {
-    // Complete onboarding via API
-    fetch('/api/onboarding/complete', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
+    const onboardingData = {
         preferredLanguage: onboardingData.preferredLanguage,
         learningStyle: onboardingData.learningStyle,
         teachingStyle: onboardingData.teachingStyle,
@@ -70,17 +66,10 @@ export const OnboardingWizard: React.FC = () => {
           iepCount: onboardingData.iepCount,
           ifspCount: onboardingData.ifspCount
         }
-      })
-    }).then(async (response) => {
-      if (response.ok) {
-        toast.success('Welcome to Lumi!', 'Your account is ready to use');
-        setCurrentView('dashboard');
-      } else {
-        const error = await response.json();
-        toast.error('Setup failed', error.error || 'Please try again');
-      }
-    }).catch(() => {
-      toast.error('Setup failed', 'Please check your connection and try again');
+    };
+    
+    updateOnboarding(onboardingData).catch(() => {
+      // Error handling is done in updateOnboarding
     });
   };
 

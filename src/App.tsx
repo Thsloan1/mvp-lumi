@@ -1,10 +1,8 @@
 import React from 'react';
-import { SessionProvider } from 'next-auth/react';
 import { AppProvider, useAppContext } from './context/AppContext';
 import { ErrorBoundary } from './components/UI/ErrorBoundary';
 import { ToastContainer } from './components/UI/ToastContainer';
 import { FullPageLoading } from './components/UI/LoadingState';
-import { useAuth } from './hooks/useAuth';
 import { WelcomeScreen } from './components/Welcome/WelcomeScreen';
 import { EducatorSignup } from './components/Auth/EducatorSignup';
 import { AdminSignup } from './components/Auth/AdminSignup';
@@ -36,7 +34,7 @@ import { DataReports } from './components/Reports/DataReports';
 import { FamilyScriptGenerator } from './components/FamilyNotes/FamilyScriptGenerator';
 
 const AppContent: React.FC = () => {
-  const { currentView, setCurrentView, user, isLoading, isAuthenticated } = useAppContext();
+  const { currentView, setCurrentView, currentUser, isLoading, isAuthenticated } = useAppContext();
   
   // Show loading while checking authentication
   if (isLoading) {
@@ -44,7 +42,7 @@ const AppContent: React.FC = () => {
   }
   
   // Redirect to onboarding if user is authenticated but hasn't completed onboarding
-  if (isAuthenticated && user?.onboardingStatus === 'INCOMPLETE' && 
+  if (isAuthenticated && currentUser?.onboardingStatus === 'incomplete' && 
       !['onboarding-start', 'onboarding-complete'].includes(currentView)) {
     return <OnboardingWizard />;
   }
@@ -156,6 +154,7 @@ function App() {
         <ToastContainer />
       </div>
     </AppProvider>
+  );
 }
 
 export default App;

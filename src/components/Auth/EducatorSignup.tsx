@@ -45,8 +45,8 @@ export const EducatorSignup: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
     
+    setLoading(true);
     const newErrors: Record<string, string> = {};
     
     if (!formData.fullName.trim()) {
@@ -69,11 +69,13 @@ export const EducatorSignup: React.FC = () => {
       return;
     }
 
-    // Simulate API call
-    setTimeout(() => {
-      setCurrentView('subscription-plan');
+    try {
+      await signup(formData.fullName, formData.email, formData.password);
+    } catch (error) {
+      // Error is handled by signup function
+    } finally {
       setLoading(false);
-    }, 1000);
+    }
   };
 
   return (

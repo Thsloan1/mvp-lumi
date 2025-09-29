@@ -218,24 +218,19 @@ export const BehaviorLogFlow: React.FC = () => {
     setLoading(true);
     
     try {
-      // Generate AI strategy
-      const selectedChild = children.find(c => c.id === behaviorData.childId);
-      const response = await AIService.generateChildBehaviorStrategy({
+      const response = await AuthService.apiRequest('/api/ai/child-strategy', {
+        method: 'POST',
+        body: JSON.stringify({
         behaviorDescription: behaviorData.behaviorDescription,
         context: behaviorData.context,
         timeOfDay: behaviorData.timeOfDay,
         severity: behaviorData.severity as 'low' | 'medium' | 'high',
-        ageGroup: 'preschool',
-        stressors: [],
         educatorMood: behaviorData.educatorMood,
-        teachingStyle: currentUser?.teachingStyle,
-        learningStyle: currentUser?.learningStyle,
-        teachingStyle: user?.teachingStyle,
-        learningStyle: user?.learningStyle,
-        child: selectedChild
+        stressors: []
+        })
       });
       
-      setAiResponse(response);
+      setAiResponse(response.aiResponse);
       setCurrentStep(steps.length); // Move to response screen
     } catch (error) {
       console.error('Error generating strategy:', error);

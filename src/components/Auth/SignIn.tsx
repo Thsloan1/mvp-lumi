@@ -33,8 +33,8 @@ export const SignIn: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
     
+    setLoading(true);
     const newErrors: Record<string, string> = {};
     
     const emailError = validateEmail(formData.email);
@@ -52,12 +52,13 @@ export const SignIn: React.FC = () => {
       return;
     }
 
-    // Simulate API call
-    setTimeout(() => {
-      // In real implementation, this would authenticate the user
-      setCurrentView('dashboard');
+    try {
+      await signin(formData.email, formData.password);
+    } catch (error) {
+      // Error is handled by signin function
+    } finally {
       setLoading(false);
-    }, 1000);
+    }
   };
 
   return (

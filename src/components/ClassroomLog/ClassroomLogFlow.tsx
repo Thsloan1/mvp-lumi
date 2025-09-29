@@ -106,18 +106,18 @@ export const ClassroomLogFlow: React.FC = () => {
     setLoading(true);
     
     try {
-      const response = await AIService.generateClassroomStrategy({
+      const response = await AuthService.apiRequest('/api/ai/classroom-strategy', {
+        method: 'POST',
+        body: JSON.stringify({
         challengeDescription: classroomData.challengeDescription,
         context: classroomData.context,
         severity: classroomData.severity as 'low' | 'medium' | 'high',
-        gradeLevel: 'preschool',
-        classSize: 15,
         stressors: classroomData.stressors,
-        educatorMood: classroomData.educatorMood,
-        teachingStyle: user?.teachingStyle
+        educatorMood: classroomData.educatorMood
+        })
       });
       
-      setAiResponse(response);
+      setAiResponse(response.aiResponse);
       setCurrentStep(steps.length);
     } catch (error) {
       console.error('Error generating strategy:', error);
