@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Code, Database, Settings, Download, Upload, RefreshCw, Play, Book, Zap, FileText, ArrowLeft } from 'lucide-react';
+import { Code, Database, Settings, Download, Upload, RefreshCw, Play, Book, Zap, FileText, ArrowLeft, BarChart3, Users, TrendingUp, AlertTriangle, Eye, Filter } from 'lucide-react';
 import { Button } from '../UI/Button';
 import { Card } from '../UI/Card';
 import { Input } from '../UI/Input';
@@ -7,9 +7,16 @@ import { Select } from '../UI/Select';
 import { knowledgeLibrary, TheoreticalFramework, StrategyTemplate, LanguageGuideline } from '../../data/knowledgeLibrary';
 import { testDataManager } from '../../data/testData';
 import { getCurrentEnvironment, ENVIRONMENTS } from '../../config/environments';
+import { AnalyticsEngine } from '../../utils/analyticsEngine';
+import { useAppContext } from '../../context/AppContext';
 
 export const DeveloperAppManager: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'overview' | 'knowledge' | 'testing' | 'config'>('overview');
+  const { behaviorLogs, classroomLogs, children, classrooms } = useAppContext();
+  const [activeTab, setActiveTab] = useState<'overview' | 'analytics' | 'knowledge' | 'testing' | 'config'>('overview');
+  const [analyticsView, setAnalyticsView] = useState<'app' | 'individual' | 'organization' | 'patterns'>('app');
+  const [selectedUserId, setSelectedUserId] = useState('');
+  const [selectedOrgId, setSelectedOrgId] = useState('');
+  const [timeRange, setTimeRange] = useState('30d');
   const [editingFramework, setEditingFramework] = useState<string | null>(null);
   const [editingStrategy, setEditingStrategy] = useState<string | null>(null);
   const [newFramework, setNewFramework] = useState<Partial<TheoreticalFramework>>({
@@ -27,6 +34,7 @@ export const DeveloperAppManager: React.FC = () => {
 
   const tabs = [
     { id: 'overview', label: 'App Overview', icon: Code },
+    { id: 'analytics', label: 'Analytics & Reports', icon: BarChart3 },
     { id: 'knowledge', label: 'Knowledge Library', icon: Book },
     { id: 'testing', label: 'Test Management', icon: Play },
     { id: 'config', label: 'Configuration', icon: Settings }
