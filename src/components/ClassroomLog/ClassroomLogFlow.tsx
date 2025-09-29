@@ -12,7 +12,7 @@ import { AIService } from '../../services/aiService';
 import { ClassroomStrategyResponse } from './ClassroomStrategyResponse';
 
 export const ClassroomLogFlow: React.FC = () => {
-  const { setCurrentView, user, createClassroomLog, classrooms, toast } = useAppContext();
+  const { setCurrentView, currentUser, createClassroomLog, classrooms, toast } = useAppContext();
   const [currentStep, setCurrentStep] = useState(0);
   const [loading, setLoading] = useState(false);
   const [classroomData, setClassroomData] = useState({
@@ -109,11 +109,11 @@ export const ClassroomLogFlow: React.FC = () => {
       const response = await AuthService.apiRequest('/api/ai/classroom-strategy', {
         method: 'POST',
         body: JSON.stringify({
-        challengeDescription: classroomData.challengeDescription,
-        context: classroomData.context,
-        severity: classroomData.severity as 'low' | 'medium' | 'high',
-        stressors: classroomData.stressors,
-        educatorMood: classroomData.educatorMood
+          challengeDescription: classroomData.challengeDescription,
+          context: classroomData.context,
+          severity: classroomData.severity as 'low' | 'medium' | 'high',
+          stressors: classroomData.stressors,
+          educatorMood: classroomData.educatorMood
         })
       });
       

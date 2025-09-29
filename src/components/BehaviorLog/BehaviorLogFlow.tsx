@@ -22,7 +22,7 @@ import { AIService } from '../../services/aiService';
 import { BehaviorStrategyResponse } from './BehaviorStrategyResponse';
 
 export const BehaviorLogFlow: React.FC = () => {
-  const { setCurrentView, user, createBehaviorLog, children, createChild, toast } = useAppContext();
+  const { setCurrentView, currentUser, createBehaviorLog, children, createChild, toast } = useAppContext();
   const [currentStep, setCurrentStep] = useState(0);
   const [loading, setLoading] = useState(false);
   const [showNewChildForm, setShowNewChildForm] = useState(false);
@@ -221,12 +221,12 @@ export const BehaviorLogFlow: React.FC = () => {
       const response = await AuthService.apiRequest('/api/ai/child-strategy', {
         method: 'POST',
         body: JSON.stringify({
-        behaviorDescription: behaviorData.behaviorDescription,
-        context: behaviorData.context,
-        timeOfDay: behaviorData.timeOfDay,
-        severity: behaviorData.severity as 'low' | 'medium' | 'high',
-        educatorMood: behaviorData.educatorMood,
-        stressors: []
+          behaviorDescription: behaviorData.behaviorDescription,
+          context: behaviorData.context,
+          timeOfDay: behaviorData.timeOfDay,
+          severity: behaviorData.severity as 'low' | 'medium' | 'high',
+          educatorMood: behaviorData.educatorMood,
+          stressors: []
         })
       });
       

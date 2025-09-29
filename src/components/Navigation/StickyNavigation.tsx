@@ -4,8 +4,7 @@ import { Button } from '../UI/Button';
 import { useAppContext } from '../../context/AppContext';
 
 export const StickyNavigation: React.FC = () => {
-  const { currentView, setCurrentView, user } = useAppContext();
-  const { signOut } = useSession();
+  const { currentView, setCurrentView, currentUser, signout } = useAppContext();
 
   const navigationItems = [
     {
@@ -77,16 +76,10 @@ export const StickyNavigation: React.FC = () => {
                       ? 'bg-[#C44E38] text-white shadow-sm' 
                       : 'text-gray-600 hover:text-[#1A1A1A] hover:bg-[#F8F6F4]'
                     }
-                    ${item.locked ? 'relative' : ''}
                   `}
                 >
                   <IconComponent className="w-4 h-4" />
                   <span>{item.label}</span>
-                  {item.locked && (
-                    <div className="absolute -top-1 -right-1 w-3 h-3 bg-yellow-500 rounded-full flex items-center justify-center">
-                      <Lock className="w-2 h-2 text-white" />
-                    </div>
-                  )}
                 </button>
               );
             })}
@@ -96,14 +89,14 @@ export const StickyNavigation: React.FC = () => {
           <div className="flex items-center space-x-3">
             <div className="text-right">
               <p className="text-sm font-medium text-[#1A1A1A]">
-                {user?.name?.split(' ')[0]}
+                {currentUser?.fullName?.split(' ')[0]}
               </p>
               <p className="text-xs text-gray-600">
-                {user?.role === 'ADMIN' ? 'Administrator' : 'Educator'}
+                {currentUser?.role === 'admin' ? 'Administrator' : 'Educator'}
               </p>
             </div>
             <button 
-              onClick={() => signOut()}
+              onClick={() => signout()}
               className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center hover:bg-blue-200 transition-colors"
             >
               <User className="w-4 h-4 text-blue-600" />

@@ -8,7 +8,7 @@ import { AnalyticsEngine, ChildInsight, ClassroomInsight, UnifiedInsight } from 
 
 export const EducatorDashboard: React.FC = () => {
   const { 
-    user,
+    currentUser,
     isLoading,
     behaviorLogs, 
     classroomLogs, 
@@ -94,7 +94,7 @@ export const EducatorDashboard: React.FC = () => {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold text-[#1A1A1A] mb-2">
-                Welcome back, {user?.name?.split(' ')[0]}
+                Welcome back, {currentUser?.fullName?.split(' ')[0]}
               </h1>
               <p className="text-gray-600">
                 Ready to support your students today? Let's see what's happening.

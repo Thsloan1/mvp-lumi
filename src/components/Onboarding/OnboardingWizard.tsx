@@ -11,7 +11,7 @@ import { ReviewStep } from './steps/ReviewStep';
 import { User } from '../../types';
 
 export const OnboardingWizard: React.FC = () => {
-  const { setCurrentView, user, toast } = useAppContext();
+  const { setCurrentView, currentUser, updateOnboarding, toast } = useAppContext();
   const [currentStep, setCurrentStep] = useState(0);
   const [onboardingData, setOnboardingData] = useState({
     firstName: '',
@@ -53,22 +53,22 @@ export const OnboardingWizard: React.FC = () => {
   };
 
   const handleComplete = () => {
-    const onboardingData = {
-        preferredLanguage: onboardingData.preferredLanguage,
-        learningStyle: onboardingData.learningStyle,
-        teachingStyle: onboardingData.teachingStyle,
-        classroomData: {
-          name: onboardingData.classroomName,
-          gradeBand: onboardingData.gradeBand,
-          studentCount: parseInt(onboardingData.studentCount),
-          teacherStudentRatio: onboardingData.teacherStudentRatio,
-          stressors: onboardingData.stressors,
-          iepCount: onboardingData.iepCount,
-          ifspCount: onboardingData.ifspCount
-        }
+    const updateData = {
+      preferredLanguage: onboardingData.preferredLanguage,
+      learningStyle: onboardingData.learningStyle,
+      teachingStyle: onboardingData.teachingStyle,
+      classroomData: {
+        name: onboardingData.classroomName,
+        gradeBand: onboardingData.gradeBand,
+        studentCount: parseInt(onboardingData.studentCount),
+        teacherStudentRatio: onboardingData.teacherStudentRatio,
+        stressors: onboardingData.stressors,
+        iepCount: onboardingData.iepCount,
+        ifspCount: onboardingData.ifspCount
+      }
     };
     
-    updateOnboarding(onboardingData).catch(() => {
+    updateOnboarding(updateData).catch(() => {
       // Error handling is done in updateOnboarding
     });
   };

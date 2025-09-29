@@ -11,6 +11,7 @@ import { OrganizationPayment } from './components/Auth/OrganizationPayment';
 import { InviteEducators } from './components/Auth/InviteEducators';
 import { OrganizationComplete } from './components/Auth/OrganizationComplete';
 import { InvitedSignup } from './components/Auth/InvitedSignup';
+import { InvitedOnboarding } from './components/Auth/InvitedOnboarding';
 import { SubscriptionPlan } from './components/Auth/SubscriptionPlan';
 import { PaymentScreen } from './components/Auth/PaymentScreen';
 import { OnboardingWizard } from './components/Onboarding/OnboardingWizard';
