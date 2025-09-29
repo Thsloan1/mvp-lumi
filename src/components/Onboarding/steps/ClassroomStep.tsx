@@ -65,11 +65,18 @@ export const ClassroomStep: React.FC<ClassroomStepProps> = ({ data, updateData }
               required
             />
 
-            <Input
-              label="Teacher:Student Ratio"
-              value={data.teacherStudentRatio}
-              onChange={(value) => handleInputChange('teacherStudentRatio', value)}
-              placeholder="e.g., 1:8 or 2:16"
+            <Select
+              label="Classroom In-Ratio Teachers"
+              value={data.classroomInRatioTeachers}
+              onChange={(value) => handleInputChange('classroomInRatioTeachers', value)}
+              options={[
+                { value: '1', label: '1' },
+                { value: '2', label: '2' },
+                { value: '3', label: '3' },
+                { value: '4', label: '4' },
+                { value: '5+', label: '5+' }
+              ]}
+              placeholder="Select number of teachers"
               required
             />
           </div>

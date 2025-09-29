@@ -5,6 +5,11 @@ export const STRESSOR_OPTIONS = [
   'Emotional fatigue or burnout',
   'Limited planning and preparation time',
   'Simultaneous behavior needs',
+  'Stress carried from home',
+  'Parental expectations or disconnect',
+  'Limited family engagement',
+  'Home language differences',
+  'Safety concerns',
   
   // Child Development and Behavior
   'Separation challenges',
@@ -19,15 +24,16 @@ export const STRESSOR_OPTIONS = [
   'Peer conflict',
   
   // Family and Home Factors
-  'Stress carried from home',
   'Inconsistent routines',
-  'Parental expectations and pressures',
-  'Limited family engagement',
-  'Home language differences',
+  'Food insecurity',
+  'Employment insecurity/unemployment',
+  'Housing insecurity/unhoused',
+  'Community violence',
+  'Domestic violence',
+  'Incarceration',
   
   // Environment and System Factors
   'Limited or crowded classroom space',
-  'Safety concerns',
   'TK transition pressures',
   'Resource limitations',
   'Administrative and policy demands'

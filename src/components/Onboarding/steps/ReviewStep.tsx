@@ -23,7 +23,7 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({ data }) => {
         { label: 'Classroom Name', value: data.classroomName },
         { label: 'Grade/Age Band', value: data.gradeBand },
         { label: 'Student Count', value: data.studentCount },
-        { label: 'Teacher:Student Ratio', value: data.teacherStudentRatio }
+        { label: 'Classroom In-Ratio Teachers', value: data.classroomInRatioTeachers }
       ]
     },
     {
