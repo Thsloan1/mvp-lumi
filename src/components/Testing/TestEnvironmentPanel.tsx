@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
-import { Settings, RefreshCw, Database, Users, BarChart3, Download, Upload, Trash2, Play, Code, DollarSign, AlertTriangle, Wrench } from 'lucide-react';
+import { Settings, RefreshCw, Database, Users, BarChart3, Download, Upload, Trash2, Play, Code, DollarSign, AlertTriangle, Wrench, BookOpen, Edit, Save, X, Plus } from 'lucide-react';
 import { Button } from '../UI/Button';
 import { Card } from '../UI/Card';
 import { Select } from '../UI/Select';
+import { Input } from '../UI/Input';
 import { useAppContext } from '../../context/AppContext';
 import { testDataManager } from '../../data/testData';
 import { getCurrentEnvironment, isTestEnvironment } from '../../config/environments';
 import { DeveloperAnalyticsEngine } from '../../utils/developerAnalytics';
+import { knowledgeLibrary, TheoreticalFramework, StrategyTemplate, LanguageGuideline } from '../../data/knowledgeLibrary';
 
 export const DeveloperPortal: React.FC = () => {
   const { setCurrentView, setCurrentUser, toast, behaviorLogs, classroomLogs, children, classrooms } = useAppContext();
@@ -15,6 +17,10 @@ export const DeveloperPortal: React.FC = () => {
   const [selectedTestUser, setSelectedTestUser] = useState('');
   const [selectedUserId, setSelectedUserId] = useState('');
   const [selectedOrgId, setSelectedOrgId] = useState('');
+  const [editingFramework, setEditingFramework] = useState<string | null>(null);
+  const [editingStrategy, setEditingStrategy] = useState<string | null>(null);
+  const [editingGuideline, setEditingGuideline] = useState<string | null>(null);
+  const [frameworkUpdates, setFrameworkUpdates] = useState<Record<string, Partial<TheoreticalFramework>>>({});
   
   const currentEnv = getCurrentEnvironment();
 
@@ -25,6 +31,7 @@ export const DeveloperPortal: React.FC = () => {
 
   const modules = [
     { id: 'testing', label: 'Testing Environment', icon: Play },
+    { id: 'knowledge', label: 'Core Knowledge Foundation', icon: BookOpen },
     { id: 'client-data', label: 'Client Data', icon: Database },
     { id: 'analytics', label: 'Analytics & Reports', icon: BarChart3 },
     { id: 'revenue', label: 'Revenue & Subscriptions', icon: DollarSign },
