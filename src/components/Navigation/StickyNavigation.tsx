@@ -187,12 +187,3 @@ export const useKeyboardNavigation = () => {
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [setCurrentView]);
 };
-            >
-              <User className="w-4 h-4 text-blue-600" />
-            </button>
-          </div>
-        </div>
-      </div>
-    </nav>
-  );
-};
