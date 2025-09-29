@@ -1,11 +1,12 @@
 import React from 'react';
-import { Heart, Users, FileText, BarChart3, Plus, Calendar, BookOpen, TrendingUp, User } from 'lucide-react';
+import { Heart, Users, FileText, BarChart3, Plus, Calendar, BookOpen, TrendingUp, User, ArrowRight } from 'lucide-react';
 import { Button } from '../UI/Button';
 import { Card } from '../UI/Card';
 import { useAppContext } from '../../context/AppContext';
 import { EngagementTracker } from '../Analytics/EngagementTracker';
 import { AnalyticsEngine, ChildInsight, ClassroomInsight, UnifiedInsight } from '../../utils/analyticsEngine';
 import { FullPageLoading } from '../UI/LoadingState';
+import { EmptyState } from '../UI/EmptyState';
 
 export const EducatorDashboard: React.FC = () => {
   const { 
@@ -22,6 +23,9 @@ export const EducatorDashboard: React.FC = () => {
   if (isLoading || loading) {
     return <FullPageLoading message="Loading your dashboard..." />;
   }
+
+  // Handle case where user has no data yet
+  const hasAnyData = behaviorLogs.length > 0 || classroomLogs.length > 0 || children.length > 0;
 
   // Generate unified insights
   const currentClassroom = classrooms[0]; // For MVP, use first classroom
@@ -90,40 +94,18 @@ export const EducatorDashboard: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Header */}
-      <div className="bg-[#F8F6F4] border-b border-[#E6E2DD]">
-        <div className="max-w-7xl mx-auto px-6 py-8">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-[#1A1A1A] mb-2">
-                Welcome back, {currentUser?.fullName?.split(' ')[0]}
-              </h1>
-              <p className="text-gray-600">
-                Ready to support your students today? Let's see what's happening.
-              </p>
-            </div>
-            <div className="flex space-x-3">
-              <Button
-                onClick={() => setCurrentView('behavior-log')}
-                icon={Heart}
-                size="lg"
-              >
-                Strategy for Challenging Behavior
-              </Button>
-              <Button
-                onClick={() => setCurrentView('classroom-log')}
-                variant="secondary"
-                icon={Users}
-                size="lg"
-              >
-                Strategy for the Whole Class
-              </Button>
-            </div>
-          </div>
-        </div>
-      </div>
 
       <div className="max-w-7xl mx-auto px-6 py-8">
+        {/* Welcome Header */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-[#1A1A1A] mb-2">
+            Welcome back, {currentUser?.fullName?.split(' ')[0]}
+          </h1>
+          <p className="text-gray-600">
+            Ready to support your students today? Let's see what's happening.
+          </p>
+        </div>
+
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           {stats.map((stat, index) => {
@@ -144,25 +126,41 @@ export const EducatorDashboard: React.FC = () => {
           })}
         </div>
 
-        {/* Sticky Action Buttons */}
-        <div className="fixed bottom-6 right-6 flex flex-col space-y-3 z-50">
-          <Button
-            onClick={() => setCurrentView('behavior-log')}
-            icon={Heart}
-            size="lg"
-            className="shadow-lg hover:shadow-xl transition-shadow duration-200"
-          >
-            Strategy for Challenging Behavior
-          </Button>
-          <Button
-            onClick={() => setCurrentView('classroom-log')}
-            variant="secondary"
-            icon={Users}
-            size="lg"
-            className="shadow-lg hover:shadow-xl transition-shadow duration-200"
-          >
-            Strategy for the Whole Class
-          </Button>
+        {/* Main Action Buttons */}
+        <div className="grid md:grid-cols-2 gap-6 mb-8">
+          <Card className="p-6 hover:shadow-md transition-shadow duration-200 cursor-pointer" onClick={() => setCurrentView('behavior-log')}>
+            <div className="flex items-center space-x-4">
+              <div className="w-12 h-12 bg-[#C44E38] bg-opacity-10 rounded-xl flex items-center justify-center">
+                <Heart className="w-6 h-6 text-[#C44E38]" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold text-[#1A1A1A] mb-1">
+                  Individual Child Behavior
+                </h3>
+                <p className="text-gray-600 text-sm">
+                  Get personalized strategies for challenging behaviors
+                </p>
+              </div>
+              <ArrowRight className="w-5 h-5 text-gray-400" />
+            </div>
+          </Card>
+          
+          <Card className="p-6 hover:shadow-md transition-shadow duration-200 cursor-pointer" onClick={() => setCurrentView('classroom-log')}>
+            <div className="flex items-center space-x-4">
+              <div className="w-12 h-12 bg-blue-600 bg-opacity-10 rounded-xl flex items-center justify-center">
+                <Users className="w-6 h-6 text-blue-600" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold text-[#1A1A1A] mb-1">
+                  Whole Class Challenge
+                </h3>
+                <p className="text-gray-600 text-sm">
+                  Address classroom-wide management challenges
+                </p>
+              </div>
+              <ArrowRight className="w-5 h-5 text-gray-400" />
+            </div>
+          </Card>
         </div>
 
         <div className="grid lg:grid-cols-3 gap-8">
@@ -217,39 +215,38 @@ export const EducatorDashboard: React.FC = () => {
                 </div>
               </Card>
 
-              {/* Child Insights Feed */}
-              {childInsights.length > 0 && (
-                <Card className="p-6">
+              {/* Getting Started Guide */}
+              {!hasAnyData && (
+                <Card className="p-6 bg-gradient-to-r from-blue-50 to-green-50 border-blue-200">
                   <h3 className="text-lg font-semibold text-[#1A1A1A] mb-4">
-                    Child Insights
+                    Getting Started with Lumi
                   </h3>
-                  <div className="space-y-4">
-                    {childInsights.slice(0, 3).map((insight) => (
-                      <div key={insight.childId} className="p-4 bg-[#F8F6F4] rounded-xl">
-                        <div className="flex items-center justify-between mb-2">
-                          <p className="font-medium text-[#1A1A1A]">{insight.childName}</p>
-                          <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">
-                            {insight.totalLogs} logs
-                          </span>
-                        </div>
-                        <p className="text-sm text-gray-600 mb-2">
-                          Most frequent: {insight.patterns.mostFrequentContext.replace(/_/g, ' ')}
-                        </p>
-                        {insight.patterns.effectiveStrategies.length > 0 && (
-                          <p className="text-xs text-green-600">
-                            Effective: {insight.patterns.effectiveStrategies[0].substring(0, 40)}...
-                          </p>
-                        )}
+                  <div className="space-y-3 text-sm text-gray-700">
+                    <div className="flex items-start space-x-2">
+                      <div className="w-5 h-5 bg-[#C44E38] rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <span className="text-xs text-white font-bold">1</span>
                       </div>
-                    ))}
+                      <p>Add children to your classroom profiles</p>
+                    </div>
+                    <div className="flex items-start space-x-2">
+                      <div className="w-5 h-5 bg-[#C44E38] rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <span className="text-xs text-white font-bold">2</span>
+                      </div>
+                      <p>Log your first behavior or classroom challenge</p>
+                    </div>
+                    <div className="flex items-start space-x-2">
+                      <div className="w-5 h-5 bg-[#C44E38] rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <span className="text-xs text-white font-bold">3</span>
+                      </div>
+                      <p>Get personalized strategies and track your progress</p>
+                    </div>
                   </div>
                   <Button
-                    onClick={() => setCurrentView('reports')}
-                    variant="ghost"
-                    size="sm"
+                    onClick={() => setCurrentView('child-profiles')}
                     className="w-full mt-4"
+                    icon={Plus}
                   >
-                    View All Child Reports
+                    Add Your First Child
                   </Button>
                 </Card>
               )}
@@ -348,34 +345,13 @@ export const EducatorDashboard: React.FC = () => {
                 </h3>
                 
                 {recentActivity.length === 0 ? (
-                  <div className="text-center py-12">
-                    {loading ? (
-                      <div className="space-y-4">
-                        <div className="animate-pulse">
-                          <div className="h-4 bg-[#F8F6F4] rounded w-3/4 mx-auto mb-2"></div>
-                          <div className="h-4 bg-[#F8F6F4] rounded w-1/2 mx-auto"></div>
-                        </div>
-                      </div>
-                    ) : (
-                      <>
-                        <div className="w-16 h-16 bg-[#F8F6F4] rounded-full flex items-center justify-center mx-auto mb-4">
-                          <Heart className="w-8 h-8 text-[#C44E38]" />
-                        </div>
-                        <h4 className="text-lg font-medium text-[#1A1A1A] mb-2">
-                          Ready to get started?
-                        </h4>
-                        <p className="text-gray-600 mb-6">
-                          Log your first behavior or classroom challenge to see personalized strategies.
-                        </p>
-                        <Button
-                          onClick={() => setCurrentView('behavior-log')}
-                          icon={Plus}
-                        >
-                          Log First Behavior
-                        </Button>
-                      </>
-                    )}
-                  </div>
+                  <EmptyState
+                    icon={Heart}
+                    title="Ready to get started?"
+                    description="Log your first behavior or classroom challenge to see personalized strategies."
+                    actionLabel="Log First Behavior"
+                    onAction={() => setCurrentView('behavior-log')}
+                  />
                 ) : (
                   <div className="space-y-4">
                     {recentActivity.map((activity, index) => (
@@ -398,6 +374,14 @@ export const EducatorDashboard: React.FC = () => {
                         </div>
                       </div>
                     ))}
+                    <Button
+                      onClick={() => setCurrentView('reports')}
+                      variant="ghost"
+                      size="sm"
+                      className="w-full"
+                    >
+                      View All Activity
+                    </Button>
                   </div>
                 )}
               </Card>
@@ -409,7 +393,7 @@ export const EducatorDashboard: React.FC = () => {
         </div>
         
         {/* Resource Library Promotion */}
-        <Card className="mt-8 p-6 bg-gradient-to-r from-[#F8F6F4] to-white border-[#C44E38] border">
+        <Card className="mt-8 p-6 bg-gradient-to-r from-[#F8F6F4] to-white border-[#E6E2DD]">
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-lg font-semibold text-[#1A1A1A] mb-2">
@@ -425,6 +409,13 @@ export const EducatorDashboard: React.FC = () => {
                 icon={BookOpen}
               >
                 Browse Resources
+              </Button>
+              <Button
+                onClick={() => setCurrentView('family-notes')}
+                variant="outline"
+                icon={FileText}
+              >
+                Family Notes
               </Button>
             </div>
           </div>

@@ -91,6 +91,21 @@ button:focus-visible {
   outline-offset: 2px;
 }
 
+/* Enhanced keyboard navigation */
+.keyboard-navigation *:focus {
+  outline: 3px solid #C44E38 !important;
+  outline-offset: 2px !important;
+  box-shadow: 0 0 0 5px rgba(196, 78, 56, 0.2) !important;
+}
+
+.keyboard-navigation button:focus,
+.keyboard-navigation input:focus,
+.keyboard-navigation select:focus,
+.keyboard-navigation textarea:focus {
+  transform: scale(1.02);
+  transition: transform 0.1s ease;
+}
+
 /* Form validation styling */
 input:invalid {
   border-color: #ef4444;
@@ -109,4 +124,33 @@ input:valid {
 [aria-invalid="true"] {
   border-color: #ef4444;
   background-color: #fef2f2;
+}
+
+/* Line height improvements for readability */
+body {
+  line-height: 1.6;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  line-height: 1.3;
+}
+
+/* Focus indicators for custom components */
+[role="button"]:focus,
+[role="tab"]:focus,
+[role="menuitem"]:focus {
+  outline: 2px solid #C44E38;
+  outline-offset: 2px;
+}
+
+/* High contrast improvements */
+.high-contrast button {
+  border: 2px solid var(--color-border) !important;
+}
+
+.high-contrast input,
+.high-contrast select,
+.high-contrast textarea {
+  border: 2px solid var(--color-border) !important;
+  background-color: var(--color-background) !important;
 }

@@ -88,6 +88,14 @@ export const OnboardingWizard: React.FC = () => {
       });
   };
 
+  // Track step completion
+  const handleStepComplete = (stepIndex: number) => {
+    ErrorLogger.logOnboardingEvent('step_completed', stepIndex, {
+      userId: currentUser?.id,
+      stepData: steps[stepIndex].title
+    });
+  };
+
   const isStepValid = () => {
     switch (currentStep) {
       case 0: // About You
@@ -141,13 +149,17 @@ export const OnboardingWizard: React.FC = () => {
           {currentStep === steps.length - 1 ? (
             <Button
               onClick={handleComplete}
+              disabled={!isStepValid()}
               size="lg"
             >
               Complete Setup
             </Button>
           ) : (
             <Button
-              onClick={handleNext}
+              onClick={() => {
+                handleStepComplete(currentStep);
+                handleNext();
+              }}
               disabled={!isStepValid()}
               icon={ArrowRight}
               iconPosition="right"

@@ -4,6 +4,7 @@ import { Button } from '../UI/Button';
 import { Input } from '../UI/Input';
 import { Card } from '../UI/Card';
 import { useAppContext } from '../../context/AppContext';
+import { ErrorLogger } from '../../utils/errorLogger';
 
 export const SignIn: React.FC = () => {
   const { setCurrentView, signin } = useAppContext();
@@ -33,6 +34,7 @@ export const SignIn: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    ErrorLogger.logUserAction('signin_form_submit', { email: formData.email });
     
     const newErrors: Record<string, string> = {};
     
@@ -46,6 +48,7 @@ export const SignIn: React.FC = () => {
     }
     
     if (Object.keys(newErrors).length > 0) {
+      ErrorLogger.warning('Signin form validation failed', { errors: newErrors });
       setErrors(newErrors);
       return;
     }
@@ -53,6 +56,7 @@ export const SignIn: React.FC = () => {
     setLoading(true);
     try {
       await signin(formData.email, formData.password);
+      // Success - user will be redirected by signin function
     } catch (error) {
       // Error is handled by signin function in context
     } finally {

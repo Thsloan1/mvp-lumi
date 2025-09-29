@@ -4,6 +4,7 @@ import { Button } from '../UI/Button';
 import { Card } from '../UI/Card';
 import { Input } from '../UI/Input';
 import { Select } from '../UI/Select';
+import { LoadingState } from '../UI/LoadingState';
 import { useAppContext } from '../../context/AppContext';
 import { Classroom } from '../../types';
 import { GRADE_BAND_OPTIONS, STRESSOR_OPTIONS } from '../../data/constants';
@@ -107,16 +108,7 @@ export const ClassroomProfileManager: React.FC = () => {
 
   if (!currentClassroom) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-16 h-16 bg-[#F8F6F4] rounded-full flex items-center justify-center mx-auto mb-4">
-            <Users className="w-8 h-8 text-gray-400" />
-          </div>
-          <h3 className="text-lg font-medium text-[#1A1A1A] mb-2">
-            Setting up your classroom...
-          </h3>
-        </div>
-      </div>
+      <LoadingState message="Setting up your classroom..." />
     );
   }
 

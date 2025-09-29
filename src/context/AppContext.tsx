@@ -253,7 +253,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
       setCurrentUser(result.user);
       ErrorLogger.logAuthEvent('signup_success', { userId: result.user.id });
       success('Account created!', 'Welcome to Lumi');
-      setCurrentView('onboarding-start'); // Skip email verification for MVP
+      setCurrentView('email-verification'); // Enable email verification for production
     } catch (err: any) {
       ErrorLogger.logAuthEvent('signup_error', { email, error: err.message });
       error('Sign up failed', err.message);

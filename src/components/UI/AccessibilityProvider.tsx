@@ -5,8 +5,10 @@ interface AccessibilityContextType {
   highContrast: boolean;
   reducedMotion: boolean;
   fontSize: 'normal' | 'large' | 'extra-large';
+  keyboardNavigation: boolean;
   announceMessage: (message: string, priority?: 'polite' | 'assertive') => void;
   setFontSize: (size: 'normal' | 'large' | 'extra-large') => void;
+  toggleKeyboardNavigation: () => void;
 }
 
 const AccessibilityContext = createContext<AccessibilityContextType | undefined>(undefined);
@@ -27,6 +29,7 @@ export const AccessibilityProvider: React.FC<AccessibilityProviderProps> = ({ ch
   const [highContrast, setHighContrast] = useState(false);
   const [reducedMotion, setReducedMotion] = useState(false);
   const [fontSize, setFontSize] = useState<'normal' | 'large' | 'extra-large'>('normal');
+  const [keyboardNavigation, setKeyboardNavigation] = useState(false);
 
   useEffect(() => {
     // Detect user preferences
@@ -41,6 +44,10 @@ export const AccessibilityProvider: React.FC<AccessibilityProviderProps> = ({ ch
     if (savedFontSize) {
       setFontSize(savedFontSize);
     }
+    
+    // Load keyboard navigation preference
+    const savedKeyboardNav = localStorage.getItem('lumi_keyboard_nav') === 'true';
+    setKeyboardNavigation(savedKeyboardNav);
   }, []);
 
   useEffect(() => {
@@ -73,6 +80,16 @@ export const AccessibilityProvider: React.FC<AccessibilityProviderProps> = ({ ch
     }
   }, [reducedMotion]);
 
+  useEffect(() => {
+    // Apply keyboard navigation enhancements
+    if (keyboardNavigation) {
+      document.documentElement.classList.add('keyboard-navigation');
+    } else {
+      document.documentElement.classList.remove('keyboard-navigation');
+    }
+    localStorage.setItem('lumi_keyboard_nav', keyboardNavigation.toString());
+  }, [keyboardNavigation]);
+
   const announceMessage = (message: string, priority: 'polite' | 'assertive' = 'polite') => {
     AccessibilityService.announce(message, priority);
   };
@@ -82,12 +99,19 @@ export const AccessibilityProvider: React.FC<AccessibilityProviderProps> = ({ ch
     announceMessage(`Font size changed to ${size}`);
   };
 
+  const toggleKeyboardNavigation = () => {
+    setKeyboardNavigation(prev => !prev);
+    announceMessage(`Keyboard navigation ${!keyboardNavigation ? 'enabled' : 'disabled'}`);
+  };
+
   const value: AccessibilityContextType = {
     highContrast,
     reducedMotion,
     fontSize,
+    keyboardNavigation,
     announceMessage,
-    setFontSize: handleSetFontSize
+    setFontSize: handleSetFontSize,
+    toggleKeyboardNavigation
   };
 
   return (

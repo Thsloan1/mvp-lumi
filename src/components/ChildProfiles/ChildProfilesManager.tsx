@@ -3,11 +3,12 @@ import { User, Plus, Search, Filter, Calendar, FileText, TrendingUp } from 'luci
 import { Button } from '../UI/Button';
 import { Card } from '../UI/Card';
 import { Input } from '../UI/Input';
+import { EmptyState } from '../UI/EmptyState';
 import { useAppContext } from '../../context/AppContext';
 import { Child } from '../../types';
 
 export const ChildProfilesManager: React.FC = () => {
-  const { children, setChildren, behaviorLogs, setCurrentView } = useAppContext();
+  const { children, setChildren, behaviorLogs, setCurrentView, createChild } = useAppContext();
   const [searchQuery, setSearchQuery] = useState('');
   const [showNewChildForm, setShowNewChildForm] = useState(false);
   const [newChildData, setNewChildData] = useState({
@@ -171,25 +172,13 @@ export const ChildProfilesManager: React.FC = () => {
 
         {/* Children Grid */}
         {filteredChildren.length === 0 ? (
-          <div className="text-center py-12">
-            <div className="w-16 h-16 bg-[#F8F6F4] rounded-full flex items-center justify-center mx-auto mb-4">
-              <User className="w-8 h-8 text-gray-400" />
-            </div>
-            <h3 className="text-lg font-medium text-[#1A1A1A] mb-2">
-              No children found
-            </h3>
-            <p className="text-gray-600 mb-6">
-              {searchQuery ? 'Try adjusting your search' : 'Add your first child to get started'}
-            </p>
-            {!searchQuery && (
-              <Button
-                onClick={() => setShowNewChildForm(true)}
-                icon={Plus}
-              >
-                Add First Child
-              </Button>
-            )}
-          </div>
+          <EmptyState
+            icon={User}
+            title="No children found"
+            description={searchQuery ? 'Try adjusting your search' : 'Add your first child to get started'}
+            actionLabel={!searchQuery ? "Add First Child" : undefined}
+            onAction={!searchQuery ? () => setShowNewChildForm(true) : undefined}
+          />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredChildren.map((child) => {

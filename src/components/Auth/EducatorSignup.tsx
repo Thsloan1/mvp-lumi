@@ -73,7 +73,7 @@ export const EducatorSignup: React.FC = () => {
     setLoading(true);
     try {
       await signup(formData.fullName, formData.email, formData.password);
-      // User will be redirected by signup function
+      // User will be redirected to email verification by signup function
     } catch (error) {
       // Error handling is done by signup function
     } finally {
