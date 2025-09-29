@@ -92,13 +92,6 @@ export const ProfilePhotoUpload: React.FC<ProfilePhotoUploadProps> = ({
     fileInputRef.current?.click();
   };
 
-  const handleRemovePhoto = () => {
-    setPreviewUrl(null);
-    onPhotoUpdate('');
-    setError(null);
-    toast.info('Photo removed', 'Profile photo has been removed');
-  };
-
   return (
     <div className={className}>
       <label className="block text-sm font-medium text-[#1A1A1A] mb-3">

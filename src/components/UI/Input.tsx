@@ -32,7 +32,7 @@ export const Input: React.FC<InputProps> = ({
   className = '',
   rows,
   min,
-  max
+  max,
   maxLength,
   autoComplete,
   'aria-describedby': ariaDescribedBy
