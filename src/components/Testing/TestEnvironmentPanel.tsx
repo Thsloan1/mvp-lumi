@@ -628,11 +628,11 @@ export const DeveloperPortal: React.FC = () => {
         <div className="grid grid-cols-2 gap-4 text-sm">
           <div>
             <p className="text-gray-600">Load Time:</p>
-            <p className="font-bold text-green-600">< 2s</p>
+            <p className="font-bold text-green-600">{'< 2s'}</p>
           </div>
           <div>
             <p className="text-gray-600">API Response:</p>
-            <p className="font-bold text-green-600">< 500ms</p>
+            <p className="font-bold text-green-600">{'< 500ms'}</p>
           </div>
           <div>
             <p className="text-gray-600">Memory Usage:</p>
