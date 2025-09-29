@@ -5,6 +5,7 @@ import { Card } from '../UI/Card';
 import { Input } from '../UI/Input';
 import { Select } from '../UI/Select';
 import { useAppContext } from '../../context/AppContext';
+import { safeLocalStorageGet, safeLocalStorageSet } from '../../utils/jsonUtils';
 
 interface TestUserFeedbackWidgetProps {
   module: string;
@@ -70,18 +71,18 @@ export const TestUserFeedbackWidget: React.FC<TestUserFeedbackWidgetProps> = ({
     };
 
     // Save to localStorage
-    const existingFeedback = JSON.parse(localStorage.getItem('lumi_test_feedback') || '[]');
+    const existingFeedback = safeLocalStorageGet('lumi_test_feedback', []);
     existingFeedback.push(feedback);
-    localStorage.setItem('lumi_test_feedback', JSON.stringify(existingFeedback));
+    safeLocalStorageSet('lumi_test_feedback', existingFeedback);
 
     // Update test user feedback count
-    const testUsers = JSON.parse(localStorage.getItem('lumi_test_users') || '[]');
+    const testUsers = safeLocalStorageGet('lumi_test_users', []);
     const updatedUsers = testUsers.map((user: any) => 
       user.accessCode === feedbackData.testerInfo.accessCode 
         ? { ...user, feedbackSubmitted: (user.feedbackSubmitted || 0) + 1, lastActive: new Date().toISOString() }
         : user
     );
-    localStorage.setItem('lumi_test_users', JSON.stringify(updatedUsers));
+    safeLocalStorageSet('lumi_test_users', updatedUsers);
 
     toast.success('Feedback Submitted', 'Thank you for your input!');
     
@@ -100,7 +101,7 @@ export const TestUserFeedbackWidget: React.FC<TestUserFeedbackWidgetProps> = ({
   };
 
   // Check if user is a test user
-  const testUsers = JSON.parse(localStorage.getItem('lumi_test_users') || '[]');
+  const testUsers = safeLocalStorageGet('lumi_test_users', []);
   const isTestUser = testUsers.length > 0;
 
   if (!isTestUser) {

@@ -1,4 +1,5 @@
 import { User, Child, Classroom, BehaviorLog, ClassroomLog } from '../types';
+import { safeLocalStorageGet, safeLocalStorageSet } from '../utils/jsonUtils';
 
 // Test Users for different scenarios
 export const TEST_USERS: User[] = [
@@ -339,9 +340,13 @@ export class TestDataManager {
     this.invitations = [...TEST_INVITATIONS];
     
     // Clear localStorage
-    localStorage.removeItem('lumi_token');
-    localStorage.removeItem('lumi_current_view');
-    localStorage.removeItem('lumi_current_user');
+    try {
+      localStorage.removeItem('lumi_token');
+      localStorage.removeItem('lumi_current_view');
+      localStorage.removeItem('lumi_current_user');
+    } catch (error) {
+      console.warn('Failed to clear localStorage:', error);
+    }
     
     console.log('🔄 Test data reset to initial state');
   }

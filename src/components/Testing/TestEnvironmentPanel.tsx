@@ -258,20 +258,20 @@ export const DeveloperPortal: React.FC = () => {
 
   // Initialize test users and feedback from localStorage
   React.useEffect(() => {
-    const savedTestUsers = JSON.parse(localStorage.getItem('lumi_test_users') || '[]');
-    const savedFeedback = JSON.parse(localStorage.getItem('lumi_test_feedback') || '[]');
+    const savedTestUsers = safeLocalStorageGet('lumi_test_users', []);
+    const savedFeedback = safeLocalStorageGet('lumi_test_feedback', []);
     setTestUsers(savedTestUsers);
     setFeedback(savedFeedback);
   }, []);
 
   const saveTestUsers = (users: any[]) => {
     setTestUsers(users);
-    localStorage.setItem('lumi_test_users', JSON.stringify(users));
+    safeLocalStorageSet('lumi_test_users', users);
   };
 
   const saveFeedback = (feedbackData: any[]) => {
     setFeedback(feedbackData);
-    localStorage.setItem('lumi_test_feedback', JSON.stringify(feedbackData));
+    safeLocalStorageSet('lumi_test_feedback', feedbackData);
   };
 
   const generateAccessCode = () => {

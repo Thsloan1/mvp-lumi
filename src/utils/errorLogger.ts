@@ -128,8 +128,11 @@ export class ErrorLogger {
     try {
       const token = localStorage.getItem('lumi_token');
       if (token) {
-        const payload = JSON.parse(atob(token.split('.')[1]));
-        return payload.id;
+        const tokenParts = token.split('.');
+        if (tokenParts.length === 3) {
+          const payload = JSON.parse(atob(tokenParts[1]));
+          return payload.id;
+        }
       }
     } catch (error) {
       // Ignore token parsing errors
@@ -152,8 +155,7 @@ export class ErrorLogger {
 
   private static storeLocally(entry: ErrorLogEntry) {
     try {
-      const stored = localStorage.getItem('lumi_error_logs');
-      const logs = stored ? JSON.parse(stored) : [];
+      const logs = safeLocalStorageGet('lumi_error_logs', []);
       logs.push(entry);
       
       // Keep only last 100 entries
@@ -161,7 +163,7 @@ export class ErrorLogger {
         logs.splice(0, logs.length - 100);
       }
       
-      localStorage.setItem('lumi_error_logs', JSON.stringify(logs));
+      safeLocalStorageSet('lumi_error_logs', logs);
     } catch (error) {
       // Ignore storage errors
     }
