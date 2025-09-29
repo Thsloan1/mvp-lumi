@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { Book, Plus, CreditCard as Edit, Save, X, Download, Upload } from 'lucide-react';
+import { Book, Plus, CreditCard as Edit, Save, X, Download, Upload, ArrowLeft } from 'lucide-react';
 import { Button } from '../UI/Button';
 import { Card } from '../UI/Card';
 import { Input } from '../UI/Input';
+import { useAppContext } from '../../context/AppContext';
 import { knowledgeLibrary, TheoreticalFramework, StrategyTemplate } from '../../data/knowledgeLibrary';
 
 export const KnowledgeLibraryManager: React.FC = () => {
@@ -40,6 +41,7 @@ export const KnowledgeLibraryManager: React.FC = () => {
           knowledgeLibrary.importKnowledgeBase(data);
           setFrameworks(data.frameworks || []);
           setStrategies(data.templates || []);
+          console.log('📚 Knowledge base imported successfully');
         } catch (error) {
           console.error('Error importing knowledge base:', error);
         }
@@ -207,6 +209,15 @@ export const KnowledgeLibraryManager: React.FC = () => {
       <div className="max-w-7xl mx-auto px-6 py-8">
         {/* Header */}
         <div className="mb-8">
+          <Button
+            variant="ghost"
+            onClick={() => setCurrentView('admin-dashboard')}
+            icon={ArrowLeft}
+            className="mb-6 -ml-2"
+          >
+            Back to Dashboard
+          </Button>
+          
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold text-[#1A1A1A] mb-2">

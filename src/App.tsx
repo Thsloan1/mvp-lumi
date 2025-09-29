@@ -171,6 +171,8 @@ const AppContent: React.FC = () => {
         return <EmailVerification />;
       case 'forgot-password':
         return <ForgotPassword />;
+     case 'knowledge-library-manager':
+       return <KnowledgeLibraryManager />;
     }
   }
 };

@@ -563,6 +563,7 @@ export class KnowledgeLibrary {
     const index = this.frameworks.findIndex(f => f.id === id);
     if (index !== -1) {
       this.frameworks[index] = { ...this.frameworks[index], ...updates };
+      console.log(`📚 Framework updated: ${this.frameworks[index].name}`);
       return true;
     }
     return false;
@@ -571,6 +572,7 @@ export class KnowledgeLibrary {
   // Add new strategy template
   addStrategyTemplate(template: StrategyTemplate): void {
     this.templates.push(template);
+    console.log(`📚 Strategy template added: ${template.name}`);
   }
 
   // Update strategy template
@@ -578,6 +580,7 @@ export class KnowledgeLibrary {
     const index = this.templates.findIndex(t => t.id === id);
     if (index !== -1) {
       this.templates[index] = { ...this.templates[index], ...updates };
+      console.log(`📚 Strategy template updated: ${this.templates[index].name}`);
       return true;
     }
     return false;

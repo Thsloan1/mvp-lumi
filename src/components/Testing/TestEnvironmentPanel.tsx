@@ -274,6 +274,14 @@ export const TestEnvironmentPanel: React.FC = () => {
               >
                 Import
               </Button>
+              <Button
+                onClick={() => setCurrentView('knowledge-library-manager')}
+                variant="outline"
+                size="sm"
+                className="text-indigo-600 border-indigo-200"
+              >
+                Knowledge Library
+              </Button>
             </div>
           </div>
 

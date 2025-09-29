@@ -46,6 +46,12 @@ export const StickyNavigation: React.FC = () => {
       label: 'Profile & Settings',
       icon: Settings,
       view: 'profile-settings'
+    },
+    {
+      id: 'knowledge-library',
+      label: 'Knowledge Library',
+      icon: BookOpen,
+      view: 'knowledge-library-manager'
     }
   ];
 
