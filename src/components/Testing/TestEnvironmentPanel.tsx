@@ -53,7 +53,6 @@ export const DeveloperPortal: React.FC = () => {
     { id: 'testing', label: 'Testing Environment', icon: Play },
     { id: 'user-management', label: 'Test User Management', icon: Users },
     { id: 'feedback', label: 'Feedback & Reviews', icon: MessageCircle },
-    { id: 'knowledge', label: 'Core Knowledge Foundation', icon: BookOpen },
     { id: 'client-data', label: 'Client Data', icon: Database },
     { id: 'analytics', label: 'Analytics & Reports', icon: BarChart3 },
     { id: 'revenue', label: 'Revenue & Subscriptions', icon: DollarSign },
@@ -317,6 +316,43 @@ export const DeveloperPortal: React.FC = () => {
     const updatedUsers = testUsers.filter(user => user.id !== userId);
     saveTestUsers(updatedUsers);
     toast.info('Test User Removed', 'User access revoked');
+  };
+
+  const handleExportInvitations = () => {
+    const invitationData = testUsers.map(user => ({
+      name: user.fullName,
+      email: user.email,
+      accessCode: user.accessCode,
+      role: user.role,
+      modules: user.modules.join(', '),
+      status: user.status,
+      expiresAt: user.expiresAt || 'No expiration'
+    }));
+
+    const csvContent = [
+      'Name,Email,Access Code,Role,Modules,Status,Expires',
+      ...invitationData.map(row => 
+        `"${row.name}","${row.email}","${row.accessCode}","${row.role}","${row.modules}","${row.status}","${row.expiresAt}"`
+      )
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `lumi-test-invitations-${new Date().toISOString().split('T')[0]}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    
+    toast.success('Invitations Exported', 'CSV file downloaded with all access codes');
+  };
+
+  const handleCopyAllCodes = () => {
+    const codes = testUsers.map(user => `${user.fullName}: ${user.accessCode}`).join('\n');
+    navigator.clipboard.writeText(codes);
+    toast.success('Access Codes Copied', 'All codes copied to clipboard');
   };
 
   const handleModuleToggle = (module: string) => {
