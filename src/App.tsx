@@ -1,5 +1,7 @@
 import React from 'react';
 import { AppProvider, useAppContext } from './context/AppContext';
+import { ErrorBoundary } from './components/UI/ErrorBoundary';
+import { ErrorToastContainer } from './components/UI/ErrorToastContainer';
 import { WelcomeScreen } from './components/Welcome/WelcomeScreen';
 import { EducatorSignup } from './components/Auth/EducatorSignup';
 import { AdminSignup } from './components/Auth/AdminSignup';
@@ -31,7 +33,14 @@ import { OrganizationAnalytics } from './components/Admin/OrganizationAnalytics'
 const AppContent: React.FC = () => {
   const { currentView, setCurrentView } = useAppContext();
 
-  const renderView = () => {
+  return (
+    <div className="relative">
+      {renderView()}
+      <ErrorToastContainer />
+    </div>
+  );
+
+  function renderView() {
     switch (currentView) {
       case 'welcome':
         return <WelcomeScreen />;
@@ -95,16 +104,16 @@ const AppContent: React.FC = () => {
       default:
         return <WelcomeScreen />;
     }
-  };
-
-  return renderView();
+  }
 };
 
 function App() {
   return (
-    <AppProvider>
-      <AppContent />
-    </AppProvider>
+    <ErrorBoundary>
+      <AppProvider>
+        <AppContent />
+      </AppProvider>
+    </ErrorBoundary>
   );
 }
 

@@ -17,7 +17,7 @@ interface EmailInvite {
 }
 
 export const InviteEducatorsModal: React.FC<InviteEducatorsModalProps> = ({ onClose }) => {
-  const { setCurrentView } = useAppContext();
+  const { setCurrentView, organizationApi, handleApiError } = useAppContext();
   const [inviteMethod, setInviteMethod] = useState<'individual' | 'bulk'>('individual');
   const [emailInvites, setEmailInvites] = useState<EmailInvite[]>([
     { id: '1', firstName: '', lastName: '', email: '' }
@@ -26,13 +26,28 @@ export const InviteEducatorsModal: React.FC<InviteEducatorsModalProps> = ({ onCl
   const [loading, setLoading] = useState(false);
   const [seatError, setSeatError] = useState<string | null>(null);
   const [invitesSent, setInvitesSent] = useState(false);
+  const [subscriptionInfo, setSubscriptionInfo] = useState({
+    activeSeats: 0,
+    maxSeats: 0,
+    availableSeats: 0
+  });
   const [copiedLink, setCopiedLink] = useState(false);
 
-  // Mock subscription data
-  const subscriptionInfo = {
-    activeSeats: 12,
-    maxSeats: 15,
-    availableSeats: 3
+  useEffect(() => {
+    fetchSeatInfo();
+  }, []);
+
+  const fetchSeatInfo = async () => {
+    try {
+      const seatCheck = await organizationApi.checkSeatAvailability(0);
+      setSubscriptionInfo({
+        activeSeats: seatCheck.activeSeats,
+        maxSeats: seatCheck.maxSeats,
+        availableSeats: seatCheck.maxSeats - seatCheck.activeSeats
+      });
+    } catch (error) {
+      handleApiError(error, { action: 'fetchSeatInfo' });
+    }
   };
 
   const inviteLink = "https://lumi.app/invite/abc123xyz";
@@ -91,19 +106,30 @@ export const InviteEducatorsModal: React.FC<InviteEducatorsModalProps> = ({ onCl
       return;
     }
 
-    if (!checkSeatAvailability(validEmails.length)) {
-      return;
-    }
-
     setLoading(true);
+    setSeatError(null);
     
     try {
-      // In real implementation, this would call the API
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      setInvitesSent(true);
+      // Check seat availability first
+      const seatCheck = await organizationApi.checkSeatAvailability(validEmails.length);
+      
+      if (!seatCheck.available) {
+        setSeatError(seatCheck.message || 'Not enough seats available');
+        return;
+      }
+
+      // Send invitations
+      const result = await organizationApi.inviteEducators(validEmails);
+      
+      if (result.success) {
+        setInvitesSent(true);
+        // Update seat info
+        await fetchSeatInfo();
+      } else {
+        setSeatError(result.errors?.[0] || 'Failed to send invitations');
+      }
     } catch (error) {
-      console.error('Error sending invites:', error);
-      setSeatError('Failed to send invitations. Please try again.');
+      handleApiError(error, { action: 'sendInvites', emails: validEmails });
     } finally {
       setLoading(false);
     }
@@ -329,7 +355,7 @@ export const InviteEducatorsModal: React.FC<InviteEducatorsModalProps> = ({ onCl
 
           {/* Error Display */}
           {seatError && (
-            <Card className="p-4 mb-6 bg-red-50 border-red-200">
+            <div className="p-4 mb-6 bg-red-50 border border-red-200 rounded-xl">
               <div className="flex items-start space-x-3">
                 <AlertCircle className="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" />
                 <div>
@@ -341,7 +367,7 @@ export const InviteEducatorsModal: React.FC<InviteEducatorsModalProps> = ({ onCl
                   </p>
                 </div>
               </div>
-            </Card>
+            </div>
           )}
 
           {/* Summary */}

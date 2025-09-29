@@ -6,7 +6,7 @@ import { Card } from '../UI/Card';
 import { useAppContext } from '../../context/AppContext';
 
 export const InvitedSignup: React.FC = () => {
-  const { setCurrentView } = useAppContext();
+  const { setCurrentView, invitationApi, handleApiError } = useAppContext();
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
     inviteCode: '',
@@ -16,11 +16,40 @@ export const InvitedSignup: React.FC = () => {
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
+  const [invitationValid, setInvitationValid] = useState(false);
+  const [organizationInfo, setOrganizationInfo] = useState({
+    name: '',
+    invitedBy: ''
+  });
 
-  // Mock organization data from invite
-  const organizationInfo = {
-    name: "Sunshine Elementary School",
-    invitedBy: "Dr. Maria Rodriguez, Principal"
+  useEffect(() => {
+    validateInvitation();
+  }, []);
+
+  const validateInvitation = async () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const token = urlParams.get('token');
+    
+    if (!token) {
+      handleApiError({ message: 'Invalid invitation link' }, { action: 'validateInvitation' });
+      return;
+    }
+
+    try {
+      const response = await invitationApi.validateInvitation(token);
+      if (response.valid) {
+        setInvitationValid(true);
+        setOrganizationInfo({
+          name: response.invitation.organizationName,
+          invitedBy: response.invitation.inviterName
+        });
+        setFormData(prev => ({ ...prev, email: response.invitation.email }));
+      } else {
+        handleApiError({ message: response.error }, { action: 'validateInvitation' });
+      }
+    } catch (error) {
+      handleApiError(error, { action: 'validateInvitation' });
+    }
   };
 
   const validatePassword = (password: string) => {
@@ -45,6 +74,7 @@ export const InvitedSignup: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setErrors({});
     
     const newErrors: Record<string, string> = {};
     
@@ -67,12 +97,43 @@ export const InvitedSignup: React.FC = () => {
       return;
     }
 
-    // Simulate API call
-    setTimeout(() => {
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      const token = urlParams.get('token');
+      
+      if (!token) {
+        throw new Error('Invalid invitation token');
+      }
+
+      await invitationApi.acceptInvitation(token);
       setCurrentView('invited-onboarding');
+    } catch (error) {
+      handleApiError(error, { action: 'acceptInvitation' });
+    } finally {
       setLoading(false);
-    }, 1000);
+    }
   };
+
+  if (!invitationValid) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center p-6">
+        <Card className="p-8 text-center max-w-md">
+          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Mail className="w-8 h-8 text-red-600" />
+          </div>
+          <h1 className="text-2xl font-bold text-[#1A1A1A] mb-2">
+            Invalid Invitation
+          </h1>
+          <p className="text-gray-600 mb-6">
+            This invitation link is invalid or has expired. Please contact your administrator for a new invitation.
+          </p>
+          <Button onClick={() => setCurrentView('welcome')}>
+            Back to Home
+          </Button>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-white flex items-center justify-center p-6">

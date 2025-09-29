@@ -27,7 +27,7 @@ interface PendingInvitation {
 }
 
 export const ManageEducators: React.FC = () => {
-  const { setCurrentView } = useAppContext();
+  const { setCurrentView, organizationApi, handleApiError } = useAppContext();
   const [educators, setEducators] = useState<Educator[]>([]);
   const [pendingInvitations, setPendingInvitations] = useState<PendingInvitation[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -41,72 +41,19 @@ export const ManageEducators: React.FC = () => {
 
   const fetchEducators = async () => {
     try {
-      // Mock data - in real implementation, this would fetch from API
-      const mockEducators: Educator[] = [
-        {
-          id: '1',
-          fullName: 'Dr. Maria Rodriguez',
-          email: 'maria@sunshine-elementary.edu',
-          organizationRole: 'OWNER',
-          onboardingStatus: 'COMPLETE',
-          createdAt: '2024-01-15',
-          lastActive: '2 hours ago',
-          behaviorLogsCount: 45,
-          classroomLogsCount: 23
-        },
-        {
-          id: '2',
-          fullName: 'Sarah Johnson',
-          email: 'sarah.johnson@sunshine-elementary.edu',
-          organizationRole: 'EDUCATOR',
-          onboardingStatus: 'COMPLETE',
-          createdAt: '2024-01-20',
-          lastActive: '1 day ago',
-          behaviorLogsCount: 32,
-          classroomLogsCount: 18
-        },
-        {
-          id: '3',
-          fullName: 'Mike Chen',
-          email: 'mike.chen@sunshine-elementary.edu',
-          organizationRole: 'EDUCATOR',
-          onboardingStatus: 'INCOMPLETE',
-          createdAt: '2024-02-01',
-          lastActive: '3 days ago',
-          behaviorLogsCount: 0,
-          classroomLogsCount: 0
-        }
-      ];
-      setEducators(mockEducators);
+      const response = await organizationApi.getMembers();
+      setEducators(response.members || []);
     } catch (error) {
-      console.error('Error fetching educators:', error);
+      handleApiError(error, { action: 'fetchEducators' });
     }
   };
 
   const fetchPendingInvitations = async () => {
     try {
-      // Mock data - in real implementation, this would fetch from API
-      const mockInvitations: PendingInvitation[] = [
-        {
-          id: '1',
-          email: 'lisa.rodriguez@sunshine-elementary.edu',
-          inviterName: 'Dr. Maria Rodriguez',
-          createdAt: '2024-02-10',
-          expiresAt: '2024-02-17',
-          status: 'PENDING'
-        },
-        {
-          id: '2',
-          email: 'david.kim@sunshine-elementary.edu',
-          inviterName: 'Dr. Maria Rodriguez',
-          createdAt: '2024-02-12',
-          expiresAt: '2024-02-19',
-          status: 'PENDING'
-        }
-      ];
-      setPendingInvitations(mockInvitations);
+      const response = await organizationApi.get('/organizations/invitations');
+      setPendingInvitations(response.invitations || []);
     } catch (error) {
-      console.error('Error fetching invitations:', error);
+      handleApiError(error, { action: 'fetchPendingInvitations' });
     } finally {
       setLoading(false);
     }
@@ -114,29 +61,29 @@ export const ManageEducators: React.FC = () => {
 
   const handleRemoveEducator = async (educatorId: string) => {
     try {
-      // In real implementation, this would call API
-      setEducators(educators.filter(e => e.id !== educatorId));
+      await organizationApi.removeMember(educatorId);
+      await fetchEducators(); // Refresh the list
       setActionMenuOpen(null);
     } catch (error) {
-      console.error('Error removing educator:', error);
+      handleApiError(error, { action: 'removeEducator', educatorId });
     }
   };
 
   const handleCancelInvitation = async (invitationId: string) => {
     try {
-      // In real implementation, this would call API
-      setPendingInvitations(pendingInvitations.filter(i => i.id !== invitationId));
+      await organizationApi.delete(`/organizations/invitations?invitationId=${invitationId}`);
+      await fetchPendingInvitations(); // Refresh the list
     } catch (error) {
-      console.error('Error canceling invitation:', error);
+      handleApiError(error, { action: 'cancelInvitation', invitationId });
     }
   };
 
   const handleResendInvitation = async (invitationId: string) => {
     try {
-      // In real implementation, this would call API
-      console.log('Resending invitation:', invitationId);
+      await organizationApi.post(`/organizations/invitations/resend`, { invitationId });
+      await fetchPendingInvitations(); // Refresh the list
     } catch (error) {
-      console.error('Error resending invitation:', error);
+      handleApiError(error, { action: 'resendInvitation', invitationId });
     }
   };
 

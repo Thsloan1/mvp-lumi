@@ -27,7 +27,7 @@ interface SubscriptionData {
 }
 
 export const OrganizationSettings: React.FC = () => {
-  const { setCurrentView, currentUser } = useAppContext();
+  const { setCurrentView, organizationApi, handleApiError } = useAppContext();
   const [activeTab, setActiveTab] = useState<'general' | 'subscription' | 'ownership'>('general');
   const [loading, setLoading] = useState(false);
   const [showTransferOwnership, setShowTransferOwnership] = useState(false);
@@ -78,11 +78,13 @@ export const OrganizationSettings: React.FC = () => {
   const handleSaveGeneral = async () => {
     setLoading(true);
     try {
-      // In real implementation, this would call API
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      console.log('Organization settings saved:', orgData);
+      await organizationApi.put('/organizations', {
+        name: orgData.name,
+        type: orgData.type,
+        settings: orgData.settings
+      });
     } catch (error) {
-      console.error('Error saving settings:', error);
+      handleApiError(error, { action: 'saveOrganizationSettings' });
     } finally {
       setLoading(false);
     }
@@ -93,14 +95,12 @@ export const OrganizationSettings: React.FC = () => {
     
     setLoading(true);
     try {
-      // In real implementation, this would call API
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      console.log('Ownership transfer initiated:', { transferEmail, transferReason });
+      await organizationApi.transferOwnership(transferEmail, transferReason);
       setShowTransferOwnership(false);
       setTransferEmail('');
       setTransferReason('');
     } catch (error) {
-      console.error('Error transferring ownership:', error);
+      handleApiError(error, { action: 'transferOwnership', transferEmail });
     } finally {
       setLoading(false);
     }
