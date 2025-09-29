@@ -34,6 +34,10 @@ import { ProfileSettings } from './components/Profile/ProfileSettings';
 import { DataReports } from './components/Reports/DataReports';
 import { LearningLibraryComplete } from './components/Library/LearningLibraryComplete';
 import { FamilyScriptGenerator } from './components/FamilyNotes/FamilyScriptGenerator';
+import { LumiEdPreview } from './components/LumiEd/LumiEdPreview';
+import { LumiEdSubscription } from './components/LumiEd/LumiEdSubscription';
+import { LumiEdPayment } from './components/LumiEd/LumiEdPayment';
+import { LumiEdWelcome } from './components/LumiEd/LumiEdWelcome';
 
 const AppContent: React.FC = () => {
   const { currentView, setCurrentView } = useAppContext();
