@@ -150,36 +150,6 @@ const AppContent: React.FC = () => {
         return <WelcomeScreen />;
       case 'profile-settings':
         return <ProfileSettings />;
-      case 'reports':
-        return <DataReports />;
-      case 'admin-dashboard':
-        return <AdminDashboard />;
-      case 'manage-educators':
-        return <ManageEducators />;
-      case 'organization-settings':
-        return <OrganizationSettings />;
-      case 'organization-analytics':
-        return <OrganizationAnalytics />;
-      case 'invite-educators-modal':
-        return (
-          <div>
-            <AdminDashboard />
-            <InviteEducatorsModal onClose={() => setCurrentView('admin-dashboard')} />
-          </div>
-        );
-      case 'email-verification':
-        return <EmailVerification />;
-      case 'forgot-password':
-        return <ForgotPassword />;
-      case 'developer-app-manager':
-        return <DeveloperAppManager />;
-      default:
-        // Handle dynamic child profile detail routes
-        if (currentView.startsWith('child-profile-detail-')) {
-          const childId = currentView.replace('child-profile-detail-', '');
-          return <ChildProfileDetail childId={childId} />;
-        }
-        return <WelcomeScreen />;
     }
   }
 };
