@@ -215,49 +215,6 @@ export const STARTER_LIBRARY: Resource[] = [
   }
 ];
 
-// Premium resources that will be available in LumiEd
-export const PREMIUM_RESOURCES: Resource[] = [
-  {
-    id: 'toddler-toolkit',
-    title: 'Complete Toddler Behavior Toolkit',
-    description: 'Comprehensive 20-page toolkit with strategies, visual supports, and family resources for toddler behaviors.',
-    type: 'toolkit',
-    category: 'behavior',
-    ageGroups: ['Toddlers (2-3 years old)'],
-    settings: ['classroom', 'childcare', 'home'],
-    language: 'bilingual',
-    isPremium: true,
-    createdAt: new Date('2024-01-01'),
-    updatedAt: new Date('2024-01-01')
-  },
-  {
-    id: 'transition-mastery',
-    title: 'Transition Mastery: Advanced Strategies',
-    description: 'Deep-dive toolkit for complex transition challenges with visual supports and implementation guides.',
-    type: 'toolkit',
-    category: 'transitions',
-    ageGroups: ['Preschool (4-5 years old)', 'Transitional Kindergarten (4-5 years old)'],
-    settings: ['classroom', 'childcare'],
-    language: 'bilingual',
-    isPremium: true,
-    createdAt: new Date('2024-01-01'),
-    updatedAt: new Date('2024-01-01')
-  },
-  {
-    id: 'trauma-informed-classroom',
-    title: 'Trauma-Informed Classroom Environment Guide',
-    description: 'Comprehensive guide for creating healing-centered classroom environments.',
-    type: 'guide',
-    category: 'behavior',
-    ageGroups: ['Toddlers (2-3 years old)', 'Preschool (4-5 years old)', 'Transitional Kindergarten (4-5 years old)'],
-    settings: ['classroom', 'childcare'],
-    language: 'bilingual',
-    isPremium: true,
-    createdAt: new Date('2024-01-01'),
-    updatedAt: new Date('2024-01-01')
-  }
-];
-
 export const RESOURCE_CATEGORIES = [
   { id: 'behavior', label: 'Behavior Support', icon: '🤗' },
   { id: 'transitions', label: 'Transitions', icon: '🔄' },

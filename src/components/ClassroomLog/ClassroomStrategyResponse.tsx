@@ -149,12 +149,6 @@ export const ClassroomStrategyResponse: React.FC<ClassroomStrategyResponseProps>
             </div>
           </Card>
 
-          {/* LumiEd Integration */}
-          <LumiEdIntegration 
-            context="classroom-profile"
-            relatedTopics={['classroom-management', 'transitions']}
-          />
-
           {/* Confidence Ratings */}
           {selectedStrategy && (
             <Card className="p-8 bg-[#F8F6F4]">

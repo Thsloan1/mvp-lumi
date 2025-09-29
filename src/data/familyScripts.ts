@@ -115,29 +115,6 @@ export const FAMILY_COMMUNICATION_SCRIPTS: FamilyCommunicationScript[] = [
   }
 ];
 
-// Premium scripts available in LumiEd
-export const PREMIUM_FAMILY_SCRIPTS: FamilyCommunicationScript[] = [
-  {
-    id: 'iep-meeting-prep',
-    title: 'Preparing Families for IEP Meetings',
-    category: 'collaborative_problem_solving',
-    scenario: 'When supporting families through the IEP process',
-    script: `[Parent Name], I wanted to help prepare you for [Child Name]'s upcoming IEP meeting. As [his/her] teacher, I see [his/her] strengths every day: [specific strengths]. I also see areas where [he/she] would benefit from additional support: [specific needs]. During the meeting, the team will discuss how we can best support [Child Name]'s learning and development. I encourage you to share your observations from home and ask questions about anything you don't understand. Remember, you are the expert on your child, and your voice is essential in this process. I'll be there to advocate for [Child Name] alongside you. Here are some questions you might want to consider asking: [list of questions]. Please reach out if you'd like to discuss anything before the meeting.`,
-    language: 'bilingual',
-    isPremium: true,
-    createdAt: new Date('2024-01-01')
-  },
-  {
-    id: 'trauma-informed-communication',
-    title: 'Trauma-Informed Family Communication',
-    category: 'stress_regulation',
-    scenario: 'When communicating with families about trauma responses',
-    script: `[Parent Name], I want to share some observations about [Child Name] in a way that honors [his/her] experiences and your family's journey. Sometimes children who have experienced stress or difficult situations show us their feelings through their behavior. What I'm seeing with [Child Name] - [specific behaviors] - tells me [he/she] is working hard to feel safe and secure. This is actually a sign of resilience. At school, we're focusing on helping [him/her] build trust and feel emotionally safe. We use gentle, predictable routines and give [him/her] choices whenever possible. [His/Her] healing happens through relationships, and both you and I play important roles in that process. I'm here to support both [Child Name] and your family in whatever way feels most helpful.`,
-    language: 'bilingual',
-    isPremium: true,
-    createdAt: new Date('2024-01-01')
-  }
-];
 
 export const SCRIPT_CATEGORIES = [
   { id: 'behavior_explanation', label: 'Explaining Behaviors', icon: '💭' },

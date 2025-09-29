@@ -22,7 +22,6 @@ import { EducatorDashboard } from './components/Dashboard/EducatorDashboard';
 import { BehaviorLogFlow } from './components/BehaviorLog/BehaviorLogFlow';
 import { ClassroomLogFlow } from './components/ClassroomLog/ClassroomLogFlow';
 import { ResourceLibrary } from './components/Library/ResourceLibrary';
-import { LumiEdUpsell } from './components/Library/LumiEdUpsell';
 import { FamilyNotesManager } from './components/FamilyNotes/FamilyNotesManager';
 import { ChildProfilesManager } from './components/ChildProfiles/ChildProfilesManager';
 import { ClassroomProfileManager } from './components/ClassroomProfile/ClassroomProfileManager';
@@ -35,12 +34,7 @@ import { OrganizationAnalytics } from './components/Admin/OrganizationAnalytics'
 import { StickyNavigation } from './components/Navigation/StickyNavigation';
 import { ProfileSettings } from './components/Profile/ProfileSettings';
 import { DataReports } from './components/Reports/DataReports';
-import { LearningLibraryComplete } from './components/Library/LearningLibraryComplete';
 import { FamilyScriptGenerator } from './components/FamilyNotes/FamilyScriptGenerator';
-import { LumiEdPreview } from './components/LumiEd/LumiEdPreview';
-import { LumiEdSubscription } from './components/LumiEd/LumiEdSubscription';
-import { LumiEdPayment } from './components/LumiEd/LumiEdPayment';
-import { LumiEdWelcome } from './components/LumiEd/LumiEdWelcome';
 
 const AppContent: React.FC = () => {
   const { currentView, setCurrentView, user, isLoading, isAuthenticated } = useAppContext();
@@ -121,17 +115,7 @@ const AppContent: React.FC = () => {
       case 'classroom-log':
         return <ClassroomLogFlow />;
       case 'library':
-        return <LearningLibraryComplete />;
-      case 'lumied-upsell':
-        return <LumiEdUpsell />;
-      case 'lumied-preview':
-        return <LumiEdPreview />;
-      case 'lumied-subscription':
-        return <LumiEdSubscription />;
-      case 'lumied-payment':
-        return <LumiEdPayment />;
-      case 'lumied-welcome':
-        return <LumiEdWelcome />;
+        return <ResourceLibrary />;
       case 'family-notes':
         return <FamilyNotesManager />;
       case 'family-script-generator':

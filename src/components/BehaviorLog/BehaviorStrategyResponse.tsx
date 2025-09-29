@@ -279,12 +279,6 @@ export const BehaviorStrategyResponse: React.FC<BehaviorStrategyResponseProps> =
             </Card>
           )}
 
-          {/* LumiEd Integration */}
-          <LumiEdIntegration 
-            context="behavior-strategy"
-            relatedTopics={['behavior-support', 'family-engagement']}
-          />
-
           {/* Strategy Selection */}
           {selectedStrategy && (
             <Card className="p-8 bg-[#F8F6F4]">
@@ -347,7 +341,7 @@ export const BehaviorStrategyResponse: React.FC<BehaviorStrategyResponseProps> =
           )}
         </div>
 
-        {/* Cross-promotion to Library/LumiEd */}
+        {/* Cross-promotion to Library */}
         <Card className="p-6 bg-gradient-to-r from-blue-50 to-green-50 border-blue-200">
           <div className="flex items-start space-x-4">
             <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center flex-shrink-0">
@@ -355,10 +349,10 @@ export const BehaviorStrategyResponse: React.FC<BehaviorStrategyResponseProps> =
             </div>
             <div className="flex-1">
               <h3 className="text-lg font-semibold text-[#1A1A1A] mb-2">
-                Want More Strategies Like This?
+                Explore More Resources
               </h3>
               <p className="text-gray-700 mb-4">
-                Explore our curated library of behavior strategies, implementation guides, and family resources.
+                Browse our curated library of behavior strategies and family resources.
               </p>
               <div className="flex space-x-3">
                 <Button
@@ -367,15 +361,7 @@ export const BehaviorStrategyResponse: React.FC<BehaviorStrategyResponseProps> =
                   size="sm"
                   icon={BookOpen}
                 >
-                  Browse Free Resources
-                </Button>
-                <Button
-                  onClick={() => setCurrentView('lumied-upsell')}
-                  variant="outline"
-                  size="sm"
-                  icon={ExternalLink}
-                >
-                  Unlock Full Toolkit
+                  Browse Resources
                 </Button>
               </div>
             </div>

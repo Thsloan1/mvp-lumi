@@ -424,13 +424,6 @@ export const EducatorDashboard: React.FC = () => {
               >
                 Browse Resources
               </Button>
-              <Button
-                onClick={() => setCurrentView('lumied-upsell')}
-                variant="outline"
-                icon={TrendingUp}
-              >
-                Upgrade to LumiEd
-              </Button>
             </div>
           </div>
         </Card>

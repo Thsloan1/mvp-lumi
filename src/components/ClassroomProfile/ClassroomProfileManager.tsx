@@ -316,12 +316,6 @@ export const ClassroomProfileManager: React.FC = () => {
           </div>
         )}
 
-        {/* LumiEd Integration for Classroom */}
-        <LumiEdIntegration 
-          context="classroom-profile"
-          className="mt-8"
-        />
-
         {/* Classroom Details */}
         <Card className="p-8 mb-8">
           <h3 className="text-lg font-semibold text-[#1A1A1A] mb-6">

@@ -27,13 +27,6 @@ export const StickyNavigation: React.FC = () => {
       view: 'library'
     },
     {
-      id: 'lumied-preview',
-      label: 'LumiEd',
-      icon: Lock,
-      view: 'lumied-preview',
-      locked: true
-    },
-    {
       id: 'reports',
       label: 'Data & Reports',
       icon: BarChart3,

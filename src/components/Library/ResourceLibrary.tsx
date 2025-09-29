@@ -6,7 +6,7 @@ import { Input } from '../UI/Input';
 import { Select } from '../UI/Select';
 import { useAppContext } from '../../context/AppContext';
 import { Resource, ResourceSearch } from '../../types';
-import { STARTER_LIBRARY, PREMIUM_RESOURCES, RESOURCE_CATEGORIES, RESOURCE_TYPES, SETTINGS } from '../../data/starterLibrary';
+import { STARTER_LIBRARY, RESOURCE_CATEGORIES, RESOURCE_TYPES, SETTINGS } from '../../data/starterLibrary';
 import { GRADE_BAND_OPTIONS } from '../../data/constants';
 
 export const ResourceLibrary: React.FC = () => {
@@ -21,8 +21,8 @@ export const ResourceLibrary: React.FC = () => {
   });
   const [showFilters, setShowFilters] = useState(false);
 
-  // Combine starter library with premium resources for display
-  const allResources = [...STARTER_LIBRARY, ...PREMIUM_RESOURCES];
+  // Use only starter library resources
+  const allResources = STARTER_LIBRARY;
 
   const filteredResources = useMemo(() => {
     return allResources.filter(resource => {
@@ -67,13 +67,9 @@ export const ResourceLibrary: React.FC = () => {
 
   const handleResourceAction = (resource: Resource) => {
     if (resource.isPremium) {
-      // Show LumiEd upsell
-      setCurrentView('lumied-upsell');
-    } else {
-      // Track engagement and download/view
-      console.log('Accessing resource:', resource.title);
-      // In real implementation, this would track analytics and provide download
-    }
+    // Track engagement and download/view
+    console.log('Accessing resource:', resource.title);
+    // In real implementation, this would track analytics and provide download
   };
 
   const clearFilters = () => {
@@ -158,15 +154,8 @@ export const ResourceLibrary: React.FC = () => {
                 onClick={() => setShowFilters(!showFilters)}
                 icon={Filter}
               >
-                Filters
+                    {allResources.length} Resources
               </Button>
-              {Object.values(searchParams).some(value => value) && (
-                <Button
-                  variant="ghost"
-                  onClick={clearFilters}
-                >
-                  Clear All
-                </Button>
               )}
             </div>
 
@@ -278,39 +267,28 @@ export const ResourceLibrary: React.FC = () => {
                 </div>
 
                 <div className="pt-4 border-t border-[#E6E2DD]">
-                  {resource.isPremium ? (
+                  <div className="space-y-2">
                     <Button
-                      onClick={() => handleResourceAction(resource)}
-                      variant="outline"
+                      onClick={() => handleResourceAccess(resource)}
                       className="w-full"
-                      icon={ExternalLink}
+                      icon={Download}
                     >
-                      View in LumiEd
+                      Access Resource
                     </Button>
-                  ) : (
-                    <div className="space-y-2">
+                    {resource.familyCompanionId && (
                       <Button
-                        onClick={() => handleResourceAction(resource)}
+                        onClick={() => {
+                          const companion = STARTER_LIBRARY.find(r => r.id === resource.familyCompanionId);
+                          if (companion) handleResourceAccess(companion);
+                        }}
+                        variant="outline"
+                        size="sm"
                         className="w-full"
-                        icon={Download}
                       >
-                        Access Resource
+                        + Family Companion
                       </Button>
-                      {resource.familyCompanionId && (
-                        <Button
-                          onClick={() => {
-                            const companion = STARTER_LIBRARY.find(r => r.id === resource.familyCompanionId);
-                            if (companion) handleResourceAction(companion);
-                          }}
-                          variant="outline"
-                          size="sm"
-                          className="w-full"
-                        >
-                          + Family Companion
-                        </Button>
-                      )}
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
               </Card>
             );
@@ -333,33 +311,6 @@ export const ResourceLibrary: React.FC = () => {
             </Button>
           </div>
         )}
-
-        {/* LumiEd Promotion */}
-        <Card className="mt-12 p-8 bg-gradient-to-r from-[#F8F6F4] to-white border-[#C44E38] border-2">
-          <div className="text-center">
-            <h3 className="text-xl font-bold text-[#1A1A1A] mb-2">
-              Want More Resources?
-            </h3>
-            <p className="text-gray-600 mb-6">
-              Unlock 100+ comprehensive toolkits, guides, and family resources with LumiEd
-            </p>
-            <div className="flex items-center justify-center space-x-4">
-              <Button
-                onClick={() => setCurrentView('lumied-upsell')}
-                size="lg"
-                icon={ExternalLink}
-              >
-                Explore LumiEd
-              </Button>
-              <Button
-                variant="outline"
-                size="lg"
-              >
-                Learn More
-              </Button>
-            </div>
-          </div>
-        </Card>
       </div>
     </div>
   );

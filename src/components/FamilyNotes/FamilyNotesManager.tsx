@@ -5,7 +5,7 @@ import { Card } from '../UI/Card';
 import { Input } from '../UI/Input';
 import { Select } from '../UI/Select';
 import { useAppContext } from '../../context/AppContext';
-import { FAMILY_COMMUNICATION_SCRIPTS, PREMIUM_FAMILY_SCRIPTS, SCRIPT_CATEGORIES } from '../../data/familyScripts';
+import { FAMILY_COMMUNICATION_SCRIPTS, SCRIPT_CATEGORIES } from '../../data/familyScripts';
 
 export const FamilyNotesManager: React.FC = () => {
   const { setCurrentView } = useAppContext();
@@ -14,7 +14,7 @@ export const FamilyNotesManager: React.FC = () => {
   const [selectedLanguage, setSelectedLanguage] = useState('');
   const [showFilters, setShowFilters] = useState(false);
 
-  const allScripts = [...FAMILY_COMMUNICATION_SCRIPTS, ...PREMIUM_FAMILY_SCRIPTS];
+  const allScripts = FAMILY_COMMUNICATION_SCRIPTS;
 
   const filteredScripts = allScripts.filter(script => {
     const matchesSearch = !searchQuery || 
@@ -40,12 +40,8 @@ export const FamilyNotesManager: React.FC = () => {
   ];
 
   const handleScriptAccess = (script: any) => {
-    if (script.isPremium) {
-      setCurrentView('lumied-upsell');
-    } else {
-      // In real implementation, this would open the script editor/viewer
-      console.log('Accessing script:', script.title);
-    }
+    // In real implementation, this would open the script editor/viewer
+    console.log('Accessing script:', script.title);
   };
 
   return (
@@ -65,15 +61,9 @@ export const FamilyNotesManager: React.FC = () => {
             <div className="flex items-center space-x-3">
               <div className="bg-[#F8F6F4] px-3 py-1 rounded-full">
                 <span className="text-sm font-medium text-[#C44E38]">
-                  {FAMILY_COMMUNICATION_SCRIPTS.length} Free Scripts
+                  {FAMILY_COMMUNICATION_SCRIPTS.length} Scripts
                 </span>
               </div>
-              <Button
-                variant="outline"
-                onClick={() => setCurrentView('lumied-upsell')}
-              >
-                Get Premium Scripts
-              </Button>
               <Button
                 onClick={() => setCurrentView('family-script-generator')}
                 icon={MessageCircle}
@@ -222,33 +212,23 @@ export const FamilyNotesManager: React.FC = () => {
                     <div className="flex space-x-2">
                       {script.isPremium ? (
                         <Button
-                          onClick={() => handleScriptAccess(script)}
-                          variant="outline"
-                          size="sm"
-                        >
-                          Unlock in LumiEd
-                        </Button>
-                      ) : (
-                        <>
-                          <Button
-                            onClick={() => handleScriptAccess(script)}
-                            size="sm"
-                            icon={Download}
-                          >
-                            Use Script
-                          </Button>
-                          {script.familyHandoutId && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => setCurrentView('library')}
-                            >
-                              Get Handout
-                            </Button>
-                          )}
-                        </>
-                      )}
-                    </div>
+                  <div className="space-y-2">
+                    <Button
+                      onClick={() => handleScriptAccess(script)}
+                      size="sm"
+                      icon={Download}
+                    >
+                      Use Script
+                    </Button>
+                    {script.familyHandoutId && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentView('library')}
+                      >
+                        Get Handout
+                      </Button>
+                    )}
                   </div>
                 </div>
               </Card>
@@ -277,23 +257,6 @@ export const FamilyNotesManager: React.FC = () => {
           </div>
         )}
 
-        {/* Premium Promotion */}
-        <Card className="mt-12 p-8 bg-gradient-to-r from-[#F8F6F4] to-white border-[#C44E38] border-2">
-          <div className="text-center">
-            <h3 className="text-xl font-bold text-[#1A1A1A] mb-2">
-              Need More Communication Support?
-            </h3>
-            <p className="text-gray-600 mb-6">
-              Get access to specialized scripts for IEP meetings, trauma-informed communication, and complex family situations with LumiEd
-            </p>
-            <Button
-              onClick={() => setCurrentView('lumied-upsell')}
-              size="lg"
-            >
-              Explore Premium Scripts
-            </Button>
-          </div>
-        </Card>
       </div>
     </div>
   );
