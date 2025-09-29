@@ -156,6 +156,7 @@ export const EducatorSignup: React.FC = () => {
               placeholder="Enter your full name"
               required
               error={errors.fullName}
+              autoComplete="name"
             />
 
             <Input
@@ -166,6 +167,7 @@ export const EducatorSignup: React.FC = () => {
               placeholder="Enter your email address"
               required
               error={errors.email}
+              autoComplete="email"
             />
 
             <div className="relative">
@@ -178,11 +180,13 @@ export const EducatorSignup: React.FC = () => {
                 required
                 error={errors.password}
                 helperText="Must be at least 8 characters with a capital letter and number"
+                autoComplete="new-password"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-[38px] text-gray-500 hover:text-gray-700"
+                className="absolute right-3 top-[38px] text-gray-500 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#C44E38] rounded"
+                aria-label={showPassword ? "Hide password" : "Show password"}
               >
                 {showPassword ? (
                   <EyeOff className="w-5 h-5" />
@@ -197,6 +201,7 @@ export const EducatorSignup: React.FC = () => {
               loading={loading}
               className="w-full"
               size="lg"
+              disabled={loading}
             >
               Create Account
             </Button>

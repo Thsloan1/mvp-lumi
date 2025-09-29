@@ -2,6 +2,13 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Font optimization */
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+  font-variation-settings: normal;
+}
+
 /* Landing Page Animations */
 @keyframes fadeInUp {
   from {
@@ -54,6 +61,27 @@
 
 .animation-delay-400 {
   animation-delay: 400ms;
+}
+
+/* Performance optimizations */
+.animate-fade-in-up,
+.animate-fade-in-left,
+.animate-fade-in-right {
+  will-change: transform, opacity;
+}
+
+/* Reduce motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-in-up,
+  .animate-fade-in-left,
+  .animate-fade-in-right {
+    animation: none;
+  }
+  
+  .animation-delay-200,
+  .animation-delay-400 {
+    animation-delay: 0ms;
+  }
 }
 
 /* Smooth scrolling */

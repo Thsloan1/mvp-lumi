@@ -140,6 +140,7 @@ export const SignIn: React.FC = () => {
               placeholder="Enter your email address"
               required
               error={errors.email}
+              autoComplete="email"
             />
 
             <div className="relative">
@@ -151,11 +152,13 @@ export const SignIn: React.FC = () => {
                 placeholder="Enter your password"
                 required
                 error={errors.password}
+                autoComplete="current-password"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-[38px] text-gray-500 hover:text-gray-700"
+                className="absolute right-3 top-[38px] text-gray-500 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#C44E38] rounded"
+                aria-label={showPassword ? "Hide password" : "Show password"}
               >
                 {showPassword ? (
                   <EyeOff className="w-5 h-5" />
@@ -170,13 +173,14 @@ export const SignIn: React.FC = () => {
                 <input
                   type="checkbox"
                   className="rounded border-[#E6E2DD] text-[#C44E38] focus:ring-[#C44E38]"
+                  aria-label="Remember me for future visits"
                 />
                 <span className="ml-2 text-sm text-gray-600">Remember me</span>
               </label>
               <button
                 type="button"
                 onClick={() => setCurrentView('forgot-password')}
-                className="text-sm text-[#C44E38] hover:underline"
+                className="text-sm text-[#C44E38] hover:underline focus:outline-none focus:ring-2 focus:ring-[#C44E38] rounded px-1"
               >
                 Forgot password?
               </button>
@@ -187,6 +191,7 @@ export const SignIn: React.FC = () => {
               loading={loading}
               className="w-full"
               size="lg"
+              disabled={loading}
             >
               Sign In
             </Button>

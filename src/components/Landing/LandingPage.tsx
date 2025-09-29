@@ -8,6 +8,7 @@ export const LandingPage: React.FC = () => {
   const { setCurrentView } = useAppContext();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeSection, setActiveSection] = useState('hero');
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -36,6 +37,15 @@ export const LandingPage: React.FC = () => {
       element.scrollIntoView({ behavior: 'smooth' });
     }
     setMobileMenuOpen(false);
+  };
+
+  const handleCTAClick = async (view: string) => {
+    setIsLoading(true);
+    // Add slight delay for better UX
+    setTimeout(() => {
+      setCurrentView(view);
+      setIsLoading(false);
+    }, 100);
   };
 
   const features = [
@@ -110,11 +120,11 @@ export const LandingPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-white">
       {/* Header */}
-      <header className="sticky top-0 z-50 bg-white border-b border-[#E6E2DD] shadow-sm">
+      <header className="sticky top-0 z-50 bg-white border-b border-[#E6E2DD] shadow-sm" role="banner">
         <div className="max-w-7xl mx-auto px-6">
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-2" role="img" aria-label="Lumi Classroom Behavior Coach">
               <div className="w-8 h-8 bg-[#C44E38] rounded-lg flex items-center justify-center">
                 <Heart className="w-5 h-5 text-white" />
               </div>
@@ -123,16 +133,18 @@ export const LandingPage: React.FC = () => {
             </div>
 
             {/* Desktop Navigation */}
-            <nav className="hidden md:flex items-center space-x-8">
+            <nav className="hidden md:flex items-center space-x-8" role="navigation" aria-label="Main navigation">
               <button 
                 onClick={() => scrollToSection('story')}
-                className="text-[#615E59] hover:text-[#1A1A1A] transition-colors"
+                className="text-[#615E59] hover:text-[#1A1A1A] transition-colors focus:outline-none focus:ring-2 focus:ring-[#C44E38] rounded-lg px-2 py-1"
+                aria-label="Learn about Lumi's story"
               >
                 About
               </button>
               <button 
                 onClick={() => scrollToSection('features')}
-                className="text-[#615E59] hover:text-[#1A1A1A] transition-colors"
+                className="text-[#615E59] hover:text-[#1A1A1A] transition-colors focus:outline-none focus:ring-2 focus:ring-[#C44E38] rounded-lg px-2 py-1"
+                aria-label="View Lumi features"
               >
                 Features
               </button>
@@ -150,15 +162,17 @@ export const LandingPage: React.FC = () => {
               </button>
               <div className="flex items-center space-x-3">
                 <Button
-                  onClick={() => setCurrentView('signin')}
+                  onClick={() => handleCTAClick('signin')}
                   variant="ghost"
                   size="sm"
+                  aria-label="Sign in to your account"
                 >
                   Sign In
                 </Button>
                 <Button
-                  onClick={() => setCurrentView('welcome')}
+                  onClick={() => handleCTAClick('welcome')}
                   size="sm"
+                  aria-label="Get started with Lumi"
                 >
                   Get Started
                 </Button>
@@ -168,7 +182,9 @@ export const LandingPage: React.FC = () => {
             {/* Mobile Menu Button */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="md:hidden p-2"
+              className="md:hidden p-2 focus:outline-none focus:ring-2 focus:ring-[#C44E38] rounded-lg"
+              aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
+              aria-expanded={mobileMenuOpen}
             >
               {mobileMenuOpen ? (
                 <X className="w-6 h-6 text-[#1A1A1A]" />
@@ -180,11 +196,12 @@ export const LandingPage: React.FC = () => {
 
           {/* Mobile Menu */}
           {mobileMenuOpen && (
-            <div className="md:hidden border-t border-[#E6E2DD] py-4">
-              <nav className="space-y-4">
+            <div className="md:hidden border-t border-[#E6E2DD] py-4" role="navigation" aria-label="Mobile navigation">
+              <nav className="space-y-4" role="menu">
                 <button 
                   onClick={() => scrollToSection('story')}
-                  className="block w-full text-left text-[#615E59] hover:text-[#1A1A1A] transition-colors"
+                  className="block w-full text-left text-[#615E59] hover:text-[#1A1A1A] transition-colors focus:outline-none focus:ring-2 focus:ring-[#C44E38] rounded-lg px-2 py-1"
+                  role="menuitem"
                 >
                   About
                 </button>
@@ -208,15 +225,17 @@ export const LandingPage: React.FC = () => {
                 </button>
                 <div className="pt-4 border-t border-[#E6E2DD] space-y-2">
                   <Button
-                    onClick={() => setCurrentView('signin')}
+                    onClick={() => handleCTAClick('signin')}
                     variant="ghost"
                     className="w-full"
+                    aria-label="Sign in to your account"
                   >
                     Sign In
                   </Button>
                   <Button
-                    onClick={() => setCurrentView('welcome')}
+                    onClick={() => handleCTAClick('welcome')}
                     className="w-full"
+                    aria-label="Get started with Lumi"
                   >
                     Get Started
                   </Button>
@@ -228,11 +247,11 @@ export const LandingPage: React.FC = () => {
       </header>
 
       {/* Hero Section */}
-      <section id="hero" className="relative py-20 lg:py-32 overflow-hidden">
+      <section id="hero" className="relative py-20 lg:py-32 overflow-hidden" role="main" aria-labelledby="hero-heading">
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center">
             <div className="animate-fade-in-up">
-              <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-[#1A1A1A] mb-6 leading-tight">
+              <h1 id="hero-heading" className="text-4xl md:text-6xl lg:text-7xl font-bold text-[#1A1A1A] mb-6 leading-tight">
                 Classroom Behavior,<br />
                 <span className="text-[#C44E38]">Decoded.</span>
               </h1>
@@ -255,19 +274,23 @@ export const LandingPage: React.FC = () => {
 
             <div className="animate-fade-in-up animation-delay-400 flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-6">
               <Button
-                onClick={() => setCurrentView('welcome')}
+                onClick={() => handleCTAClick('welcome')}
                 size="lg"
                 className="px-12 py-4 text-lg"
                 icon={ArrowRight}
                 iconPosition="right"
+                loading={isLoading}
+                aria-label="Get started with Lumi - Create your account"
               >
                 Get Started
               </Button>
               <Button
-                onClick={() => setCurrentView('signin')}
+                onClick={() => handleCTAClick('signin')}
                 variant="outline"
                 size="lg"
                 className="px-8 py-4 text-lg"
+                loading={isLoading}
+                aria-label="Sign in to your existing Lumi account"
               >
                 Sign In
               </Button>
@@ -301,11 +324,11 @@ export const LandingPage: React.FC = () => {
       </section>
 
       {/* The Story Section */}
-      <section id="story" className="py-20">
+      <section id="story" className="py-20" role="region" aria-labelledby="story-heading">
         <div className="max-w-7xl mx-auto px-6">
           <div className="grid lg:grid-cols-2 gap-16 items-center">
             <div className="animate-fade-in-left">
-              <h2 className="text-3xl md:text-4xl font-bold text-[#1A1A1A] mb-8">
+              <h2 id="story-heading" className="text-3xl md:text-4xl font-bold text-[#1A1A1A] mb-8">
                 The Story Educators Know Too Well
               </h2>
               
@@ -358,10 +381,10 @@ export const LandingPage: React.FC = () => {
       </section>
 
       {/* Solution Section */}
-      <section id="solution" className="py-20 bg-[#F8F6F4]">
+      <section id="solution" className="py-20 bg-[#F8F6F4]" role="region" aria-labelledby="solution-heading">
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-[#1A1A1A] mb-8">
+            <h2 id="solution-heading" className="text-3xl md:text-4xl font-bold text-[#1A1A1A] mb-8">
               The Moment Lumi Steps In
             </h2>
             <p className="text-xl text-[#615E59] mb-8">
@@ -419,10 +442,10 @@ export const LandingPage: React.FC = () => {
       </section>
 
       {/* Features Section */}
-      <section id="features" className="py-20">
+      <section id="features" className="py-20" role="region" aria-labelledby="features-heading">
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-[#1A1A1A] mb-8">
+            <h2 id="features-heading" className="text-3xl md:text-4xl font-bold text-[#1A1A1A] mb-8">
               What You Can Do With Lumi
             </h2>
             <p className="text-xl text-[#615E59] max-w-3xl mx-auto">
@@ -778,19 +801,23 @@ export const LandingPage: React.FC = () => {
             
             <div className="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-6">
               <Button
-                onClick={() => setCurrentView('welcome')}
+                onClick={() => handleCTAClick('welcome')}
                 size="lg"
                 className="bg-white text-[#C44E38] hover:bg-gray-50 px-12 py-4 text-lg font-semibold"
                 icon={ArrowRight}
                 iconPosition="right"
+                loading={isLoading}
+                aria-label="Get started free with Lumi"
               >
                 Get Started Free
               </Button>
               <Button
-                onClick={() => setCurrentView('signin')}
+                onClick={() => handleCTAClick('signin')}
                 variant="outline"
                 size="lg"
                 className="border-white text-white hover:bg-white hover:text-[#C44E38] px-8 py-4 text-lg"
+                loading={isLoading}
+                aria-label="Sign in to your existing account"
               >
                 Sign In
               </Button>

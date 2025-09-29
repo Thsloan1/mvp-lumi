@@ -47,6 +47,7 @@ export const Button: React.FC<ButtonProps> = ({
       type={type}
       onClick={onClick}
       disabled={disabled || loading}
+      aria-disabled={disabled || loading}
       className={`
         ${baseClasses}
         ${variantClasses[variant]}
@@ -56,15 +57,15 @@ export const Button: React.FC<ButtonProps> = ({
       `}
     >
       {loading ? (
-        <div className="animate-spin rounded-full h-4 w-4 border-2 border-current border-t-transparent mr-2" />
+        <div className="animate-spin rounded-full h-4 w-4 border-2 border-current border-t-transparent mr-2" aria-hidden="true" />
       ) : Icon && iconPosition === 'left' ? (
-        <Icon className="w-4 h-4 mr-2" />
+        <Icon className="w-4 h-4 mr-2" aria-hidden="true" />
       ) : null}
       
       {children}
       
       {Icon && iconPosition === 'right' && !loading && (
-        <Icon className="w-4 h-4 ml-2" />
+        <Icon className="w-4 h-4 ml-2" aria-hidden="true" />
       )}
     </button>
   );
