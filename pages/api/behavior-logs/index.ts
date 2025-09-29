@@ -1,19 +1,16 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { getAuth } from '@clerk/nextjs/server';
-import { prisma } from '../../../lib/prisma';
-import { Severity, EducatorMood } from '@prisma/client';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '../../../lib/auth';
+import { DatabaseService } from '../../../lib/database';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  const { userId } = getAuth(req);
+  const session = await getServerSession(req, res, authOptions);
 
-  if (!userId) {
+  if (!session?.user?.email) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
-  const user = await prisma.user.findUnique({
-    where: { clerkId: userId }
-  });
-
+  const user = await DatabaseService.getUserByEmail(session.user.email);
   if (!user) {
     return res.status(404).json({ error: 'User not found' });
   }
@@ -30,15 +27,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
 async function getBehaviorLogs(req: NextApiRequest, res: NextApiResponse, userId: string) {
   try {
-    const behaviorLogs = await prisma.behaviorLog.findMany({
-      where: { educatorId: userId },
-      include: {
-        child: true,
-        classroom: true
-      },
-      orderBy: { createdAt: 'desc' }
-    });
-
+    const behaviorLogs = await DatabaseService.getUserBehaviorLogs(userId);
     res.status(200).json({ behaviorLogs });
   } catch (error) {
     console.error('Get behavior logs error:', error);
@@ -56,21 +45,9 @@ async function createBehaviorLog(req: NextApiRequest, res: NextApiResponse, user
     severity,
     educatorMood,
     stressors,
-    intensity,
-    duration,
-    frequency,
-    adultResponse,
-    outcome,
-    developmentalNotes,
-    supports,
-    classroomRatio,
-    resourcesAvailable,
-    educatorStressLevel,
-    confidenceLevel,
     aiResponse,
     selectedStrategy,
-    confidenceRating,
-    reflectionNotes
+    confidenceRating
   } = req.body;
 
   if (!behaviorDescription || !context || !severity) {
@@ -78,37 +55,19 @@ async function createBehaviorLog(req: NextApiRequest, res: NextApiResponse, user
   }
 
   try {
-    const behaviorLog = await prisma.behaviorLog.create({
-      data: {
-        educatorId: userId,
-        childId: childId || null,
-        classroomId: classroomId || null,
-        behaviorDescription,
-        context,
-        timeOfDay,
-        severity: severity as Severity,
-        educatorMood: educatorMood as EducatorMood,
-        stressors: stressors || [],
-        intensity,
-        duration,
-        frequency,
-        adultResponse: adultResponse || [],
-        outcome: outcome || [],
-        developmentalNotes,
-        supports: supports || [],
-        classroomRatio,
-        resourcesAvailable: resourcesAvailable || [],
-        educatorStressLevel,
-        confidenceLevel,
-        aiResponse: aiResponse || null,
-        selectedStrategy,
-        confidenceRating,
-        reflectionNotes
-      },
-      include: {
-        child: true,
-        classroom: true
-      }
+    const behaviorLog = await DatabaseService.createBehaviorLog({
+      educatorId: userId,
+      childId: childId || undefined,
+      classroomId: classroomId || undefined,
+      behaviorDescription,
+      context,
+      timeOfDay,
+      severity: severity.toUpperCase() as 'LOW' | 'MEDIUM' | 'HIGH',
+      educatorMood: educatorMood?.toUpperCase(),
+      stressors: stressors || [],
+      aiResponse,
+      selectedStrategy,
+      confidenceRating
     });
 
     res.status(201).json({ behaviorLog });

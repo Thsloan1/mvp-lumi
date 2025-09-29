@@ -1,19 +1,16 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { getAuth } from '@clerk/nextjs/server';
-import { prisma } from '../../../lib/prisma';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '../../../lib/auth';
+import { DatabaseService } from '../../../lib/database';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  const { userId } = getAuth(req);
+  const session = await getServerSession(req, res, authOptions);
 
-  if (!userId) {
+  if (!session?.user?.email) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
-  const user = await prisma.user.findUnique({
-    where: { clerkId: userId },
-    include: { classrooms: true }
-  });
-
+  const user = await DatabaseService.getUserByEmail(session.user.email);
   if (!user) {
     return res.status(404).json({ error: 'User not found' });
   }
@@ -30,24 +27,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
 async function getChildren(req: NextApiRequest, res: NextApiResponse, user: any) {
   try {
-    // Get children from all user's classrooms
-    const classroomIds = user.classrooms.map((c: any) => c.id);
-    
-    const children = await prisma.child.findMany({
-      where: { 
-        classroomId: { in: classroomIds }
-      },
-      include: {
-        classroom: true,
-        behaviorLogs: {
-          select: { id: true, createdAt: true, severity: true },
-          orderBy: { createdAt: 'desc' },
-          take: 5
-        }
-      },
-      orderBy: { name: 'asc' }
-    });
-
+    const classrooms = await DatabaseService.getUserClassrooms(user.id);
+    const children = classrooms.flatMap(classroom => classroom.children || []);
     res.status(200).json({ children });
   } catch (error) {
     console.error('Get children error:', error);
@@ -62,15 +43,8 @@ async function createChild(req: NextApiRequest, res: NextApiResponse, user: any)
     gradeBand,
     classroomId,
     developmentalNotes,
-    languageAbility,
-    selfRegulationSkills,
-    sensorySensitivities,
     hasIEP,
-    hasIFSP,
-    supportPlans,
-    knownTriggers,
-    homeLanguage,
-    familyContext
+    hasIFSP
   } = req.body;
 
   if (!name || !gradeBand) {
@@ -79,47 +53,32 @@ async function createChild(req: NextApiRequest, res: NextApiResponse, user: any)
 
   // Use default classroom if none specified
   let targetClassroomId = classroomId;
-  if (!targetClassroomId && user.classrooms.length > 0) {
-    targetClassroomId = user.classrooms[0].id;
-  }
-
   if (!targetClassroomId) {
-    return res.status(400).json({ error: 'No classroom available for child' });
-  }
-
-  // Verify user owns the classroom
-  const classroom = await prisma.classroom.findFirst({
-    where: { 
-      id: targetClassroomId,
-      educatorId: user.id 
+    const classrooms = await DatabaseService.getUserClassrooms(user.id);
+    if (classrooms.length > 0) {
+      targetClassroomId = classrooms[0].id;
+    } else {
+      // Create default classroom
+      const defaultClassroom = await DatabaseService.createClassroom(user.id, {
+        name: `${user.fullName?.split(' ')[0]}'s Classroom`,
+        gradeBand: 'Preschool (4-5 years old)',
+        studentCount: 15,
+        teacherStudentRatio: '1:8',
+        stressors: []
+      });
+      targetClassroomId = defaultClassroom.id;
     }
-  });
-
-  if (!classroom) {
-    return res.status(403).json({ error: 'Access denied to classroom' });
   }
 
   try {
-    const child = await prisma.child.create({
-      data: {
-        name,
-        age,
-        gradeBand,
-        classroomId: targetClassroomId,
-        developmentalNotes,
-        languageAbility,
-        selfRegulationSkills,
-        sensorySensitivities: sensorySensitivities || [],
-        hasIEP: hasIEP || false,
-        hasIFSP: hasIFSP || false,
-        supportPlans: supportPlans || [],
-        knownTriggers: knownTriggers || [],
-        homeLanguage,
-        familyContext
-      },
-      include: {
-        classroom: true
-      }
+    const child = await DatabaseService.createChild({
+      name,
+      age,
+      gradeBand,
+      classroomId: targetClassroomId,
+      developmentalNotes,
+      hasIEP: hasIEP || false,
+      hasIFSP: hasIFSP || false
     });
 
     res.status(201).json({ child });

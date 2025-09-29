@@ -1,34 +1,43 @@
 import { useState, useEffect } from 'react';
-import { BehaviorLogApi, ClassroomLogApi, ChildApi, ClassroomApi, AnalyticsApi } from '../../lib/apiClient';
-import { useErrorHandler } from './useErrorHandler';
+import { useSession } from 'next-auth/react';
+import { BehaviorLogApi, ClassroomLogApi, ChildApi, ClassroomApi, AIApi } from '../../lib/apiClient';
+import { useToast } from './useToast';
 
 export const useApiData = () => {
-  const { handleApiError } = useErrorHandler();
+  const { error: showError } = useToast();
   
+  const handleApiError = (error: any, context?: any) => {
+    console.error('API Error:', error, context);
+    showError('Operation failed', error.message || 'Please try again');
+  };
+
   // Initialize API clients
-  const behaviorLogApi = new BehaviorLogApi({ onError: handleApiError });
-  const classroomLogApi = new ClassroomLogApi({ onError: handleApiError });
-  const childApi = new ChildApi({ onError: handleApiError });
-  const classroomApi = new ClassroomApi({ onError: handleApiError });
-  const analyticsApi = new AnalyticsApi({ onError: handleApiError });
+  const behaviorLogApi = new BehaviorLogApi();
+  const classroomLogApi = new ClassroomLogApi();
+  const childApi = new ChildApi();
+  const classroomApi = new ClassroomApi();
+  const aiApi = new AIApi();
 
   return {
     behaviorLogApi,
     classroomLogApi,
     childApi,
     classroomApi,
-    analyticsApi,
+    aiApi,
     handleApiError
   };
 };
 
-// Hook for behavior logs with real-time sync
+// Hook for behavior logs with real API integration
 export const useBehaviorLogs = () => {
   const [behaviorLogs, setBehaviorLogs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const { behaviorLogApi, handleApiError } = useApiData();
+  const { data: session } = useSession();
 
   const fetchBehaviorLogs = async () => {
+    if (!session?.user) return;
+    
     try {
       setLoading(true);
       const response = await behaviorLogApi.getBehaviorLogs();
@@ -41,6 +50,8 @@ export const useBehaviorLogs = () => {
   };
 
   const createBehaviorLog = async (data: any) => {
+    if (!session?.user) throw new Error('Not authenticated');
+    
     try {
       const response = await behaviorLogApi.createBehaviorLog(data);
       setBehaviorLogs(prev => [response.behaviorLog, ...prev]);
@@ -51,39 +62,16 @@ export const useBehaviorLogs = () => {
     }
   };
 
-  const updateBehaviorLog = async (id: string, data: any) => {
-    try {
-      const response = await behaviorLogApi.updateBehaviorLog(id, data);
-      setBehaviorLogs(prev => prev.map(log => 
-        log.id === id ? response.behaviorLog : log
-      ));
-      return response.behaviorLog;
-    } catch (error) {
-      handleApiError(error, { action: 'updateBehaviorLog' });
-      throw error;
-    }
-  };
-
-  const deleteBehaviorLog = async (id: string) => {
-    try {
-      await behaviorLogApi.deleteBehaviorLog(id);
-      setBehaviorLogs(prev => prev.filter(log => log.id !== id));
-    } catch (error) {
-      handleApiError(error, { action: 'deleteBehaviorLog' });
-      throw error;
-    }
-  };
-
   useEffect(() => {
-    fetchBehaviorLogs();
-  }, []);
+    if (session?.user) {
+      fetchBehaviorLogs();
+    }
+  }, [session?.user]);
 
   return {
     behaviorLogs,
     loading,
     createBehaviorLog,
-    updateBehaviorLog,
-    deleteBehaviorLog,
     refetch: fetchBehaviorLogs
   };
 };
@@ -93,8 +81,11 @@ export const useClassroomLogs = () => {
   const [classroomLogs, setClassroomLogs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const { classroomLogApi, handleApiError } = useApiData();
+  const { data: session } = useSession();
 
   const fetchClassroomLogs = async () => {
+    if (!session?.user) return;
+    
     try {
       setLoading(true);
       const response = await classroomLogApi.getClassroomLogs();
@@ -107,6 +98,8 @@ export const useClassroomLogs = () => {
   };
 
   const createClassroomLog = async (data: any) => {
+    if (!session?.user) throw new Error('Not authenticated');
+    
     try {
       const response = await classroomLogApi.createClassroomLog(data);
       setClassroomLogs(prev => [response.classroomLog, ...prev]);
@@ -118,8 +111,10 @@ export const useClassroomLogs = () => {
   };
 
   useEffect(() => {
-    fetchClassroomLogs();
-  }, []);
+    if (session?.user) {
+      fetchClassroomLogs();
+    }
+  }, [session?.user]);
 
   return {
     classroomLogs,
@@ -134,8 +129,11 @@ export const useChildren = () => {
   const [children, setChildren] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const { childApi, handleApiError } = useApiData();
+  const { data: session } = useSession();
 
   const fetchChildren = async () => {
+    if (!session?.user) return;
+    
     try {
       setLoading(true);
       const response = await childApi.getChildren();
@@ -148,6 +146,8 @@ export const useChildren = () => {
   };
 
   const createChild = async (data: any) => {
+    if (!session?.user) throw new Error('Not authenticated');
+    
     try {
       const response = await childApi.createChild(data);
       setChildren(prev => [...prev, response.child]);
@@ -158,39 +158,17 @@ export const useChildren = () => {
     }
   };
 
-  const updateChild = async (id: string, data: any) => {
-    try {
-      const response = await childApi.updateChild(id, data);
-      setChildren(prev => prev.map(child => 
-        child.id === id ? response.child : child
-      ));
-      return response.child;
-    } catch (error) {
-      handleApiError(error, { action: 'updateChild' });
-      throw error;
-    }
-  };
-
-  const deleteChild = async (id: string) => {
-    try {
-      await childApi.deleteChild(id);
-      setChildren(prev => prev.filter(child => child.id !== id));
-    } catch (error) {
-      handleApiError(error, { action: 'deleteChild' });
-      throw error;
-    }
-  };
-
   useEffect(() => {
-    fetchChildren();
-  }, []);
+    if (session?.user) {
+      fetchChildren();
+    }
+  }, [session?.user]);
 
   return {
     children,
+    setChildren,
     loading,
     createChild,
-    updateChild,
-    deleteChild,
     refetch: fetchChildren
   };
 };
@@ -200,8 +178,11 @@ export const useClassrooms = () => {
   const [classrooms, setClassrooms] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const { classroomApi, handleApiError } = useApiData();
+  const { data: session } = useSession();
 
   const fetchClassrooms = async () => {
+    if (!session?.user) return;
+    
     try {
       setLoading(true);
       const response = await classroomApi.getClassrooms();
@@ -214,6 +195,8 @@ export const useClassrooms = () => {
   };
 
   const createClassroom = async (data: any) => {
+    if (!session?.user) throw new Error('Not authenticated');
+    
     try {
       const response = await classroomApi.createClassroom(data);
       setClassrooms(prev => [...prev, response.classroom]);
@@ -224,28 +207,17 @@ export const useClassrooms = () => {
     }
   };
 
-  const updateClassroom = async (id: string, data: any) => {
-    try {
-      const response = await classroomApi.updateClassroom(id, data);
-      setClassrooms(prev => prev.map(classroom => 
-        classroom.id === id ? response.classroom : classroom
-      ));
-      return response.classroom;
-    } catch (error) {
-      handleApiError(error, { action: 'updateClassroom' });
-      throw error;
-    }
-  };
-
   useEffect(() => {
-    fetchClassrooms();
-  }, []);
+    if (session?.user) {
+      fetchClassrooms();
+    }
+  }, [session?.user]);
 
   return {
     classrooms,
+    setClassrooms,
     loading,
     createClassroom,
-    updateClassroom,
     refetch: fetchClassrooms
   };
 };

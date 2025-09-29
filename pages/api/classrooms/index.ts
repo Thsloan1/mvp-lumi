@@ -1,18 +1,16 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { getAuth } from '@clerk/nextjs/server';
-import { prisma } from '../../../lib/prisma';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '../../../lib/auth';
+import { DatabaseService } from '../../../lib/database';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  const { userId } = getAuth(req);
+  const session = await getServerSession(req, res, authOptions);
 
-  if (!userId) {
+  if (!session?.user?.email) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
-  const user = await prisma.user.findUnique({
-    where: { clerkId: userId }
-  });
-
+  const user = await DatabaseService.getUserByEmail(session.user.email);
   if (!user) {
     return res.status(404).json({ error: 'User not found' });
   }
@@ -29,26 +27,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
 async function getClassrooms(req: NextApiRequest, res: NextApiResponse, userId: string) {
   try {
-    const classrooms = await prisma.classroom.findMany({
-      where: { educatorId: userId },
-      include: {
-        children: {
-          select: { id: true, name: true, hasIEP: true, hasIFSP: true }
-        },
-        behaviorLogs: {
-          select: { id: true, severity: true, createdAt: true },
-          orderBy: { createdAt: 'desc' },
-          take: 10
-        },
-        classroomLogs: {
-          select: { id: true, severity: true, createdAt: true },
-          orderBy: { createdAt: 'desc' },
-          take: 10
-        }
-      },
-      orderBy: { createdAt: 'desc' }
-    });
-
+    const classrooms = await DatabaseService.getUserClassrooms(userId);
     res.status(200).json({ classrooms });
   } catch (error) {
     console.error('Get classrooms error:', error);
@@ -72,20 +51,14 @@ async function createClassroom(req: NextApiRequest, res: NextApiResponse, userId
   }
 
   try {
-    const classroom = await prisma.classroom.create({
-      data: {
-        name,
-        gradeBand,
-        studentCount: parseInt(studentCount),
-        teacherStudentRatio,
-        iepCount: parseInt(iepCount) || 0,
-        ifspCount: parseInt(ifspCount) || 0,
-        stressors: stressors || [],
-        educatorId: userId
-      },
-      include: {
-        children: true
-      }
+    const classroom = await DatabaseService.createClassroom(userId, {
+      name,
+      gradeBand,
+      studentCount: parseInt(studentCount),
+      teacherStudentRatio,
+      iepCount: parseInt(iepCount) || 0,
+      ifspCount: parseInt(ifspCount) || 0,
+      stressors: stressors || []
     });
 
     res.status(201).json({ classroom });

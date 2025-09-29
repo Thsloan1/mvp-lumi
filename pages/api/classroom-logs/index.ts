@@ -1,19 +1,16 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { getAuth } from '@clerk/nextjs/server';
-import { prisma } from '../../../lib/prisma';
-import { Severity, EducatorMood } from '@prisma/client';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '../../../lib/auth';
+import { DatabaseService } from '../../../lib/database';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  const { userId } = getAuth(req);
+  const session = await getServerSession(req, res, authOptions);
 
-  if (!userId) {
+  if (!session?.user?.email) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
-  const user = await prisma.user.findUnique({
-    where: { clerkId: userId }
-  });
-
+  const user = await DatabaseService.getUserByEmail(session.user.email);
   if (!user) {
     return res.status(404).json({ error: 'User not found' });
   }
@@ -30,14 +27,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
 async function getClassroomLogs(req: NextApiRequest, res: NextApiResponse, userId: string) {
   try {
-    const classroomLogs = await prisma.classroomLog.findMany({
-      where: { educatorId: userId },
-      include: {
-        classroom: true
-      },
-      orderBy: { createdAt: 'desc' }
-    });
-
+    const classroomLogs = await DatabaseService.getUserClassroomLogs(userId);
     res.status(200).json({ classroomLogs });
   } catch (error) {
     console.error('Get classroom logs error:', error);
@@ -56,8 +46,7 @@ async function createClassroomLog(req: NextApiRequest, res: NextApiResponse, use
     aiResponse,
     selectedStrategy,
     confidenceSelfRating,
-    confidenceStrategyRating,
-    reflectionNotes
+    confidenceStrategyRating
   } = req.body;
 
   if (!challengeDescription || !context || !severity || !classroomId) {
@@ -65,24 +54,18 @@ async function createClassroomLog(req: NextApiRequest, res: NextApiResponse, use
   }
 
   try {
-    const classroomLog = await prisma.classroomLog.create({
-      data: {
-        educatorId: userId,
-        classroomId,
-        challengeDescription,
-        context,
-        severity: severity as Severity,
-        educatorMood: educatorMood as EducatorMood,
-        stressors: stressors || [],
-        aiResponse: aiResponse || null,
-        selectedStrategy,
-        confidenceSelfRating,
-        confidenceStrategyRating,
-        reflectionNotes
-      },
-      include: {
-        classroom: true
-      }
+    const classroomLog = await DatabaseService.createClassroomLog({
+      educatorId: userId,
+      classroomId,
+      challengeDescription,
+      context,
+      severity: severity.toUpperCase() as 'LOW' | 'MEDIUM' | 'HIGH',
+      educatorMood: educatorMood?.toUpperCase(),
+      stressors: stressors || [],
+      aiResponse,
+      selectedStrategy,
+      confidenceSelfRating,
+      confidenceStrategyRating
     });
 
     res.status(201).json({ classroomLog });
