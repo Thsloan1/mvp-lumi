@@ -1,5 +1,4 @@
 import React from 'react';
-import { Video as LucideIcon } from 'lucide-react';
 
 interface ButtonProps {
   children: React.ReactNode;
@@ -9,7 +8,7 @@ interface ButtonProps {
   size?: 'sm' | 'md' | 'lg';
   disabled?: boolean;
   loading?: boolean;
-  icon?: LucideIcon;
+  icon?: React.ComponentType<any>;
   iconPosition?: 'left' | 'right';
   className?: string;
 }
