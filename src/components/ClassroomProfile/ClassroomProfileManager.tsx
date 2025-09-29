@@ -7,9 +7,10 @@ import { Select } from '../UI/Select';
 import { useAppContext } from '../../context/AppContext';
 import { Classroom } from '../../types';
 import { GRADE_BAND_OPTIONS, STRESSOR_OPTIONS } from '../../data/constants';
+import { AnalyticsEngine } from '../../utils/analyticsEngine';
 
 export const ClassroomProfileManager: React.FC = () => {
-  const { currentUser, classrooms, setClassrooms, behaviorLogs, classroomLogs } = useAppContext();
+  const { currentUser, classrooms, setClassrooms, behaviorLogs, classroomLogs, children } = useAppContext();
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState<Partial<Classroom>>({});
 
@@ -83,6 +84,17 @@ export const ClassroomProfileManager: React.FC = () => {
   };
 
   const stats = getClassroomStats();
+
+  // Generate classroom insights
+  const classroomInsight = currentClassroom 
+    ? AnalyticsEngine.generateClassroomInsights(
+        currentClassroom.id, 
+        behaviorLogs, 
+        classroomLogs, 
+        children, 
+        currentClassroom
+      )
+    : null;
 
   const gradeBandOptions = GRADE_BAND_OPTIONS.map(option => ({
     value: option,
@@ -173,6 +185,132 @@ export const ClassroomProfileManager: React.FC = () => {
             </div>
           </Card>
         </div>
+
+        {/* Unified Classroom Insights */}
+        {classroomInsight && (
+          <div className="grid lg:grid-cols-2 gap-8 mb-8">
+            {/* Child Behaviors Aggregated */}
+            <Card className="p-6">
+              <h3 className="text-lg font-semibold text-[#1A1A1A] mb-6">
+                Child Behaviors Aggregated
+              </h3>
+              
+              <div className="space-y-6">
+                <div>
+                  <h4 className="font-medium text-[#1A1A1A] mb-3">Most Frequent Behaviors</h4>
+                  <div className="space-y-2">
+                    {classroomInsight.aggregatedChildBehaviors.mostFrequentBehaviors.map((behavior, index) => (
+                      <div key={index} className="flex items-center justify-between">
+                        <span className="text-sm text-gray-700">{behavior}</span>
+                        <div className="w-16 bg-[#E6E2DD] rounded-full h-2">
+                          <div 
+                            className="bg-[#C44E38] h-2 rounded-full"
+                            style={{ width: `${100 - (index * 20)}%` }}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                
+                <div>
+                  <h4 className="font-medium text-[#1A1A1A] mb-3">Common Stressors</h4>
+                  <div className="space-y-1">
+                    {classroomInsight.aggregatedChildBehaviors.commonStressors.map((stressor, index) => (
+                      <div key={index} className="text-sm text-gray-700 flex items-center">
+                        <div className="w-2 h-2 bg-blue-500 rounded-full mr-2" />
+                        {stressor}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <h4 className="font-medium text-[#1A1A1A] mb-3">Severity Distribution</h4>
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="text-center">
+                      <div className="text-lg font-bold text-green-600">
+                        {classroomInsight.aggregatedChildBehaviors.severityMix.low}
+                      </div>
+                      <p className="text-xs text-gray-600">Low</p>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-lg font-bold text-yellow-600">
+                        {classroomInsight.aggregatedChildBehaviors.severityMix.medium}
+                      </div>
+                      <p className="text-xs text-gray-600">Medium</p>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-lg font-bold text-red-600">
+                        {classroomInsight.aggregatedChildBehaviors.severityMix.high}
+                      </div>
+                      <p className="text-xs text-gray-600">High</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </Card>
+
+            {/* Classroom Challenges */}
+            <Card className="p-6">
+              <h3 className="text-lg font-semibold text-[#1A1A1A] mb-6">
+                Classroom Challenges
+              </h3>
+              
+              <div className="space-y-6">
+                <div>
+                  <h4 className="font-medium text-[#1A1A1A] mb-3">Group Climate Score</h4>
+                  <div className="flex items-center space-x-3">
+                    <div className="text-2xl font-bold text-[#C44E38]">
+                      {classroomInsight.groupClimate.score}/10
+                    </div>
+                    <div className="flex-1">
+                      <div className="w-full bg-[#E6E2DD] rounded-full h-3">
+                        <div 
+                          className="bg-[#C44E38] h-3 rounded-full"
+                          style={{ width: `${classroomInsight.groupClimate.score * 10}%` }}
+                        />
+                      </div>
+                      <p className="text-xs text-gray-600 mt-1">
+                        Based on severity and frequency patterns
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <h4 className="font-medium text-[#1A1A1A] mb-3">Challenge Areas</h4>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-gray-700">Transition Difficulty</span>
+                      <span className="text-sm font-medium text-[#1A1A1A]">
+                        {classroomInsight.classroomChallenges.transitionDifficulty}%
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-gray-700">Group Management</span>
+                      <span className="text-sm font-medium text-[#1A1A1A]">
+                        {classroomInsight.classroomChallenges.groupManagementScore}/10
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <h4 className="font-medium text-[#1A1A1A] mb-3">Environmental Stressors</h4>
+                  <div className="space-y-1">
+                    {classroomInsight.classroomChallenges.environmentalStressors.map((stressor, index) => (
+                      <div key={index} className="text-sm text-gray-700 flex items-center">
+                        <div className="w-2 h-2 bg-orange-500 rounded-full mr-2" />
+                        {stressor}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </Card>
+          </div>
+        )}
 
         {/* Classroom Details */}
         <Card className="p-8 mb-8">

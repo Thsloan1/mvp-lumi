@@ -4,9 +4,33 @@ import { Button } from '../UI/Button';
 import { Card } from '../UI/Card';
 import { useAppContext } from '../../context/AppContext';
 import { EngagementTracker } from '../Analytics/EngagementTracker';
+import { AnalyticsEngine, ChildInsight, ClassroomInsight, UnifiedInsight } from '../../utils/analyticsEngine';
 
 export const EducatorDashboard: React.FC = () => {
-  const { currentUser, behaviorLogs, classroomLogs, setCurrentView } = useAppContext();
+  const { currentUser, behaviorLogs, classroomLogs, children, classrooms, setCurrentView } = useAppContext();
+
+  // Generate unified insights
+  const currentClassroom = classrooms[0]; // For MVP, use first classroom
+  const childInsights = children.map(child => 
+    AnalyticsEngine.generateChildInsights(child.id, behaviorLogs, child)
+  ).filter(insight => insight.totalLogs > 0);
+
+  const classroomInsight = currentClassroom 
+    ? AnalyticsEngine.generateClassroomInsights(
+        currentClassroom.id, 
+        behaviorLogs, 
+        classroomLogs, 
+        children, 
+        currentClassroom
+      )
+    : null;
+
+  const unifiedInsights = AnalyticsEngine.generateUnifiedInsights(
+    behaviorLogs,
+    classroomLogs,
+    children,
+    classrooms
+  );
 
   const stats = [
     {
@@ -130,58 +154,180 @@ export const EducatorDashboard: React.FC = () => {
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Quick Actions */}
           <div className="lg:col-span-1">
-            <Card className="p-6">
-              <h3 className="text-lg font-semibold text-[#1A1A1A] mb-6">
-                Quick Actions
-              </h3>
-              <div className="space-y-4">
-                <Button
-                  onClick={() => setCurrentView('child-profiles')}
-                  variant="outline"
-                  className="w-full justify-start"
-                  icon={User}
-                >
-                  Child Profiles
-                </Button>
-                <Button
-                  onClick={() => setCurrentView('classroom-profile')}
-                  variant="outline"
-                  className="w-full justify-start"
-                  icon={Users}
-                >
-                  Classroom Profile
-                </Button>
-                <Button
-                  onClick={() => setCurrentView('reports')}
-                  variant="outline"
-                  className="w-full justify-start"
-                  icon={BarChart3}
-                >
-                  View Data and Reports
-                </Button>
-                <Button
-                  onClick={() => setCurrentView('library')}
-                  variant="outline"
-                  className="w-full justify-start"
-                  icon={BookOpen}
-                >
-                  Resource Library
-                </Button>
-                <Button
-                  onClick={() => setCurrentView('family-notes')}
-                  variant="outline"
-                  className="w-full justify-start"
-                  icon={FileText}
-                >
-                  Family Notes
-                </Button>
-              </div>
-            </Card>
+            <div className="space-y-6">
+              <Card className="p-6">
+                <h3 className="text-lg font-semibold text-[#1A1A1A] mb-6">
+                  Quick Actions
+                </h3>
+                <div className="space-y-4">
+                  <Button
+                    onClick={() => setCurrentView('child-profiles')}
+                    variant="outline"
+                    className="w-full justify-start"
+                    icon={User}
+                  >
+                    Child Profiles
+                  </Button>
+                  <Button
+                    onClick={() => setCurrentView('classroom-profile')}
+                    variant="outline"
+                    className="w-full justify-start"
+                    icon={Users}
+                  >
+                    Classroom Profile
+                  </Button>
+                  <Button
+                    onClick={() => setCurrentView('reports')}
+                    variant="outline"
+                    className="w-full justify-start"
+                    icon={BarChart3}
+                  >
+                    View Data and Reports
+                  </Button>
+                  <Button
+                    onClick={() => setCurrentView('library')}
+                    variant="outline"
+                    className="w-full justify-start"
+                    icon={BookOpen}
+                  >
+                    Resource Library
+                  </Button>
+                  <Button
+                    onClick={() => setCurrentView('family-notes')}
+                    variant="outline"
+                    className="w-full justify-start"
+                    icon={FileText}
+                  >
+                    Family Notes
+                  </Button>
+                </div>
+              </Card>
+
+              {/* Child Insights Feed */}
+              {childInsights.length > 0 && (
+                <Card className="p-6">
+                  <h3 className="text-lg font-semibold text-[#1A1A1A] mb-4">
+                    Child Insights
+                  </h3>
+                  <div className="space-y-4">
+                    {childInsights.slice(0, 3).map((insight) => (
+                      <div key={insight.childId} className="p-4 bg-[#F8F6F4] rounded-xl">
+                        <div className="flex items-center justify-between mb-2">
+                          <p className="font-medium text-[#1A1A1A]">{insight.childName}</p>
+                          <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">
+                            {insight.totalLogs} logs
+                          </span>
+                        </div>
+                        <p className="text-sm text-gray-600 mb-2">
+                          Most frequent: {insight.patterns.mostFrequentContext.replace(/_/g, ' ')}
+                        </p>
+                        {insight.patterns.effectiveStrategies.length > 0 && (
+                          <p className="text-xs text-green-600">
+                            Effective: {insight.patterns.effectiveStrategies[0].substring(0, 40)}...
+                          </p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                  <Button
+                    onClick={() => setCurrentView('reports')}
+                    variant="ghost"
+                    size="sm"
+                    className="w-full mt-4"
+                  >
+                    View All Child Reports
+                  </Button>
+                </Card>
+              )}
+            </div>
           </div>
 
           {/* Recent Activity */}
           <div className="lg:col-span-2">
             <div className="space-y-6">
+              {/* Unified Insights */}
+              {unifiedInsights.length > 0 && (
+                <Card className="p-6">
+                  <h3 className="text-lg font-semibold text-[#1A1A1A] mb-6">
+                    Unified Insights
+                  </h3>
+                  <div className="space-y-4">
+                    {unifiedInsights.map((insight, index) => (
+                      <div key={index} className="p-4 bg-gradient-to-r from-blue-50 to-green-50 rounded-xl border border-blue-200">
+                        <div className="flex items-start justify-between mb-3">
+                          <h4 className="font-semibold text-[#1A1A1A]">{insight.pattern}</h4>
+                          <span className={`
+                            px-2 py-1 rounded-full text-xs font-medium
+                            ${insight.classroomLevel.severity === 'high' ? 'bg-red-100 text-red-700' :
+                              insight.classroomLevel.severity === 'medium' ? 'bg-yellow-100 text-yellow-700' :
+                              'bg-green-100 text-green-700'}
+                          `}>
+                            {insight.classroomLevel.severity} severity
+                          </span>
+                        </div>
+                        <div className="grid md:grid-cols-2 gap-4 mb-3">
+                          <div>
+                            <p className="text-sm font-medium text-blue-900">Child Level:</p>
+                            <p className="text-sm text-blue-700">
+                              {insight.childLevel.affectedChildren} children, {insight.childLevel.frequency} incidents
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium text-green-900">Classroom Level:</p>
+                            <p className="text-sm text-green-700">
+                              {insight.classroomLevel.affectedClassrooms} classrooms affected
+                            </p>
+                          </div>
+                        </div>
+                        <div className="text-xs text-gray-600">
+                          <strong>Recommendations:</strong> {insight.recommendations.slice(0, 2).join(', ')}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </Card>
+              )}
+
+              {/* Classroom Climate Feed */}
+              {classroomInsight && (
+                <Card className="p-6">
+                  <h3 className="text-lg font-semibold text-[#1A1A1A] mb-6">
+                    Classroom Climate Insights
+                  </h3>
+                  <div className="grid md:grid-cols-2 gap-6">
+                    <div>
+                      <h4 className="font-medium text-[#1A1A1A] mb-3">Group Climate Score</h4>
+                      <div className="flex items-center space-x-3">
+                        <div className="text-3xl font-bold text-[#C44E38]">
+                          {classroomInsight.groupClimate.score}/10
+                        </div>
+                        <div className="flex-1">
+                          <div className="w-full bg-[#E6E2DD] rounded-full h-2">
+                            <div 
+                              className="bg-[#C44E38] h-2 rounded-full"
+                              style={{ width: `${classroomInsight.groupClimate.score * 10}%` }}
+                            />
+                          </div>
+                          <p className="text-xs text-gray-600 mt-1">
+                            {classroomInsight.groupClimate.transitionChallenges}% transition challenges
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                    <div>
+                      <h4 className="font-medium text-[#1A1A1A] mb-3">Top Stressors</h4>
+                      <div className="space-y-1">
+                        {classroomInsight.groupClimate.topStressors.slice(0, 3).map((stressor, index) => (
+                          <div key={index} className="text-sm text-gray-700 flex items-center">
+                            <div className="w-2 h-2 bg-[#C44E38] rounded-full mr-2" />
+                            {stressor}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </Card>
+              )}
               <Card className="p-6">
                 <h3 className="text-lg font-semibold text-[#1A1A1A] mb-6">
                   Recent Activity

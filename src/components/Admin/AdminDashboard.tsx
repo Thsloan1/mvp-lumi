@@ -3,6 +3,7 @@ import { Users, Plus, Settings, BarChart3, Mail, Crown, Shield, TrendingUp } fro
 import { Button } from '../UI/Button';
 import { Card } from '../UI/Card';
 import { useAppContext } from '../../context/AppContext';
+import { AnalyticsEngine, OrganizationInsight } from '../../utils/analyticsEngine';
 
 interface OrganizationStats {
   totalEducators: number;
@@ -14,7 +15,7 @@ interface OrganizationStats {
 }
 
 export const AdminDashboard: React.FC = () => {
-  const { currentUser, setCurrentView } = useAppContext();
+  const { currentUser, behaviorLogs, classroomLogs, children, classrooms, setCurrentView } = useAppContext();
   const [stats, setStats] = useState<OrganizationStats>({
     totalEducators: 0,
     activeSeats: 0,
@@ -24,6 +25,14 @@ export const AdminDashboard: React.FC = () => {
     totalClassroomLogs: 0
   });
   const [loading, setLoading] = useState(true);
+
+  // Generate organization insights
+  const organizationInsight = AnalyticsEngine.generateOrganizationInsights(
+    behaviorLogs,
+    classroomLogs,
+    children,
+    classrooms
+  );
 
   useEffect(() => {
     fetchOrganizationStats();
@@ -241,43 +250,60 @@ export const AdminDashboard: React.FC = () => {
               {/* Organization Overview */}
               <Card className="p-6">
                 <h3 className="text-lg font-semibold text-[#1A1A1A] mb-6">
-                  Organization Overview
+                  Organization Data Insights
                 </h3>
                 
-                <div className="grid md:grid-cols-2 gap-6">
+                <div className="space-y-6">
+                  {/* Cross-Site Comparisons */}
+                  <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                    <h4 className="font-medium text-blue-900 mb-3">Key Finding</h4>
+                    <p className="text-sm text-blue-800">
+                      <strong>{organizationInsight.crossSiteComparisons.highSeverityTransitions}%</strong> of high severity challenges 
+                      are logged during transitions (classroom-level)
+                    </p>
+                  </div>
+
+                  <div className="bg-green-50 border border-green-200 rounded-xl p-4">
+                    <h4 className="font-medium text-green-900 mb-3">Most Frequent Child Stressor</h4>
+                    <p className="text-sm text-green-800">
+                      <strong>{organizationInsight.crossSiteComparisons.mostFrequentChildStressor}</strong> (child-level)
+                    </p>
+                  </div>
+
                   <div>
-                    <h4 className="font-medium text-[#1A1A1A] mb-3">Subscription Status</h4>
+                    <h4 className="font-medium text-[#1A1A1A] mb-3">Classroom Stressor Prevalence</h4>
                     <div className="space-y-2">
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Plan:</span>
-                        <span className="font-medium text-[#1A1A1A]">Pro Plan</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Seats Used:</span>
-                        <span className="font-medium text-[#1A1A1A]">{stats.activeSeats}/{stats.maxSeats}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Status:</span>
-                        <span className="text-green-600 font-medium">Active</span>
-                      </div>
+                      {organizationInsight.crossSiteComparisons.classroomStressorPrevalence.slice(0, 3).map((item, index) => (
+                        <div key={index} className="flex items-center justify-between">
+                          <span className="text-sm text-gray-700">{item.stressor}</span>
+                          <div className="flex items-center space-x-2">
+                            <div className="w-16 bg-[#E6E2DD] rounded-full h-2">
+                              <div 
+                                className="bg-[#C44E38] h-2 rounded-full"
+                                style={{ width: `${item.percentage}%` }}
+                              />
+                            </div>
+                            <span className="text-sm font-medium text-[#1A1A1A] w-8">
+                              {item.percentage}%
+                            </span>
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   </div>
-                  
+
                   <div>
-                    <h4 className="font-medium text-[#1A1A1A] mb-3">Usage This Month</h4>
+                    <h4 className="font-medium text-[#1A1A1A] mb-3">Severity Trends by Grade</h4>
                     <div className="space-y-2">
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Strategies Generated:</span>
-                        <span className="font-medium text-[#1A1A1A]">245</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Family Notes:</span>
-                        <span className="font-medium text-[#1A1A1A]">89</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Resources Downloaded:</span>
-                        <span className="font-medium text-[#1A1A1A]">156</span>
-                      </div>
+                      {organizationInsight.crossSiteComparisons.severityTrends
+                        .filter(trend => trend.severity === 'high')
+                        .slice(0, 3)
+                        .map((trend, index) => (
+                        <div key={index} className="flex items-center justify-between text-sm">
+                          <span className="text-gray-700">{trend.grade}</span>
+                          <span className="text-red-600 font-medium">{trend.percentage}% high severity</span>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 </div>
