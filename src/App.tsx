@@ -141,6 +141,18 @@ const AppContent: React.FC = () => {
         return <ChildProfilesManager />;
       case 'classroom-profile':
         return <ClassroomProfileManager />;
+      case 'profile-settings':
+        return <ProfileSettings />;
+      case 'admin-dashboard':
+        return <AdminDashboard />;
+      case 'manage-educators':
+        return <ManageEducators />;
+      case 'organization-settings':
+        return <OrganizationSettings />;
+      case 'organization-analytics':
+        return <OrganizationAnalytics />;
+      case 'developer-app-manager':
+        return <DeveloperAppManager />;
       default:
         // Handle dynamic child profile detail routes
         if (currentView.startsWith('child-profile-detail-')) {
@@ -148,8 +160,6 @@ const AppContent: React.FC = () => {
           return <ChildProfileDetail childId={childId} />;
         }
         return <WelcomeScreen />;
-      case 'profile-settings':
-        return <ProfileSettings />;
     }
   }
 };
