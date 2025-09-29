@@ -33,6 +33,7 @@ import { StickyNavigation } from './components/Navigation/StickyNavigation';
 import { ProfileSettings } from './components/Profile/ProfileSettings';
 import { DataReports } from './components/Reports/DataReports';
 import { FamilyScriptGenerator } from './components/FamilyNotes/FamilyScriptGenerator';
+import { AccessibilityProvider } from './components/UI/AccessibilityProvider';
 
 const AppContent: React.FC = () => {
   const { currentView, setCurrentView, currentUser, isLoading, isAuthenticated } = useAppContext();
