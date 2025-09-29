@@ -447,3 +447,50 @@ app.post('/api/subscriptions/add-seats', authenticateToken, (req, res) => {
 });
 
 // Email verification routes
+app.post('/api/auth/verify-email', authenticateToken, (req, res) => {
+  try {
+    const { code } = req.body;
+    const user = users.find(u => u.id === req.user.id);
+    
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    const storedCode = verificationCodes.get(user.email);
+    if (!storedCode || storedCode !== code) {
+      return res.status(400).json({ error: 'Invalid verification code' });
+    }
+    
+    // Mark email as verified
+    user.emailVerified = true;
+    verificationCodes.delete(user.email);
+    
+    res.json({ user: { ...user, password: undefined } });
+  } catch (error) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+app.post('/api/auth/resend-verification', authenticateToken, (req, res) => {
+  try {
+    const user = users.find(u => u.id === req.user.id);
+    
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    if (user.emailVerified) {
+      return res.status(400).json({ error: 'Email already verified' });
+    }
+    
+    // Generate new verification code
+    const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+    verificationCodes.set(user.email, verificationCode);
+    
+    console.log(`📧 New verification code for ${user.email}: ${verificationCode}`);
+    
+    res.json({ message: 'Verification code sent' });
+  } catch (error) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
