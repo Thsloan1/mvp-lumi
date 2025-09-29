@@ -37,6 +37,7 @@ import { DataReports } from './components/Reports/DataReports';
 import { FamilyScriptGenerator } from './components/FamilyNotes/FamilyScriptGenerator';
 import { AccessibilityProvider } from './components/UI/AccessibilityProvider';
 import { ChildProfileDetail } from './components/ChildProfiles/ChildProfileDetail';
+import { LandingPage } from './components/Landing/LandingPage';
 import { DeveloperPortal } from './components/Testing/TestEnvironmentPanel';
 import { TestUserFeedbackWidget } from './components/Testing/TestUserFeedbackWidget';
 
@@ -85,6 +86,8 @@ const AppContent: React.FC = () => {
 
   function renderView() {
     switch (currentView) {
+      case 'landing':
+        return <LandingPage />;
       case 'welcome':
         return <WelcomeScreen />;
       case 'educator-signup':

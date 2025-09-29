@@ -59,6 +59,15 @@ export const WelcomeScreen: React.FC = () => {
               <Heart className="w-8 h-8 text-white" />
             </div>
           </div>
+          <div className="mb-6">
+            <Button
+              onClick={() => setCurrentView('landing')}
+              variant="ghost"
+              className="text-[#B2C6E5] hover:text-[#C44E38]"
+            >
+              ← Back to Landing Page
+            </Button>
+          </div>
           <h1 className="text-4xl font-bold text-[#1A1A1A] mb-4">
             Welcome to Lumi
           </h1>
