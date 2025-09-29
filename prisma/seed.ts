@@ -386,6 +386,36 @@ async function main() {
   })
 
   console.log('✅ Database seeded successfully!')
+
+  // Seed sample organization for testing
+  console.log('🏢 Seeding sample organization...')
+  
+  const sampleOrg = await prisma.organization.create({
+    data: {
+      name: 'Sunshine Elementary School',
+      type: 'school',
+      owner: {
+        create: {
+          clerkId: 'sample_owner_clerk_id',
+          email: 'admin@sunshine-elementary.edu',
+          fullName: 'Dr. Maria Rodriguez',
+          role: 'ADMIN',
+          organizationRole: 'OWNER',
+          onboardingStatus: 'COMPLETE'
+        }
+      },
+      subscription: {
+        create: {
+          plan: 'pro',
+          maxSeats: 10,
+          activeSeats: 1,
+          status: 'ACTIVE'
+        }
+      }
+    }
+  })
+
+  console.log('✅ Sample organization created!')
 }
 
 main()
