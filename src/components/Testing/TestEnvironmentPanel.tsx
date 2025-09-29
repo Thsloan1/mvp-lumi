@@ -7,6 +7,7 @@ import { useAppContext } from '../../context/AppContext';
 import { testDataManager } from '../../data/testData';
 import { getCurrentEnvironment, isTestEnvironment } from '../../config/environments';
 import { DeveloperAnalyticsEngine } from '../../utils/developerAnalytics';
+import { safeLocalStorageGet, safeLocalStorageSet } from '../../utils/jsonUtils';
 
 export const DeveloperPortal: React.FC = () => {
   const { currentView, setCurrentView, currentUser, setCurrentUser, toast, behaviorLogs, classroomLogs, children, classrooms, inviteEducators } = useAppContext();
