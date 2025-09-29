@@ -316,7 +316,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         body: JSON.stringify(data)
       });
       setClassroomLogs(prev => [result.classroomLog, ...prev]);
-      success('Classroom challenge logged!', 'Strategy saved to your dashboard');
+      success('Classroom strategy saved!', 'Challenge logged to your dashboard');
       return result.classroomLog;
     } catch (err: any) {
       error('Failed to save', err.message);

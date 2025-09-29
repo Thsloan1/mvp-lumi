@@ -6,15 +6,19 @@ import { Select } from '../UI/Select';
 import { Card } from '../UI/Card';
 import { ProgressDots } from '../UI/ProgressDots';
 import { useAppContext } from '../../context/AppContext';
-import { ClassroomLog } from '../../types';
+import { ClassroomLog, AIStrategyResponse } from '../../types';
 import { STRESSOR_OPTIONS } from '../../data/constants';
 import { AuthService } from '../../services/authService';
 import { ClassroomStrategyResponse } from './ClassroomStrategyResponse';
+import { ReflectionPrompts } from '../Reflection/ReflectionPrompts';
+import { ErrorLogger } from '../../utils/errorLogger';
 
 export const ClassroomLogFlow: React.FC = () => {
-  const { setCurrentView, currentUser, createClassroomLog, classrooms, toast } = useAppContext();
+  const { setCurrentView, currentUser, createClassroomLog, classrooms } = useAppContext();
   const [currentStep, setCurrentStep] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [showReflection, setShowReflection] = useState(false);
+  const [savedClassroomLogId, setSavedClassroomLogId] = useState<string | null>(null);
   const [classroomData, setClassroomData] = useState({
     challengeDescription: '',
     context: '',
@@ -22,7 +26,7 @@ export const ClassroomLogFlow: React.FC = () => {
     educatorMood: '',
     stressors: [] as string[]
   });
-  const [aiResponse, setAiResponse] = useState(null);
+  const [aiResponse, setAiResponse] = useState<AIStrategyResponse | null>(null);
 
   const steps = [
     { title: "What's happening with your class?", field: 'challengeDescription' },
@@ -121,7 +125,7 @@ export const ClassroomLogFlow: React.FC = () => {
       setCurrentStep(steps.length);
     } catch (error) {
       console.error('Error generating strategy:', error);
-      alert('Failed to generate strategy. Please try again.');
+      ErrorLogger.error('Failed to generate classroom strategy', { error: error.message });
     } finally {
       setLoading(false);
     }
@@ -139,12 +143,26 @@ export const ClassroomLogFlow: React.FC = () => {
       selectedStrategy: strategy,
       confidenceSelfRating: selfConfidence,
       confidenceStrategyRating: strategyConfidence
-    }).then(() => {
-        setCurrentView('dashboard');
+    }).then((result) => {
+        setSavedClassroomLogId(result.id);
+        setShowReflection(true);
     }).catch(() => {
-        toast.error('Failed to save classroom log', 'Please try again');
+        ErrorLogger.error('Failed to save classroom log');
       });
   };
+
+  const handleReflectionComplete = () => {
+    setCurrentView('dashboard');
+  };
+
+  if (showReflection && savedClassroomLogId) {
+    return (
+      <ReflectionPrompts
+        classroomLogId={savedClassroomLogId}
+        onComplete={handleReflectionComplete}
+      />
+    );
+  }
 
   const isStepValid = () => {
     switch (currentStep) {

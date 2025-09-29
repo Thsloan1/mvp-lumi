@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Users, Target, Lightbulb, Star, TrendingUp, BookOpen, ExternalLink } from 'lucide-react';
+import { ArrowLeft, Users, Target, Lightbulb, Star, TrendingUp, BookOpen, ExternalLink, CheckCircle } from 'lucide-react';
 import { Button } from '../UI/Button';
 import { Card } from '../UI/Card';
 import { useAppContext } from '../../context/AppContext';
@@ -19,20 +19,21 @@ export const ClassroomStrategyResponse: React.FC<ClassroomStrategyResponseProps>
   const [selectedStrategy, setSelectedStrategy] = useState<string>('');
   const [selfConfidence, setSelfConfidence] = useState<number>(5);
   const [strategyConfidence, setStrategyConfidence] = useState<number>(5);
+  const [doabilityRating, setDoabilityRating] = useState<number>(5);
   const { setCurrentView } = useAppContext();
 
   const strategies = [
     {
       id: 'aligned',
-      title: 'Classroom Strategy',
-      content: response.alignedStrategy,
+      title: 'Recommended Strategy',
+      content: response.alignedStrategy || response.conceptualization,
       icon: Target,
       primary: true
     },
     {
       id: 'test',
       title: "Alternative Approach",
-      content: response.testOption,
+      content: response.testOption || response.futureReadinessBenefit,
       icon: Lightbulb,
       primary: false
     }
@@ -85,7 +86,7 @@ export const ClassroomStrategyResponse: React.FC<ClassroomStrategyResponseProps>
                   Understanding Your Classroom Dynamic
                 </h3>
                 <p className="text-gray-700 leading-relaxed">
-                  {response.conceptualization}
+                  {response.conceptualization || "Group challenges often reflect the collective needs of developing children navigating social learning together."}
                 </p>
               </div>
             </div>
@@ -143,7 +144,7 @@ export const ClassroomStrategyResponse: React.FC<ClassroomStrategyResponseProps>
                   Building Future-Ready Skills
                 </h3>
                 <p className="text-gray-700 leading-relaxed">
-                  {response.futureReadinessBenefit}
+                  {response.futureReadinessBenefit || "These strategies build classroom community and teach children to be aware of collective energy."}
                 </p>
               </div>
             </div>
@@ -153,7 +154,7 @@ export const ClassroomStrategyResponse: React.FC<ClassroomStrategyResponseProps>
           {selectedStrategy && (
             <Card className="p-8 bg-[#F8F6F4]">
               <h3 className="text-lg font-semibold text-[#1A1A1A] mb-6">
-                How confident do you feel?
+                Rate Your Confidence & Doability
               </h3>
               
               <div className="space-y-8">
@@ -183,7 +184,10 @@ export const ClassroomStrategyResponse: React.FC<ClassroomStrategyResponseProps>
                       />
                       <div className="flex justify-between mt-2">
                         {Array.from({length: 10}).map((_, i) => (
-                          <div key={i} className={`w-2 h-2 rounded-full ${i < selfConfidence ? 'bg-blue-500' : 'bg-[#E6E2DD]'}`} />
+                          <div key={i} className="flex flex-col items-center">
+                            <div className={`w-2 h-2 rounded-full ${i < selfConfidence ? 'bg-blue-500' : 'bg-[#E6E2DD]'}`} />
+                            <span className="text-xs text-gray-500 mt-1">{i + 1}</span>
+                          </div>
                         ))}
                       </div>
                     </div>
@@ -222,7 +226,10 @@ export const ClassroomStrategyResponse: React.FC<ClassroomStrategyResponseProps>
                       />
                       <div className="flex justify-between mt-2">
                         {Array.from({length: 10}).map((_, i) => (
-                          <div key={i} className={`w-2 h-2 rounded-full ${i < strategyConfidence ? 'bg-green-500' : 'bg-[#E6E2DD]'}`} />
+                          <div key={i} className="flex flex-col items-center">
+                            <div className={`w-2 h-2 rounded-full ${i < strategyConfidence ? 'bg-green-500' : 'bg-[#E6E2DD]'}`} />
+                            <span className="text-xs text-gray-500 mt-1">{i + 1}</span>
+                          </div>
                         ))}
                       </div>
                     </div>
@@ -235,11 +242,54 @@ export const ClassroomStrategyResponse: React.FC<ClassroomStrategyResponseProps>
                   </div>
                 </div>
                 
+                {/* Doability Rating */}
+                <div>
+                  <h4 className="font-medium text-[#1A1A1A] mb-4">
+                    How doable is this strategy in your current classroom context?
+                  </h4>
+                  
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-gray-600">Very difficult</span>
+                      <span className="text-sm text-gray-600">Very easy</span>
+                    </div>
+                    
+                    <div className="relative">
+                      <input
+                        type="range"
+                        min="1"
+                        max="10"
+                        value={doabilityRating}
+                        onChange={(e) => setDoabilityRating(parseInt(e.target.value))}
+                        className="w-full h-2 bg-[#E6E2DD] rounded-lg appearance-none cursor-pointer"
+                        style={{
+                          background: `linear-gradient(to right, #F59E0B 0%, #F59E0B ${doabilityRating * 10}%, #E6E2DD ${doabilityRating * 10}%, #E6E2DD 100%)`
+                        }}
+                      />
+                      <div className="flex justify-between mt-2">
+                        {Array.from({length: 10}).map((_, i) => (
+                          <div key={i} className="flex flex-col items-center">
+                            <div className={`w-2 h-2 rounded-full ${i < doabilityRating ? 'bg-orange-500' : 'bg-[#E6E2DD]'}`} />
+                            <span className="text-xs text-gray-500 mt-1">{i + 1}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    
+                    <div className="text-center">
+                      <span className="text-lg font-medium text-[#1A1A1A]">
+                        {doabilityRating}/10
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                
                 <div className="text-center pt-6">
                   <Button
                     onClick={handleConfirm}
                     size="lg"
                     className="px-12"
+                    icon={CheckCircle}
                   >
                     I'll Try This Strategy
                   </Button>
