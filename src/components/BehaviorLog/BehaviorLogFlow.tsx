@@ -22,7 +22,7 @@ import { AIService } from '../../services/aiService';
 import { BehaviorStrategyResponse } from './BehaviorStrategyResponse';
 
 export const BehaviorLogFlow: React.FC = () => {
-  const { setCurrentView, currentUser, behaviorLogs, setBehaviorLogs, children, setChildren } = useAppContext();
+  const { setCurrentView, user, createBehaviorLog, children, createChild, toast } = useAppContext();
   const [currentStep, setCurrentStep] = useState(0);
   const [loading, setLoading] = useState(false);
   const [showNewChildForm, setShowNewChildForm] = useState(false);
@@ -165,20 +165,18 @@ export const BehaviorLogFlow: React.FC = () => {
 
   const handleCreateNewChild = () => {
     if (newChildName.trim()) {
-      const newChild: Child = {
-        id: Date.now().toString(),
+      createChild({
         name: newChildName.trim(),
-        gradeBand: 'Preschool (4-5 years old)', // Default, can be updated later
-        classroomId: 'default-classroom',
+        gradeBand: 'Preschool (4-5 years old)',
         hasIEP: false,
-        hasIFSP: false,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      };
-      setChildren([...children, newChild]);
-      setBehaviorData(prev => ({ ...prev, childId: newChild.id }));
-      setNewChildName('');
-      setShowNewChildForm(false);
+        hasIFSP: false
+      }).then((newChild) => {
+        setBehaviorData(prev => ({ ...prev, childId: newChild.id }));
+        setNewChildName('');
+        setShowNewChildForm(false);
+      }).catch(() => {
+        toast.error('Failed to create child', 'Please try again');
+      });
     }
   };
 
@@ -232,6 +230,8 @@ export const BehaviorLogFlow: React.FC = () => {
         educatorMood: behaviorData.educatorMood,
         teachingStyle: currentUser?.teachingStyle,
         learningStyle: currentUser?.learningStyle,
+        teachingStyle: user?.teachingStyle,
+        learningStyle: user?.learningStyle,
         child: selectedChild
       });
       
@@ -247,7 +247,7 @@ export const BehaviorLogFlow: React.FC = () => {
   };
 
   const handleStrategySelect = (strategy: string, confidence: number) => {
-    const behaviorLogData = {
+    createBehaviorLog({
       childId: behaviorData.childId,
       behaviorDescription: behaviorData.behaviorDescription,
       context: behaviorData.context,
@@ -258,15 +258,10 @@ export const BehaviorLogFlow: React.FC = () => {
       aiResponse: aiResponse,
       selectedStrategy: strategy,
       confidenceRating: confidence
-    };
-
-    // Save to database
-    createBehaviorLog(behaviorLogData)
-      .then(() => {
+    }).then(() => {
         setCurrentView('dashboard');
-      })
-      .catch(error => {
-        console.error('Failed to save behavior log:', error);
+    }).catch(() => {
+        toast.error('Failed to save behavior log', 'Please try again');
       });
   };
 

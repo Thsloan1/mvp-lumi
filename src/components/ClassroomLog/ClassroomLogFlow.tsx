@@ -12,7 +12,7 @@ import { AIService } from '../../services/aiService';
 import { ClassroomStrategyResponse } from './ClassroomStrategyResponse';
 
 export const ClassroomLogFlow: React.FC = () => {
-  const { setCurrentView, currentUser, classroomLogs, setClassroomLogs } = useAppContext();
+  const { setCurrentView, user, createClassroomLog, classrooms, toast } = useAppContext();
   const [currentStep, setCurrentStep] = useState(0);
   const [loading, setLoading] = useState(false);
   const [classroomData, setClassroomData] = useState({
@@ -114,7 +114,7 @@ export const ClassroomLogFlow: React.FC = () => {
         classSize: 15,
         stressors: classroomData.stressors,
         educatorMood: classroomData.educatorMood,
-        teachingStyle: currentUser?.teachingStyle
+        teachingStyle: user?.teachingStyle
       });
       
       setAiResponse(response);
@@ -128,7 +128,7 @@ export const ClassroomLogFlow: React.FC = () => {
   };
 
   const handleStrategySelect = (strategy: string, selfConfidence: number, strategyConfidence: number) => {
-    const classroomLogData = {
+    createClassroomLog({
       classroomId: classrooms[0]?.id || 'default-classroom',
       challengeDescription: classroomData.challengeDescription,
       context: classroomData.context,
@@ -139,15 +139,10 @@ export const ClassroomLogFlow: React.FC = () => {
       selectedStrategy: strategy,
       confidenceSelfRating: selfConfidence,
       confidenceStrategyRating: strategyConfidence
-    };
-
-    // Save to database
-    createClassroomLog(classroomLogData)
-      .then(() => {
+    }).then(() => {
         setCurrentView('dashboard');
-      })
-      .catch(error => {
-        console.error('Failed to save classroom log:', error);
+    }).catch(() => {
+        toast.error('Failed to save classroom log', 'Please try again');
       });
   };
 

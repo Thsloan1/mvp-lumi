@@ -8,18 +8,19 @@ import { AnalyticsEngine, ChildInsight, ClassroomInsight, UnifiedInsight } from 
 
 export const EducatorDashboard: React.FC = () => {
   const { 
-    currentUser, 
+    user,
+    isLoading,
     behaviorLogs, 
-    behaviorLogsLoading,
     classroomLogs, 
-    classroomLogsLoading,
     children, 
-    childrenLoading,
     classrooms, 
-    classroomsLoading,
+    loading,
     setCurrentView 
   } = useAppContext();
 
+  if (isLoading || loading) {
+    return <FullPageLoading message="Loading your dashboard..." />;
+  }
   // Generate unified insights
   const currentClassroom = classrooms[0]; // For MVP, use first classroom
   const childInsights = children.map(child => 
@@ -93,7 +94,7 @@ export const EducatorDashboard: React.FC = () => {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold text-[#1A1A1A] mb-2">
-                Welcome back, {currentUser?.fullName?.split(' ')[0]}
+                Welcome back, {user?.name?.split(' ')[0]}
               </h1>
               <p className="text-gray-600">
                 Ready to support your students today? Let's see what's happening.
@@ -346,7 +347,7 @@ export const EducatorDashboard: React.FC = () => {
                 
                 {recentActivity.length === 0 ? (
                   <div className="text-center py-12">
-                    {behaviorLogsLoading || classroomLogsLoading ? (
+                    {loading ? (
                       <div className="space-y-4">
                         <div className="animate-pulse">
                           <div className="h-4 bg-[#F8F6F4] rounded w-3/4 mx-auto mb-2"></div>

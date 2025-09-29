@@ -11,7 +11,7 @@ import { ReviewStep } from './steps/ReviewStep';
 import { User } from '../../types';
 
 export const OnboardingWizard: React.FC = () => {
-  const { setCurrentView, setCurrentUser } = useAppContext();
+  const { setCurrentView, user, toast } = useAppContext();
   const [currentStep, setCurrentStep] = useState(0);
   const [onboardingData, setOnboardingData] = useState({
     firstName: '',
@@ -53,21 +53,35 @@ export const OnboardingWizard: React.FC = () => {
   };
 
   const handleComplete = () => {
-    // Create user object
-    const user: User = {
-      id: Date.now().toString(),
-      fullName: `${onboardingData.firstName} ${onboardingData.lastName}`,
-      email: 'user@example.com', // This would come from signup
-      role: 'educator',
-      preferredLanguage: onboardingData.preferredLanguage as 'english' | 'spanish',
-      learningStyle: onboardingData.learningStyle,
-      teachingStyle: onboardingData.teachingStyle,
-      createdAt: new Date(),
-      onboardingStatus: 'complete'
-    };
-
-    setCurrentUser(user);
-    setCurrentView('onboarding-complete');
+    // Complete onboarding via API
+    fetch('/api/onboarding/complete', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        preferredLanguage: onboardingData.preferredLanguage,
+        learningStyle: onboardingData.learningStyle,
+        teachingStyle: onboardingData.teachingStyle,
+        classroomData: {
+          name: onboardingData.classroomName,
+          gradeBand: onboardingData.gradeBand,
+          studentCount: parseInt(onboardingData.studentCount),
+          teacherStudentRatio: onboardingData.teacherStudentRatio,
+          stressors: onboardingData.stressors,
+          iepCount: onboardingData.iepCount,
+          ifspCount: onboardingData.ifspCount
+        }
+      })
+    }).then(async (response) => {
+      if (response.ok) {
+        toast.success('Welcome to Lumi!', 'Your account is ready to use');
+        setCurrentView('dashboard');
+      } else {
+        const error = await response.json();
+        toast.error('Setup failed', error.error || 'Please try again');
+      }
+    }).catch(() => {
+      toast.error('Setup failed', 'Please check your connection and try again');
+    });
   };
 
   const isStepValid = () => {

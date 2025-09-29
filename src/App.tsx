@@ -1,7 +1,10 @@
 import React from 'react';
+import { SessionProvider } from 'next-auth/react';
 import { AppProvider, useAppContext } from './context/AppContext';
 import { ErrorBoundary } from './components/UI/ErrorBoundary';
-import { ErrorToastContainer } from './components/UI/ErrorToastContainer';
+import { ToastContainer } from './components/UI/ToastContainer';
+import { FullPageLoading } from './components/UI/LoadingState';
+import { useAuth } from './hooks/useAuth';
 import { WelcomeScreen } from './components/Welcome/WelcomeScreen';
 import { EducatorSignup } from './components/Auth/EducatorSignup';
 import { AdminSignup } from './components/Auth/AdminSignup';
@@ -40,7 +43,32 @@ import { LumiEdPayment } from './components/LumiEd/LumiEdPayment';
 import { LumiEdWelcome } from './components/LumiEd/LumiEdWelcome';
 
 const AppContent: React.FC = () => {
-  const { currentView, setCurrentView } = useAppContext();
+  const { currentView, setCurrentView, user, isLoading, isAuthenticated } = useAppContext();
+  
+  // Show loading while checking authentication
+  if (isLoading) {
+    return <FullPageLoading message="Loading your account..." />;
+  }
+  
+  // Redirect to onboarding if user is authenticated but hasn't completed onboarding
+  if (isAuthenticated && user?.onboardingStatus === 'INCOMPLETE' && 
+      !['onboarding-start', 'onboarding-complete'].includes(currentView)) {
+    return <OnboardingWizard />;
+  }
+  
+  // Redirect to dashboard if authenticated and trying to access auth pages
+  if (isAuthenticated && ['welcome', 'signin', 'educator-signup'].includes(currentView)) {
+    return <EducatorDashboard />;
+  }
+  
+  // Redirect to welcome if not authenticated and trying to access protected pages
+  const protectedViews = [
+    'dashboard', 'behavior-log', 'classroom-log', 'child-profiles', 
+    'classroom-profile', 'library', 'reports', 'family-notes', 'profile-settings'
+  ];
+  if (!isAuthenticated && protectedViews.includes(currentView)) {
+    return <WelcomeScreen />;
+  }
 
   // Show sticky navigation for main app views (not auth/onboarding)
   const showStickyNav = [
@@ -52,7 +80,7 @@ const AppContent: React.FC = () => {
     <div className="relative">
       {showStickyNav && <StickyNavigation />}
       {renderView()}
-      <ErrorToastContainer />
+      <ToastContainer />
     </div>
   );
 
@@ -140,9 +168,11 @@ const AppContent: React.FC = () => {
 function App() {
   return (
     <ErrorBoundary>
-      <AppProvider>
-        <AppContent />
-      </AppProvider>
+      <SessionProvider>
+        <AppProvider>
+          <AppContent />
+        </AppProvider>
+      </SessionProvider>
     </ErrorBoundary>
   );
 }
