@@ -5,6 +5,7 @@ import { Select } from '../../UI/Select';
 import { Card } from '../../UI/Card';
 import { ProfilePhotoUpload } from '../../Profile/ProfilePhotoUpload';
 import { useAppContext } from '../../../context/AppContext';
+import { AutoSaveManager } from '../../../utils/autoSaveManager';
 
 interface AboutYouStepProps {
   data: any;
@@ -16,10 +17,17 @@ export const AboutYouStep: React.FC<AboutYouStepProps> = ({ data, updateData }) 
 
   const handleInputChange = (field: string, value: string | boolean) => {
     updateData((prev: any) => ({ ...prev, [field]: value }));
+    
+    // Auto-save when data changes
+    AutoSaveManager.autoSave('lumi_onboarding_progress', { ...data, [field]: value });
   };
 
   const handlePhotoUpdate = (photoUrl: string) => {
     updateData((prev: any) => ({ ...prev, profilePhotoUrl: photoUrl }));
+    
+    // Auto-save photo update
+    AutoSaveManager.autoSave('lumi_onboarding_progress', { ...data, profilePhotoUrl: photoUrl });
+    
     if (photoUrl) {
       toast.success('Photo uploaded!', 'Your profile photo has been added');
     }

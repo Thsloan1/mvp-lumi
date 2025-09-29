@@ -5,6 +5,7 @@ import { Card } from '../UI/Card';
 import { Input } from '../UI/Input';
 import { Select } from '../UI/Select';
 import { useAppContext } from '../../context/AppContext';
+import { safeLocalStorageSet } from '../../utils/jsonUtils';
 
 interface OrganizationData {
   name: string;
@@ -78,11 +79,15 @@ export const OrganizationSettings: React.FC = () => {
   const handleSaveGeneral = async () => {
     setLoading(true);
     try {
+      // Auto-save before API call
+      safeLocalStorageSet('lumi_org_settings_backup', orgData);
       await organizationApi.put('/organizations', {
         name: orgData.name,
         type: orgData.type,
         settings: orgData.settings
       });
+      // Clear backup after successful save
+      localStorage.removeItem('lumi_org_settings_backup');
     } catch (error) {
       handleApiError(error, { action: 'saveOrganizationSettings' });
     } finally {

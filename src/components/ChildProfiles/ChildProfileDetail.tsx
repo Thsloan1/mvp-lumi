@@ -9,6 +9,7 @@ import { useAppContext } from '../../context/AppContext';
 import { Child, BehaviorLog } from '../../types';
 import { AnalyticsEngine } from '../../utils/analyticsEngine';
 import { GRADE_BAND_OPTIONS } from '../../data/constants';
+import { safeLocalStorageSet } from '../../utils/jsonUtils';
 
 interface ChildProfileDetailProps {
   childId: string;
@@ -62,8 +63,12 @@ export const ChildProfileDetail: React.FC<ChildProfileDetailProps> = ({ childId 
   const handleSave = async () => {
     setLoading(true);
     try {
+      // Auto-save before API call
+      safeLocalStorageSet('lumi_child_profile_backup', { childId, editData });
       await updateChild(childId, editData);
       setIsEditing(false);
+      // Clear backup after successful save
+      localStorage.removeItem('lumi_child_profile_backup');
     } catch (error) {
       console.error('Failed to update child:', error);
     } finally {

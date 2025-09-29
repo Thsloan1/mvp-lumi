@@ -12,6 +12,7 @@ import { AuthService } from '../../services/authService';
 import { ClassroomStrategyResponse } from './ClassroomStrategyResponse';
 import { ReflectionPrompts } from '../Reflection/ReflectionPrompts';
 import { ErrorLogger } from '../../utils/errorLogger';
+import { safeLocalStorageSet } from '../../utils/jsonUtils';
 
 export const ClassroomLogFlow: React.FC = () => {
   const { setCurrentView, currentUser, createClassroomLog, classrooms, toast } = useAppContext();
@@ -93,19 +94,40 @@ export const ClassroomLogFlow: React.FC = () => {
   };
 
   const handleNext = () => {
+    // Auto-save progress
+    autoSaveProgress();
+    
     if (currentStep < steps.length - 1) {
       setCurrentStep(currentStep + 1);
     }
   };
 
   const handlePrevious = () => {
+    // Auto-save progress
+    autoSaveProgress();
+    
     if (currentStep > 0) {
       setCurrentStep(currentStep - 1);
     }
   };
 
+  const autoSaveProgress = () => {
+    try {
+      safeLocalStorageSet('lumi_classroom_log_progress', {
+        classroomData,
+        currentStep,
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      console.warn('Failed to auto-save classroom log progress:', error);
+    }
+  };
+
   const handleSubmit = async () => {
     if (!isStepValid()) return;
+    
+    // Auto-save before submission
+    autoSaveProgress();
     
     setLoading(true);
     
@@ -123,6 +145,9 @@ export const ClassroomLogFlow: React.FC = () => {
       
       setAiResponse(response.aiResponse);
       setCurrentStep(steps.length);
+      
+      // Clear saved progress after successful submission
+      localStorage.removeItem('lumi_classroom_log_progress');
     } catch (error) {
       console.error('Error generating strategy:', error);
       ErrorLogger.error('Failed to generate classroom strategy', { error: error.message });

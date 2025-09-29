@@ -179,6 +179,9 @@ export const BehaviorLogFlow: React.FC = () => {
   };
 
   const handleNext = () => {
+    // Auto-save progress
+    autoSaveProgress();
+    
     if (currentStep < steps.length - 1) {
       // Find the next non-skipped step
       let nextStep = currentStep + 1;
@@ -190,6 +193,9 @@ export const BehaviorLogFlow: React.FC = () => {
   };
 
   const handlePrevious = () => {
+    // Auto-save progress
+    autoSaveProgress();
+    
     if (currentStep > 0) {
       // Find the previous non-skipped step
       let prevStep = currentStep - 1;
@@ -197,6 +203,18 @@ export const BehaviorLogFlow: React.FC = () => {
         prevStep--;
       }
       setCurrentStep(prevStep);
+    }
+  };
+
+  const autoSaveProgress = () => {
+    try {
+      safeLocalStorageSet('lumi_behavior_log_progress', {
+        behaviorData,
+        currentStep,
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      console.warn('Failed to auto-save behavior log progress:', error);
     }
   };
 
@@ -212,6 +230,9 @@ export const BehaviorLogFlow: React.FC = () => {
 
   const handleSubmit = async () => {
     if (!isStepValid()) return;
+    
+    // Auto-save before submission
+    autoSaveProgress();
     
     setLoading(true);
     
@@ -230,6 +251,9 @@ export const BehaviorLogFlow: React.FC = () => {
       
       setAiResponse(response.aiResponse);
       setCurrentStep(steps.length); // Move to response screen
+      
+      // Clear saved progress after successful submission
+      localStorage.removeItem('lumi_behavior_log_progress');
     } catch (error) {
       console.error('Error generating strategy:', error);
       // Show error to user

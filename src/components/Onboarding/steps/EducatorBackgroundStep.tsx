@@ -2,6 +2,7 @@ import React from 'react';
 import { GraduationCap } from 'lucide-react';
 import { Select } from '../../UI/Select';
 import { Card } from '../../UI/Card';
+import { AutoSaveManager } from '../../../utils/autoSaveManager';
 
 interface EducatorBackgroundStepProps {
   data: any;
@@ -11,6 +12,9 @@ interface EducatorBackgroundStepProps {
 export const EducatorBackgroundStep: React.FC<EducatorBackgroundStepProps> = ({ data, updateData }) => {
   const handleInputChange = (field: string, value: string) => {
     updateData((prev: any) => ({ ...prev, [field]: value }));
+    
+    // Auto-save when data changes
+    AutoSaveManager.autoSave('lumi_onboarding_progress', { ...data, [field]: value });
   };
 
   const yearsOfExperienceOptions = [

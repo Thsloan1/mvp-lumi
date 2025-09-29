@@ -2,6 +2,7 @@ import React from 'react';
 import { Input } from '../../UI/Input';
 import { Card } from '../../UI/Card';
 import { STRESSOR_OPTIONS } from '../../../data/constants';
+import { AutoSaveManager } from '../../../utils/autoSaveManager';
 
 interface EnvironmentStepProps {
   data: any;
@@ -11,6 +12,9 @@ interface EnvironmentStepProps {
 export const EnvironmentStep: React.FC<EnvironmentStepProps> = ({ data, updateData }) => {
   const handleInputChange = (field: string, value: string | boolean | number) => {
     updateData((prev: any) => ({ ...prev, [field]: value }));
+    
+    // Auto-save when data changes
+    AutoSaveManager.autoSave('lumi_onboarding_progress', { ...data, [field]: value });
   };
 
   const handleStressorToggle = (stressor: string) => {
@@ -25,6 +29,9 @@ export const EnvironmentStep: React.FC<EnvironmentStepProps> = ({ data, updateDa
     }
     
     updateData((prev: any) => ({ ...prev, stressors: newStressors }));
+    
+    // Auto-save stressor changes
+    AutoSaveManager.autoSave('lumi_onboarding_progress', { ...data, stressors: newStressors });
   };
 
   const stressorCategories = [

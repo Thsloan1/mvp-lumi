@@ -61,6 +61,8 @@ export const ProfileSettings: React.FC = () => {
   const handleProfileSave = async () => {
     setLoading(true);
     try {
+      // Auto-save profile data
+      safeLocalStorageSet('lumi_profile_backup', profileData);
       await updateProfile(profileData);
     } catch (error) {
       console.error('Error updating profile:', error);
@@ -80,6 +82,8 @@ export const ProfileSettings: React.FC = () => {
     try {
       await changePassword(passwordData.currentPassword, passwordData.newPassword);
       setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+      // Clear any saved password data for security
+      localStorage.removeItem('lumi_profile_backup');
     } catch (error) {
       console.error('Error changing password:', error);
     } finally {
@@ -89,6 +93,8 @@ export const ProfileSettings: React.FC = () => {
 
   const handlePhotoUpdate = (photoUrl: string) => {
     setProfileData(prev => ({ ...prev, profilePhotoUrl: photoUrl }));
+    // Auto-save when photo is updated
+    safeLocalStorageSet('lumi_profile_backup', { ...profileData, profilePhotoUrl: photoUrl });
   };
 
   const renderProfileTab = () => (

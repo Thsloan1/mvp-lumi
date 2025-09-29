@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
+import { useEffect } from 'react';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { Button } from '../UI/Button';
 import { ProgressDots } from '../UI/ProgressDots';
 import { useAppContext } from '../../context/AppContext';
 import { ErrorLogger } from '../../utils/errorLogger';
+import { safeLocalStorageGet, safeLocalStorageSet } from '../../utils/jsonUtils';
 import { AboutYouStep } from './steps/AboutYouStep';
 import { SchoolInfoStep } from './steps/SchoolInfoStep';
 import { EducatorBackgroundStep } from './steps/EducatorBackgroundStep';
@@ -14,9 +16,13 @@ import { ReviewStep } from './steps/ReviewStep';
 import { BehaviorFocusStep } from './BehaviorFocusStep';
 
 export const OnboardingWizard: React.FC = () => {
-  const { setCurrentView, currentUser, updateOnboarding } = useAppContext();
+  const { setCurrentView, currentUser, updateOnboarding, toast } = useAppContext();
   const [currentStep, setCurrentStep] = useState(0);
-  const [onboardingData, setOnboardingData] = useState({
+  
+  // Initialize with saved data or defaults
+  const [onboardingData, setOnboardingData] = useState(() => {
+    const savedData = safeLocalStorageGet('lumi_onboarding_progress', {});
+    return {
     firstName: currentUser?.fullName?.split(' ')[0] || '',
     lastName: currentUser?.fullName?.split(' ').slice(1).join(' ') || '',
     profilePhotoUrl: '',
@@ -41,8 +47,32 @@ export const OnboardingWizard: React.FC = () => {
     teachingStyle: '',
     behaviorFocus: [] as string[],
     specificBehavior: '',
-    behaviorConfidence: ''
+      behaviorConfidence: '',
+      ...savedData
+    };
   });
+
+  // Auto-save onboarding progress whenever data changes
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      safeLocalStorageSet('lumi_onboarding_progress', onboardingData);
+    }, 500); // Debounce saves by 500ms
+
+    return () => clearTimeout(timeoutId);
+  }, [onboardingData]);
+
+  // Load saved step progress
+  useEffect(() => {
+    const savedStep = safeLocalStorageGet('lumi_onboarding_step', 0);
+    if (savedStep > 0 && savedStep < steps.length) {
+      setCurrentStep(savedStep);
+    }
+  }, []);
+
+  // Auto-save current step
+  useEffect(() => {
+    safeLocalStorageSet('lumi_onboarding_step', currentStep);
+  }, [currentStep]);
 
   const steps = [
     { component: AboutYouStep, title: 'About You' },
@@ -58,14 +88,41 @@ export const OnboardingWizard: React.FC = () => {
   const CurrentStepComponent = steps[currentStep].component;
 
   const handleNext = () => {
+    // Auto-save before moving to next step
+    autoSaveProgress();
+    
     if (currentStep < steps.length - 1) {
       setCurrentStep(currentStep + 1);
     }
   };
 
   const handlePrevious = () => {
+    // Auto-save before moving to previous step
+    autoSaveProgress();
+    
     if (currentStep > 0) {
       setCurrentStep(currentStep - 1);
+    }
+  };
+
+  const autoSaveProgress = () => {
+    try {
+      safeLocalStorageSet('lumi_onboarding_progress', onboardingData);
+      safeLocalStorageSet('lumi_onboarding_step', currentStep);
+      
+      // Show subtle feedback for auto-save
+      toast.info('Progress saved', 'Your information has been saved automatically');
+    } catch (error) {
+      console.warn('Failed to auto-save onboarding progress:', error);
+    }
+  };
+
+  const clearSavedProgress = () => {
+    try {
+      localStorage.removeItem('lumi_onboarding_progress');
+      localStorage.removeItem('lumi_onboarding_step');
+    } catch (error) {
+      console.warn('Failed to clear saved progress:', error);
     }
   };
 
@@ -100,6 +157,8 @@ export const OnboardingWizard: React.FC = () => {
     
     updateOnboarding(updateData)
       .then(() => {
+        // Clear saved progress after successful completion
+        clearSavedProgress();
         // Success - user will be redirected by updateOnboarding
       })
       .catch((error) => {
@@ -110,6 +169,8 @@ export const OnboardingWizard: React.FC = () => {
 
   // Track step completion
   const handleStepComplete = (stepIndex: number) => {
+    // Auto-save when completing a step
+    autoSaveProgress();
     ErrorLogger.logOnboardingEvent('step_completed', stepIndex, {
       userId: currentUser?.id,
       stepData: steps[stepIndex].title
@@ -194,6 +255,13 @@ export const OnboardingWizard: React.FC = () => {
               Next
             </Button>
           )}
+        </div>
+
+        {/* Auto-save indicator */}
+        <div className="text-center mt-4">
+          <p className="text-xs text-gray-500">
+            Your progress is automatically saved
+          </p>
         </div>
 
         {!isStepValid() && currentStep < steps.length - 1 && (

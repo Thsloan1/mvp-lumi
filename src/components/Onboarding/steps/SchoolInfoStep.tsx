@@ -2,6 +2,7 @@ import React from 'react';
 import { School } from 'lucide-react';
 import { Input } from '../../UI/Input';
 import { Card } from '../../UI/Card';
+import { AutoSaveManager } from '../../../utils/autoSaveManager';
 
 interface SchoolInfoStepProps {
   data: any;
@@ -11,6 +12,9 @@ interface SchoolInfoStepProps {
 export const SchoolInfoStep: React.FC<SchoolInfoStepProps> = ({ data, updateData }) => {
   const handleInputChange = (field: string, value: string) => {
     updateData((prev: any) => ({ ...prev, [field]: value }));
+    
+    // Auto-save when data changes
+    AutoSaveManager.autoSave('lumi_onboarding_progress', { ...data, [field]: value });
   };
 
   return (

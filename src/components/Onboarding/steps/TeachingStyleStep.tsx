@@ -1,6 +1,7 @@
 import React from 'react';
 import { Card } from '../../UI/Card';
 import { TEACHING_STYLE_OPTIONS } from '../../../data/constants';
+import { AutoSaveManager } from '../../../utils/autoSaveManager';
 
 interface TeachingStyleStepProps {
   data: any;
@@ -10,6 +11,9 @@ interface TeachingStyleStepProps {
 export const TeachingStyleStep: React.FC<TeachingStyleStepProps> = ({ data, updateData }) => {
   const handleStyleSelect = (style: string) => {
     updateData((prev: any) => ({ ...prev, teachingStyle: style }));
+    
+    // Auto-save when teaching style is selected
+    AutoSaveManager.autoSave('lumi_onboarding_progress', { ...data, teachingStyle: style });
   };
 
   return (

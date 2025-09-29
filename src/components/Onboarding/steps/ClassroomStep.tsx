@@ -3,6 +3,7 @@ import { Input } from '../../UI/Input';
 import { Select } from '../../UI/Select';
 import { Card } from '../../UI/Card';
 import { GRADE_BAND_OPTIONS } from '../../../data/constants';
+import { AutoSaveManager } from '../../../utils/autoSaveManager';
 
 interface ClassroomStepProps {
   data: any;
@@ -12,6 +13,9 @@ interface ClassroomStepProps {
 export const ClassroomStep: React.FC<ClassroomStepProps> = ({ data, updateData }) => {
   const handleInputChange = (field: string, value: string | number) => {
     updateData((prev: any) => ({ ...prev, [field]: value }));
+    
+    // Auto-save when data changes
+    AutoSaveManager.autoSave('lumi_onboarding_progress', { ...data, [field]: value });
   };
 
   const gradeBandOptions = GRADE_BAND_OPTIONS.map(option => ({

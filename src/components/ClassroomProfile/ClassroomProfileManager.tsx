@@ -9,6 +9,7 @@ import { useAppContext } from '../../context/AppContext';
 import { Classroom } from '../../types';
 import { GRADE_BAND_OPTIONS, STRESSOR_OPTIONS } from '../../data/constants';
 import { AnalyticsEngine } from '../../utils/analyticsEngine';
+import { safeLocalStorageSet } from '../../utils/jsonUtils';
 
 export const ClassroomProfileManager: React.FC = () => {
   const { currentUser, classrooms, setClassrooms, behaviorLogs, classroomLogs, children, updateClassroom } = useAppContext();
@@ -45,10 +46,14 @@ export const ClassroomProfileManager: React.FC = () => {
   const handleSave = () => {
     if (currentClassroom && editData) {
       setLoading(true);
+      // Auto-save before API call
+      safeLocalStorageSet('lumi_classroom_profile_backup', { classroomId: currentClassroom.id, editData });
       updateClassroom(currentClassroom.id, editData)
         .then(() => {
           setIsEditing(false);
           setEditData({});
+          // Clear backup after successful save
+          localStorage.removeItem('lumi_classroom_profile_backup');
         })
         .catch(error => {
           console.error('Failed to update classroom:', error);
