@@ -175,20 +175,11 @@ Comenzamos con conexión y seguridad primero. Una vez que ${childName} está cal
   };
 
   return (
-    <div className="space-y-6">
-      <div className="text-center">
-        <h1 className="text-3xl font-bold text-[#1A1A1A] mb-2">
-          Family Communication Generator
-        </h1>
-        <p className="text-gray-600">
-          Create personalized communication notes for families
-        </p>
-      </div>
-      
+    <div className="space-y-8">
       {/* Script Configuration */}
       <Card className="p-6">
-        <h3 className="text-lg font-semibold text-[#1A1A1A] mb-4">
-          Script Details
+        <h3 className="text-lg font-semibold text-[#1A1A1A] mb-6">
+          Family Communication Generator
         </h3>
         
         <div className="grid md:grid-cols-2 gap-6 mb-6">
@@ -300,3 +291,5 @@ Comenzamos con conexión y seguridad primero. Una vez que ${childName} está cal
     </div>
   );
 };
+  }
+}
