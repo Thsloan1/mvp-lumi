@@ -1,10 +1,11 @@
 import React from 'react';
-import { User } from 'lucide-react';
+import { User, Camera } from 'lucide-react';
 import { Input } from '../../UI/Input';
 import { Select } from '../../UI/Select';
 import { Card } from '../../UI/Card';
 import { LEARNING_STYLE_OPTIONS } from '../../../data/constants';
 import { ProfilePhotoUpload } from '../../Profile/ProfilePhotoUpload';
+import { useAppContext } from '../../../context/AppContext';
 
 interface AboutYouStepProps {
   data: any;
@@ -12,13 +13,19 @@ interface AboutYouStepProps {
 }
 
 export const AboutYouStep: React.FC<AboutYouStepProps> = ({ data, updateData }) => {
+  const { toast } = useAppContext();
+
   const handleInputChange = (field: string, value: string | boolean) => {
     updateData((prev: any) => ({ ...prev, [field]: value }));
   };
 
   const handlePhotoUpdate = (photoUrl: string) => {
     updateData((prev: any) => ({ ...prev, profilePhotoUrl: photoUrl }));
+    if (photoUrl) {
+      toast.success('Photo uploaded!', 'Your profile photo has been added');
+    }
   };
+
   const languageOptions = [
     { value: 'english', label: 'English' },
     { value: 'spanish', label: 'Spanish' },
@@ -43,22 +50,10 @@ export const AboutYouStep: React.FC<AboutYouStepProps> = ({ data, updateData }) 
       <Card className="p-8">
         <div className="space-y-6">
           <div>
-            <label className="block text-sm font-medium text-[#1A1A1A] mb-3">
-              Profile Photo (Optional)
-            </label>
-            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-4">
-              <div className="flex items-center space-x-3">
-                <User className="w-5 h-5 text-blue-600" />
-                <div>
-                  <p className="text-sm font-medium text-blue-900">
-                    Add a photo after onboarding
-                  </p>
-                  <p className="text-xs text-blue-700">
-                    You can upload a profile photo from your dashboard settings
-                  </p>
-                </div>
-              </div>
-            </div>
+            <ProfilePhotoUpload
+              currentPhotoUrl={data.profilePhotoUrl}
+              onPhotoUpdate={handlePhotoUpdate}
+            />
           </div>
 
           <div className="grid grid-cols-2 gap-4">

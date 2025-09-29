@@ -61,26 +61,10 @@ export const ProfileSettings: React.FC = () => {
   const handleProfileSave = async () => {
     setLoading(true);
     try {
-      // Update user in context
-      if (currentUser) {
-        const updatedUser = {
-          ...currentUser,
-          fullName: profileData.fullName,
-          email: profileData.email,
-          preferredLanguage: profileData.preferredLanguage as 'english' | 'spanish',
-          learningStyle: profileData.learningStyle,
-          teachingStyle: profileData.teachingStyle,
-          profilePhotoUrl: profileData.profilePhotoUrl
-        };
-        setCurrentUser(updatedUser);
-      }
-      
-      // In real implementation, this would call API
-      console.log('Profile updated:', profileData);
-      toast.success('Profile updated!', 'Your changes have been saved');
+      await updateProfile(profileData);
     } catch (error) {
       console.error('Error updating profile:', error);
-      toast.error('Update failed', 'Please try again');
+      // Error handled by updateProfile function
     } finally {
       setLoading(false);
     }

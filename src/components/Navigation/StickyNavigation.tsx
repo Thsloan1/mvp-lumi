@@ -129,7 +129,15 @@ export const StickyNavigation: React.FC = () => {
                 aria-label="User menu"
                 aria-expanded="false"
               >
-                <User className="w-4 h-4 text-blue-600" />
+                {currentUser?.profilePhotoUrl ? (
+                  <img
+                    src={currentUser.profilePhotoUrl}
+                    alt={currentUser.fullName}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <User className="w-4 h-4 text-blue-600" />
+                )}
               </button>
               
               {/* User Dropdown Menu */}

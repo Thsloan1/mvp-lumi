@@ -16,6 +16,7 @@ export const OnboardingWizard: React.FC = () => {
   const [onboardingData, setOnboardingData] = useState({
     firstName: '',
     lastName: '',
+    profilePhotoUrl: '',
     preferredLanguage: 'english',
     learningStyle: '',
     classroomName: '',
