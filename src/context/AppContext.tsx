@@ -14,6 +14,17 @@ interface AppContextType {
   signout: () => void;
   updateOnboarding: (data: any) => Promise<void>;
   
+  // Email verification
+  verifyEmail: (code: string) => Promise<void>;
+  resendVerificationEmail: () => Promise<void>;
+  
+  // Password reset
+  requestPasswordReset: (email: string) => Promise<void>;
+  resetPassword: (email: string, code: string, newPassword: string) => Promise<void>;
+  
+  // Profile photo
+  uploadProfilePhoto: (file: File) => Promise<string>;
+  
   // Data
   classrooms: Classroom[];
   children: Child[];
@@ -74,6 +85,89 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   const [classroomLogs, setClassroomLogs] = useState<ClassroomLog[]>([]);
   
   const { success, error, warning, info } = useToast();
+  
+  // Email verification functions
+  const verifyEmail = async (code: string) => {
+    try {
+      const result = await AuthService.apiRequest('/api/auth/verify-email', {
+        method: 'POST',
+        body: JSON.stringify({ code })
+      });
+      
+      setCurrentUser(result.user);
+      success('Email verified!', 'Your account is now active');
+      setCurrentView('onboarding-start');
+    } catch (err: any) {
+      error('Verification failed', err.message);
+      throw err;
+    }
+  };
+
+  const resendVerificationEmail = async () => {
+    try {
+      await AuthService.apiRequest('/api/auth/resend-verification', {
+        method: 'POST'
+      });
+      success('Code sent!', 'Check your email for the new verification code');
+    } catch (err: any) {
+      error('Failed to resend', err.message);
+      throw err;
+    }
+  };
+
+  // Password reset functions
+  const requestPasswordReset = async (email: string) => {
+    try {
+      await AuthService.apiRequest('/api/auth/forgot-password', {
+        method: 'POST',
+        body: JSON.stringify({ email })
+      });
+      success('Reset code sent!', 'Check your email for the reset code');
+    } catch (err: any) {
+      error('Failed to send reset code', err.message);
+      throw err;
+    }
+  };
+
+  const resetPassword = async (email: string, code: string, newPassword: string) => {
+    try {
+      await AuthService.apiRequest('/api/auth/reset-password', {
+        method: 'POST',
+        body: JSON.stringify({ email, code, newPassword })
+      });
+      success('Password reset!', 'You can now sign in with your new password');
+    } catch (err: any) {
+      error('Password reset failed', err.message);
+      throw err;
+    }
+  };
+
+  // Profile photo upload
+  const uploadProfilePhoto = async (file: File): Promise<string> => {
+    try {
+      const formData = new FormData();
+      formData.append('photo', file);
+      
+      const response = await fetch('/api/user/photo', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('lumi_token')}`
+        },
+        body: formData
+      });
+      
+      if (!response.ok) {
+        throw new Error('Upload failed');
+      }
+      
+      const result = await response.json();
+      success('Photo updated!', 'Your profile photo has been saved');
+      return result.photoUrl;
+    } catch (err: any) {
+      error('Upload failed', err.message);
+      throw err;
+    }
+  };
 
   // Initialize user on app load
   useEffect(() => {
@@ -269,6 +363,11 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     signup,
     signout,
     updateOnboarding,
+    verifyEmail,
+    resendVerificationEmail,
+    requestPasswordReset,
+    resetPassword,
+    uploadProfilePhoto,
     classrooms,
     children: apiChildren,
     behaviorLogs,

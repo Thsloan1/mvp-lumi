@@ -86,10 +86,17 @@ app.post('/api/auth/signup', async (req, res) => {
       role: 'educator',
       preferredLanguage: 'english',
       onboardingStatus: 'incomplete',
+      emailVerified: false,
       createdAt: new Date().toISOString()
     };
 
     users.push(user);
+    
+    // Generate verification code
+    const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+    verificationCodes.set(email, verificationCode);
+    
+    console.log(`📧 Verification code for ${email}: ${verificationCode}`);
 
     // Generate token
     const token = jwt.sign(
