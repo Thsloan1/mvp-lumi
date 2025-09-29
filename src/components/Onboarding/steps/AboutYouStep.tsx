@@ -1,5 +1,5 @@
 import React from 'react';
-import { User, School } from 'lucide-react';
+import { User } from 'lucide-react';
 import { Input } from '../../UI/Input';
 import { Select } from '../../UI/Select';
 import { Card } from '../../UI/Card';
@@ -30,6 +30,12 @@ export const AboutYouStep: React.FC<AboutYouStepProps> = ({ data, updateData }) 
     { value: 'spanish', label: 'Spanish' },
   ];
 
+  const learningStyleOptions = [
+    { value: 'visual', label: 'Visual' },
+    { value: 'auditory', label: 'Auditory' },
+    { value: 'kinesthetic', label: 'Kinesthetic' },
+    { value: 'reading', label: 'Reading/Writing' },
+  ];
 
   return (
     <div className="space-y-8">
@@ -56,13 +62,24 @@ export const AboutYouStep: React.FC<AboutYouStepProps> = ({ data, updateData }) 
               label="First Name"
               value={data.firstName}
               onChange={(value) => handleInputChange('firstName', value)}
+              required
+            />
+            <Input
+              label="Last Name"
+              value={data.lastName}
+              onChange={(value) => handleInputChange('lastName', value)}
+              required
+            />
+          </div>
+
+          <Select
+            label="Preferred Language"
+            value={data.preferredLanguage}
+            onChange={(value) => handleInputChange('preferredLanguage', value)}
+            options={languageOptions}
+            placeholder="Select your preferred language"
             required
           />
-        </div>
-      </Card>
-    </div>
-  );
-};
 
           <Select
             label="Learning Style"
