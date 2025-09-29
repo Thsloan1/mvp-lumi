@@ -14,6 +14,9 @@ interface InputProps {
   rows?: number;
   min?: number;
   max?: number;
+  maxLength?: number;
+  autoComplete?: string;
+  'aria-describedby'?: string;
 }
 
 export const Input: React.FC<InputProps> = ({
@@ -30,6 +33,9 @@ export const Input: React.FC<InputProps> = ({
   rows,
   min,
   max
+  maxLength,
+  autoComplete,
+  'aria-describedby': ariaDescribedBy
 }) => {
   const inputClasses = `
     w-full px-4 py-3 rounded-xl border border-[#E6E2DD] 
@@ -73,6 +79,9 @@ export const Input: React.FC<InputProps> = ({
           disabled={disabled}
           min={min}
           max={max}
+          maxLength={maxLength}
+          autoComplete={autoComplete}
+          aria-describedby={ariaDescribedBy}
           className={inputClasses}
         />
       )}

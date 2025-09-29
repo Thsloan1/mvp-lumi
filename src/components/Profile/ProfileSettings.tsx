@@ -114,11 +114,27 @@ export const ProfileSettings: React.FC = () => {
           Personal Information
         </h3>
         
-        <div className="mb-8">
+        <div className="mb-6">
           <ProfilePhotoUpload
             currentPhotoUrl={profileData.profilePhotoUrl}
             onPhotoUpdate={handlePhotoUpdate}
           />
+        </div>
+        
+        <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6">
+          <div className="flex items-center space-x-3">
+            <Camera className="w-5 h-5 text-blue-600" />
+            <div>
+              <p className="text-sm font-medium text-blue-900">
+                Photo Upload Tips
+              </p>
+              <p className="text-xs text-blue-700">
+                • Use JPG, PNG, GIF, or WebP format
+                • Keep file size under 5MB
+                • Square images work best (1:1 ratio)
+              </p>
+            </div>
+          </div>
         </div>
         
         <div className="grid md:grid-cols-2 gap-6">

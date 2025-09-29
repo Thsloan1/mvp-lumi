@@ -580,17 +580,30 @@ app.post('/api/classroom-logs', authenticateToken, (req, res) => {
 // Profile photo upload route
 app.post('/api/user/photo', authenticateToken, (req, res) => {
   try {
-    // In a real implementation, this would handle file upload to cloud storage
-    // For MVP, we'll simulate a successful upload
-    const photoUrl = `https://api.dicebear.com/7.x/initials/svg?seed=${req.user.id}`;
+    // For MVP, simulate file upload processing
+    // In production, this would:
+    // 1. Validate file type and size
+    // 2. Upload to cloud storage (AWS S3, Cloudinary, etc.)
+    // 3. Generate thumbnails/optimized versions
+    // 4. Return secure URLs
     
-    const userIndex = users.findIndex(u => u.id === req.user.id);
-    if (userIndex !== -1) {
-      users[userIndex].profilePhotoUrl = photoUrl;
+    const user = users.find(u => u.id === req.user.id);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
     }
+    
+    // Generate avatar URL based on user name
+    const photoUrl = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(user.fullName)}&backgroundColor=C44E38&color=ffffff`;
+    
+    // Update user profile
+    user.profilePhotoUrl = photoUrl;
+    user.updatedAt = new Date().toISOString();
+    
+    console.log('Profile photo updated for:', user.fullName);
     
     res.json({ photoUrl });
   } catch (error) {
+    console.error('Photo upload error:', error);
     res.status(500).json({ error: 'Upload failed' });
   }
 });

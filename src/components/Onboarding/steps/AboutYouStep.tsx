@@ -1,4 +1,5 @@
 import React from 'react';
+import { User } from 'lucide-react';
 import { Input } from '../../UI/Input';
 import { Select } from '../../UI/Select';
 import { Card } from '../../UI/Card';
@@ -41,10 +42,24 @@ export const AboutYouStep: React.FC<AboutYouStepProps> = ({ data, updateData }) 
 
       <Card className="p-8">
         <div className="space-y-6">
-          <ProfilePhotoUpload
-            currentPhotoUrl={data.profilePhotoUrl}
-            onPhotoUpdate={handlePhotoUpdate}
-          />
+          <div>
+            <label className="block text-sm font-medium text-[#1A1A1A] mb-3">
+              Profile Photo (Optional)
+            </label>
+            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-4">
+              <div className="flex items-center space-x-3">
+                <User className="w-5 h-5 text-blue-600" />
+                <div>
+                  <p className="text-sm font-medium text-blue-900">
+                    Add a photo after onboarding
+                  </p>
+                  <p className="text-xs text-blue-700">
+                    You can upload a profile photo from your dashboard settings
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
 
           <div className="grid grid-cols-2 gap-4">
             <Input

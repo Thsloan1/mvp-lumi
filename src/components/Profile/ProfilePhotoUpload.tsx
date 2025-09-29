@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Camera, Upload, X, Check, User } from 'lucide-react';
+import { Camera, Upload, X, Check, User, AlertCircle } from 'lucide-react';
 import { Button } from '../UI/Button';
 import { Card } from '../UI/Card';
 import { useAppContext } from '../../context/AppContext';
@@ -15,20 +15,35 @@ export const ProfilePhotoUpload: React.FC<ProfilePhotoUploadProps> = ({
   onPhotoUpdate,
   className = ''
 }) => {
-  const { currentUser, uploadProfilePhoto } = useAppContext();
+  const { currentUser, uploadProfilePhoto, toast } = useAppContext();
   const [uploading, setUploading] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(currentPhotoUrl || null);
   const [dragOver, setDragOver] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleFileSelect = (file: File) => {
+  const validateFile = (file: File): string | null => {
+    // Check file type
     if (!file.type.startsWith('image/')) {
-      alert('Please select an image file');
-      return;
+      return 'Please select an image file (JPG, PNG, GIF, WebP)';
     }
 
-    if (file.size > 5 * 1024 * 1024) { // 5MB limit
-      alert('Image must be smaller than 5MB');
+    // Check file size (5MB limit)
+    if (file.size > 5 * 1024 * 1024) {
+      return 'Image must be smaller than 5MB';
+    }
+
+    // Check image dimensions (optional - can be added later)
+    return null;
+  };
+
+  const handleFileSelect = (file: File) => {
+    setError(null);
+    
+    const validationError = validateFile(file);
+    if (validationError) {
+      setError(validationError);
+      toast.error('Invalid file', validationError);
       return;
     }
 
@@ -36,6 +51,10 @@ export const ProfilePhotoUpload: React.FC<ProfilePhotoUploadProps> = ({
     const reader = new FileReader();
     reader.onload = (e) => {
       setPreviewUrl(e.target?.result as string);
+    };
+    reader.onerror = () => {
+      setError('Failed to read file');
+      toast.error('Upload failed', 'Could not read the selected file');
     };
     reader.readAsDataURL(file);
 
@@ -45,10 +64,13 @@ export const ProfilePhotoUpload: React.FC<ProfilePhotoUploadProps> = ({
 
   const uploadFile = async (file: File) => {
     setUploading(true);
+    setError(null);
     try {
       const photoUrl = await uploadProfilePhoto(file);
       onPhotoUpdate(photoUrl);
+      toast.success('Photo updated!', 'Your profile photo has been saved');
     } catch (error) {
+      setError('Upload failed');
       setPreviewUrl(currentPhotoUrl || null);
       // Error handled by context
     } finally {
@@ -83,6 +105,8 @@ export const ProfilePhotoUpload: React.FC<ProfilePhotoUploadProps> = ({
   const handleRemovePhoto = () => {
     setPreviewUrl(null);
     onPhotoUpdate('');
+    setError(null);
+    toast.info('Photo removed', 'Profile photo has been removed');
   };
 
   return (
@@ -115,6 +139,15 @@ export const ProfilePhotoUpload: React.FC<ProfilePhotoUploadProps> = ({
 
         {/* Upload Area */}
         <div className="flex-1">
+          {error && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+              <div className="flex items-center space-x-2">
+                <AlertCircle className="w-4 h-4 text-red-600" />
+                <p className="text-sm text-red-700">{error}</p>
+              </div>
+            </div>
+          )}
+          
           <div
             onDrop={handleDrop}
             onDragOver={handleDragOver}
@@ -122,7 +155,9 @@ export const ProfilePhotoUpload: React.FC<ProfilePhotoUploadProps> = ({
             onClick={handleClick}
             className={`
               border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-all duration-200
-              ${dragOver 
+              ${error 
+                ? 'border-red-300 bg-red-50' 
+                : dragOver 
                 ? 'border-[#C44E38] bg-[#C44E38] bg-opacity-5' 
                 : 'border-[#E6E2DD] hover:border-[#C44E38] hover:bg-[#F8F6F4]'
               }
@@ -140,12 +175,15 @@ export const ProfilePhotoUpload: React.FC<ProfilePhotoUploadProps> = ({
           <input
             ref={fileInputRef}
             type="file"
-            accept="image/*"
+            accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
             onChange={(e) => {
               const file = e.target.files?.[0];
               if (file) handleFileSelect(file);
+              // Reset input value to allow re-selecting same file
+              e.target.value = '';
             }}
             className="hidden"
+            aria-label="Upload profile photo"
           />
         </div>
       </div>
