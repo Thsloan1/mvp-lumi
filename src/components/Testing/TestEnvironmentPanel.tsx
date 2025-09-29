@@ -9,7 +9,7 @@ import { getCurrentEnvironment, isTestEnvironment } from '../../config/environme
 import { DeveloperAnalyticsEngine } from '../../utils/developerAnalytics';
 
 export const DeveloperPortal: React.FC = () => {
-  const { setCurrentView, setCurrentUser, toast, behaviorLogs, classroomLogs, children, classrooms } = useAppContext();
+  const { currentView, setCurrentView, setCurrentUser, toast, behaviorLogs, classroomLogs, children, classrooms } = useAppContext();
   const [isOpen, setIsOpen] = useState(false);
   const [activeModule, setActiveModule] = useState<'testing' | 'client-data' | 'analytics' | 'revenue' | 'tech-stack'>('testing');
   const [selectedTestUser, setSelectedTestUser] = useState('');
