@@ -149,40 +149,11 @@ export const ClassroomStrategyResponse: React.FC<ClassroomStrategyResponseProps>
             </div>
           </Card>
 
-          {/* Cross-promotion to Library/LumiEd */}
-          <Card className="p-6 bg-gradient-to-r from-purple-50 to-blue-50 border-purple-200">
-            <div className="flex items-start space-x-4">
-              <div className="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center flex-shrink-0">
-                <BookOpen className="w-5 h-5 text-purple-600" />
-              </div>
-              <div className="flex-1">
-                <h3 className="text-lg font-semibold text-[#1A1A1A] mb-2">
-                  Explore Classroom Management Resources
-                </h3>
-                <p className="text-gray-700 mb-4">
-                  Access comprehensive toolkits for transitions, routines, and group management strategies.
-                </p>
-                <div className="flex space-x-3">
-                  <Button
-                    onClick={() => setCurrentView('library')}
-                    variant="outline"
-                    size="sm"
-                    icon={BookOpen}
-                  >
-                    Browse Free Resources
-                  </Button>
-                  <Button
-                    onClick={() => setCurrentView('lumied-upsell')}
-                    variant="outline"
-                    size="sm"
-                    icon={ExternalLink}
-                  >
-                    Get Advanced Toolkits
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </Card>
+          {/* LumiEd Integration */}
+          <LumiEdIntegration 
+            context="classroom-profile"
+            relatedTopics={['classroom-management', 'transitions']}
+          />
 
           {/* Confidence Ratings */}
           {selectedStrategy && (

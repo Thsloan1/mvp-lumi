@@ -92,6 +92,14 @@ const AppContent: React.FC = () => {
         return <LearningLibraryComplete />;
       case 'lumied-upsell':
         return <LumiEdUpsell />;
+      case 'lumied-preview':
+        return <LumiEdPreview />;
+      case 'lumied-subscription':
+        return <LumiEdSubscription />;
+      case 'lumied-payment':
+        return <LumiEdPayment />;
+      case 'lumied-welcome':
+        return <LumiEdWelcome />;
       case 'family-notes':
         return <FamilyNotesManager />;
       case 'family-script-generator':

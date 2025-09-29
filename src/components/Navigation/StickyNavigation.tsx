@@ -113,6 +113,41 @@ export const StickyNavigation: React.FC = () => {
             </div>
           </div>
         </div>
+        {/* LumiEd Integration Callout */}
+        {generatedScript && (
+          <Card className="p-6 bg-gradient-to-r from-purple-50 to-blue-50 border-purple-200">
+            <div className="flex items-start space-x-4">
+              <div className="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                <BookOpen className="w-5 h-5 text-purple-600" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold text-[#1A1A1A] mb-2">
+                  Enhance with LumiEd Resources
+                </h3>
+                <p className="text-gray-700 mb-4">
+                  Pair this family communication with relevant toolkits and family companion materials from LumiEd.
+                </p>
+                <div className="flex space-x-3">
+                  <Button
+                    onClick={() => setCurrentView('lumied-preview')}
+                    variant="outline"
+                    size="sm"
+                    icon={BookOpen}
+                  >
+                    Browse LumiEd
+                  </Button>
+                  <Button
+                    onClick={() => setCurrentView('lumied-upsell')}
+                    size="sm"
+                    className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
+                  >
+                    Unlock Premium
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </Card>
+        )}
       </div>
     </nav>
   );

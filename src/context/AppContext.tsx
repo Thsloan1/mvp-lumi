@@ -69,6 +69,8 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     setClassroomLogs,
     currentView,
     setCurrentView,
+    hasLumiEdAccess,
+    setHasLumiEdAccess,
     errors,
     addError,
     removeError,

@@ -275,6 +275,12 @@ export const ChildProfilesManager: React.FC = () => {
             })}
           </div>
         )}
+
+        {/* LumiEd Integration for Child Profiles */}
+        <LumiEdIntegration 
+          context="child-profile"
+          className="mt-8"
+        />
       </div>
     </div>
   );
