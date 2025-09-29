@@ -14,9 +14,6 @@ export const DeveloperPortal: React.FC = () => {
   const [selectedTestUser, setSelectedTestUser] = useState('');
   const [selectedUserId, setSelectedUserId] = useState('');
   const [selectedOrgId, setSelectedOrgId] = useState('');
-  const [editingFramework, setEditingFramework] = useState<string | null>(null);
-  const [editingStrategy, setEditingStrategy] = useState<string | null>(null);
-  const [frameworkUpdates, setFrameworkUpdates] = useState<Record<string, any>>({});
   
   const currentEnv = getCurrentEnvironment();
 
@@ -114,6 +111,58 @@ export const DeveloperPortal: React.FC = () => {
       }
       
       toast.success('Quick Login', `Logged in as ${user.fullName}`);
+    }
+  };
+
+  const handleExportKnowledgeBase = () => {
+    const data = knowledgeLibrary.exportKnowledgeBase();
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `lumi-knowledge-base-${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    toast.success('Knowledge Base Exported', 'Clinical foundation data downloaded');
+  };
+
+  const handleImportKnowledgeBase = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const data = JSON.parse(e.target?.result as string);
+          knowledgeLibrary.importKnowledgeBase(data);
+          toast.success('Knowledge Base Imported', 'Clinical foundation updated successfully');
+        } catch (error) {
+          toast.error('Import Failed', 'Please check the file format');
+        }
+      };
+      reader.readAsText(file);
+    }
+  };
+
+  const handleUpdateFramework = (id: string, field: string, value: any) => {
+    setFrameworkUpdates(prev => ({
+      ...prev,
+      [id]: { ...prev[id], [field]: value }
+    }));
+  };
+
+  const handleSaveFramework = (id: string) => {
+    const updates = frameworkUpdates[id];
+    if (updates) {
+      knowledgeLibrary.updateFramework(id, updates);
+      toast.success('Framework Updated', 'Changes saved to knowledge base');
+      setEditingFramework(null);
+      setFrameworkUpdates(prev => {
+        const newUpdates = { ...prev };
+        delete newUpdates[id];
+        return newUpdates;
+      });
     }
   };
 
