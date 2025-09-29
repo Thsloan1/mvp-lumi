@@ -8,10 +8,9 @@ import { ClassroomStep } from './steps/ClassroomStep';
 import { EnvironmentStep } from './steps/EnvironmentStep';
 import { TeachingStyleStep } from './steps/TeachingStyleStep';
 import { ReviewStep } from './steps/ReviewStep';
-import { User } from '../../types';
 
 export const OnboardingWizard: React.FC = () => {
-  const { setCurrentView, currentUser, updateOnboarding, toast } = useAppContext();
+  const { setCurrentView, currentUser, updateOnboarding } = useAppContext();
   const [currentStep, setCurrentStep] = useState(0);
   const [onboardingData, setOnboardingData] = useState({
     firstName: '',

@@ -228,6 +228,26 @@ app.post('/api/classrooms', authenticateToken, (req, res) => {
   }
 });
 
+// Update classroom
+app.put('/api/classrooms/:id', authenticateToken, (req, res) => {
+  try {
+    const classroomIndex = classrooms.findIndex(c => c.id === req.params.id && c.educatorId === req.user.id);
+    if (classroomIndex === -1) {
+      return res.status(404).json({ error: 'Classroom not found' });
+    }
+
+    classrooms[classroomIndex] = {
+      ...classrooms[classroomIndex],
+      ...req.body,
+      updatedAt: new Date().toISOString()
+    };
+
+    res.json({ classroom: classrooms[classroomIndex] });
+  } catch (error) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 // Behavior Logs Routes
 app.get('/api/behavior-logs', authenticateToken, (req, res) => {
   const userLogs = behaviorLogs.filter(log => log.educatorId === req.user.id);

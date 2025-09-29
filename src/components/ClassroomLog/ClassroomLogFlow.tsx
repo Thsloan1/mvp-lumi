@@ -8,7 +8,7 @@ import { ProgressDots } from '../UI/ProgressDots';
 import { useAppContext } from '../../context/AppContext';
 import { ClassroomLog } from '../../types';
 import { STRESSOR_OPTIONS } from '../../data/constants';
-import { AIService } from '../../services/aiService';
+import { AuthService } from '../../services/authService';
 import { ClassroomStrategyResponse } from './ClassroomStrategyResponse';
 
 export const ClassroomLogFlow: React.FC = () => {

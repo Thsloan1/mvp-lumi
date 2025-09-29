@@ -9,16 +9,9 @@ import { useAppContext } from '../../context/AppContext';
 import { BehaviorLog, Child } from '../../types';
 import { 
   CONTEXT_OPTIONS, 
-  SEVERITY_DESCRIPTORS, 
   TIME_OF_DAY_OPTIONS,
-  INTENSITY_OPTIONS,
-  DURATION_OPTIONS,
-  FREQUENCY_OPTIONS,
-  ADULT_RESPONSE_OPTIONS,
-  OUTCOME_OPTIONS,
-  CONTEXT_TRIGGER_OPTIONS
 } from '../../data/constants';
-import { AIService } from '../../services/aiService';
+import { AuthService } from '../../services/authService';
 import { BehaviorStrategyResponse } from './BehaviorStrategyResponse';
 
 export const BehaviorLogFlow: React.FC = () => {

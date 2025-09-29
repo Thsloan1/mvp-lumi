@@ -10,7 +10,7 @@ import { GRADE_BAND_OPTIONS, STRESSOR_OPTIONS } from '../../data/constants';
 import { AnalyticsEngine } from '../../utils/analyticsEngine';
 
 export const ClassroomProfileManager: React.FC = () => {
-  const { currentUser, classrooms, setClassrooms, behaviorLogs, classroomLogs, children } = useAppContext();
+  const { currentUser, classrooms, setClassrooms, behaviorLogs, classroomLogs, children, updateClassroom } = useAppContext();
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState<Partial<Classroom>>({});
 

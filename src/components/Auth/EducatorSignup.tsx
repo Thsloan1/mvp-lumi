@@ -6,7 +6,7 @@ import { Card } from '../UI/Card';
 import { useAppContext } from '../../context/AppContext';
 
 export const EducatorSignup: React.FC = () => {
-  const { setCurrentView } = useAppContext();
+  const { setCurrentView, signup } = useAppContext();
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
     fullName: '',
