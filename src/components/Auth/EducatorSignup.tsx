@@ -46,7 +46,6 @@ export const EducatorSignup: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    setLoading(true);
     const newErrors: Record<string, string> = {};
     
     if (!formData.fullName.trim()) {
@@ -65,14 +64,14 @@ export const EducatorSignup: React.FC = () => {
     
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
-      setLoading(false);
       return;
     }
 
+    setLoading(true);
     try {
       await signup(formData.fullName, formData.email, formData.password);
     } catch (error) {
-      // Error is handled by signup function
+      // Error is handled by signup function in context
     } finally {
       setLoading(false);
     }

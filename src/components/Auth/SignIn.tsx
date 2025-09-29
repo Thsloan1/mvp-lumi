@@ -34,7 +34,6 @@ export const SignIn: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    setLoading(true);
     const newErrors: Record<string, string> = {};
     
     const emailError = validateEmail(formData.email);
@@ -48,14 +47,14 @@ export const SignIn: React.FC = () => {
     
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
-      setLoading(false);
       return;
     }
 
+    setLoading(true);
     try {
       await signin(formData.email, formData.password);
     } catch (error) {
-      // Error is handled by signin function
+      // Error is handled by signin function in context
     } finally {
       setLoading(false);
     }

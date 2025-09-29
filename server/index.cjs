@@ -44,8 +44,28 @@ app.post('/api/auth/signup', async (req, res) => {
   try {
     const { fullName, email, password } = req.body;
 
-    if (!fullName || !email || !password) {
-      return res.status(400).json({ error: 'All fields required' });
+    // Validation
+    if (!fullName?.trim()) {
+      return res.status(400).json({ error: 'Full name is required' });
+    }
+    if (!email?.trim()) {
+      return res.status(400).json({ error: 'Email is required' });
+    }
+    if (!password || password.length < 8) {
+      return res.status(400).json({ error: 'Password must be at least 8 characters' });
+    }
+
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ error: 'Please enter a valid email address' });
+    }
+
+    // Password strength validation
+    const hasUppercase = /[A-Z]/.test(password);
+    const hasNumber = /\d/.test(password);
+    if (!hasUppercase || !hasNumber) {
+      return res.status(400).json({ error: 'Password must include at least 8 characters, with a capital letter and a number' });
     }
 
     // Check if user exists
@@ -139,13 +159,27 @@ app.put('/api/user/onboarding', authenticateToken, (req, res) => {
       return res.status(404).json({ error: 'User not found' });
     }
 
+    const { classroomData, ...userData } = req.body;
+
+    // Update user data
     users[userIndex] = {
       ...users[userIndex],
-      ...req.body,
+      ...userData,
       onboardingStatus: 'complete',
       updatedAt: new Date().toISOString()
     };
 
+    // Create classroom if provided
+    if (classroomData) {
+      const classroom = {
+        id: Date.now().toString(),
+        ...classroomData,
+        educatorId: req.user.id,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+      classrooms.push(classroom);
+    }
     res.json({ user: { ...users[userIndex], password: undefined } });
   } catch (error) {
     res.status(500).json({ error: 'Server error' });

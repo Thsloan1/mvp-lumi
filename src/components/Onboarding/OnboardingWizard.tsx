@@ -53,6 +53,7 @@ export const OnboardingWizard: React.FC = () => {
 
   const handleComplete = () => {
     const updateData = {
+      fullName: `${onboardingData.firstName} ${onboardingData.lastName}`,
       preferredLanguage: onboardingData.preferredLanguage,
       learningStyle: onboardingData.learningStyle,
       teachingStyle: onboardingData.teachingStyle,
