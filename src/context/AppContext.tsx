@@ -60,7 +60,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   // Use real API hooks
   const { behaviorLogs, loading: behaviorLoading, createBehaviorLog } = useBehaviorLogs();
   const { classroomLogs, loading: classroomLoading, createClassroomLog } = useClassroomLogs();
-  const { children, loading: childrenLoading, createChild, setChildren } = useChildren();
+  const { children: apiChildren, loading: childrenLoading, createChild, setChildren } = useChildren();
   const { classrooms, loading: classroomsLoading, createClassroom, setClassrooms } = useClassrooms();
   
   const currentUser = session?.user;
@@ -75,7 +75,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     signOut,
     classrooms,
     setClassrooms,
-    children,
+    children: apiChildren,
     setChildren,
     behaviorLogs,
     classroomLogs,
