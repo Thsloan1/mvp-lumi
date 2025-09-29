@@ -5,6 +5,7 @@ import { Card } from '../UI/Card';
 import { useAppContext } from '../../context/AppContext';
 import { EngagementTracker } from '../Analytics/EngagementTracker';
 import { AnalyticsEngine, ChildInsight, ClassroomInsight, UnifiedInsight } from '../../utils/analyticsEngine';
+import { FullPageLoading } from '../UI/LoadingState';
 
 export const EducatorDashboard: React.FC = () => {
   const { 
@@ -21,6 +22,7 @@ export const EducatorDashboard: React.FC = () => {
   if (isLoading || loading) {
     return <FullPageLoading message="Loading your dashboard..." />;
   }
+
   // Generate unified insights
   const currentClassroom = classrooms[0]; // For MVP, use first classroom
   const childInsights = children.map(child => 
@@ -70,6 +72,21 @@ export const EducatorDashboard: React.FC = () => {
       color: 'text-purple-600'
     }
   ];
+
+  const recentActivity = [
+    ...behaviorLogs.slice(-3).map(log => ({
+      type: 'behavior',
+      description: log.behaviorDescription,
+      time: new Date(log.createdAt).toLocaleDateString(),
+      severity: log.severity
+    })),
+    ...classroomLogs.slice(-2).map(log => ({
+      type: 'classroom',
+      description: log.challengeDescription,
+      time: new Date(log.createdAt).toLocaleDateString(),
+      severity: log.severity
+    }))
+  ].sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime()).slice(0, 5);
 
   const recentActivity = [
     ...behaviorLogs.slice(-3).map(log => ({

@@ -9,7 +9,7 @@ import { useAppContext } from '../../context/AppContext';
 import { BehaviorLog, Child } from '../../types';
 import { 
   CONTEXT_OPTIONS, 
-  TIME_OF_DAY_OPTIONS,
+  TIME_OF_DAY_OPTIONS
 } from '../../data/constants';
 import { AuthService } from '../../services/authService';
 import { BehaviorStrategyResponse } from './BehaviorStrategyResponse';

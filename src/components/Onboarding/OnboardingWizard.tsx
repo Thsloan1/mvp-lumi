@@ -3,6 +3,7 @@ import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { Button } from '../UI/Button';
 import { ProgressDots } from '../UI/ProgressDots';
 import { useAppContext } from '../../context/AppContext';
+import { ErrorLogger } from '../../utils/errorLogger';
 import { AboutYouStep } from './steps/AboutYouStep';
 import { ClassroomStep } from './steps/ClassroomStep';
 import { EnvironmentStep } from './steps/EnvironmentStep';
@@ -59,11 +60,6 @@ export const OnboardingWizard: React.FC = () => {
         stressorCount: onboardingData.stressors?.length || 0,
         gradeBand: onboardingData.gradeBand
       }
-    });
-    
-    logOnboardingEvent('completed', steps.length - 1, {
-      totalSteps: steps.length,
-      completedData: onboardingData
     });
     
     const updateData = {

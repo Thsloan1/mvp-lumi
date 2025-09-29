@@ -247,12 +247,15 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   };
 
   const signup = async (fullName: string, email: string, password: string) => {
+    ErrorLogger.logAuthEvent('signup_attempt', { email });
     try {
       const result = await AuthService.signup({ fullName, email, password });
       setCurrentUser(result.user);
+      ErrorLogger.logAuthEvent('signup_success', { userId: result.user.id });
       success('Account created!', 'Welcome to Lumi');
-      setCurrentView('email-verification');
+      setCurrentView('onboarding-start'); // Skip email verification for MVP
     } catch (err: any) {
+      ErrorLogger.logAuthEvent('signup_error', { email, error: err.message });
       error('Sign up failed', err.message);
       throw err;
     }

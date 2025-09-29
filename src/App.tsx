@@ -24,6 +24,8 @@ import { FamilyNotesManager } from './components/FamilyNotes/FamilyNotesManager'
 import { ChildProfilesManager } from './components/ChildProfiles/ChildProfilesManager';
 import { ClassroomProfileManager } from './components/ClassroomProfile/ClassroomProfileManager';
 import { SignIn } from './components/Auth/SignIn';
+import { EmailVerification } from './components/Auth/EmailVerification';
+import { ForgotPassword } from './components/Auth/ForgotPassword';
 import { AdminDashboard } from './components/Admin/AdminDashboard';
 import { ManageEducators } from './components/Admin/ManageEducators';
 import { InviteEducatorsModal } from './components/Admin/InviteEducatorsModal';
