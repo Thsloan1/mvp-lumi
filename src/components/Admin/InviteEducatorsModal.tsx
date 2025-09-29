@@ -107,15 +107,13 @@ export const InviteEducatorsModal: React.FC<InviteEducatorsModalProps> = ({ onCl
       return;
     }
 
+    if (!checkSeatAvailability(validEmails.length)) {
+      return;
+    }
     setLoading(true);
     setSeatError(null);
     
     try {
-      // Check seat availability
-      if (validEmails.length > subscriptionInfo.availableSeats) {
-        setSeatError(`Not enough seats available. You have ${subscriptionInfo.availableSeats} seats remaining.`);
-        return;
-      }
 
       // Send invitations
       const emailData = validEmails.map(email => ({
@@ -123,7 +121,7 @@ export const InviteEducatorsModal: React.FC<InviteEducatorsModalProps> = ({ onCl
         firstName: 'Invited',
         lastName: 'Educator'
       }));
-      const result = await inviteEducators(emailData);
+      await inviteEducators(emailData);
       
       setInvitesSent(true);
       // Update seat info

@@ -15,7 +15,6 @@ interface OrganizationStats {
 }
 
 export const AdminDashboard: React.FC = () => {
-  const { currentUser, behaviorLogs, classroomLogs, children, classrooms, setCurrentView } = useAppContext();
   const { currentUser, behaviorLogs, classroomLogs, children, classrooms, setCurrentView, getOrganizationStats } = useAppContext();
   const [stats, setStats] = useState<OrganizationStats>({
     totalEducators: 0,

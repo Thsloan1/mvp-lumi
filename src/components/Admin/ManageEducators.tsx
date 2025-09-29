@@ -42,8 +42,43 @@ export const ManageEducators: React.FC = () => {
 
   const fetchEducators = async () => {
     try {
-      const response = await organizationApi.getMembers();
-      setEducators(response.members || []);
+      // Mock educators for MVP
+      const mockEducators: Educator[] = [
+        {
+          id: '1',
+          fullName: 'Sarah Johnson',
+          email: 'sarah.johnson@school.edu',
+          organizationRole: 'EDUCATOR',
+          onboardingStatus: 'COMPLETE',
+          createdAt: '2024-01-15',
+          lastActive: '2 hours ago',
+          behaviorLogsCount: 45,
+          classroomLogsCount: 12
+        },
+        {
+          id: '2',
+          fullName: 'Mike Chen',
+          email: 'mike.chen@school.edu',
+          organizationRole: 'EDUCATOR',
+          onboardingStatus: 'COMPLETE',
+          createdAt: '2024-01-20',
+          lastActive: '1 day ago',
+          behaviorLogsCount: 38,
+          classroomLogsCount: 8
+        },
+        {
+          id: '3',
+          fullName: 'Lisa Rodriguez',
+          email: 'lisa.rodriguez@school.edu',
+          organizationRole: 'ADMIN',
+          onboardingStatus: 'COMPLETE',
+          createdAt: '2024-01-10',
+          lastActive: '4 hours ago',
+          behaviorLogsCount: 34,
+          classroomLogsCount: 15
+        }
+      ];
+      setEducators(mockEducators);
     } catch (error) {
       handleApiError(error, { action: 'fetchEducators' });
     }
