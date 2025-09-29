@@ -29,12 +29,23 @@ import { ManageEducators } from './components/Admin/ManageEducators';
 import { InviteEducatorsModal } from './components/Admin/InviteEducatorsModal';
 import { OrganizationSettings } from './components/Admin/OrganizationSettings';
 import { OrganizationAnalytics } from './components/Admin/OrganizationAnalytics';
+import { StickyNavigation } from './components/Navigation/StickyNavigation';
+import { ProfileSettings } from './components/Profile/ProfileSettings';
+import { DataReports } from './components/Reports/DataReports';
+import { LearningLibraryComplete } from './components/Library/LearningLibraryComplete';
+import { FamilyScriptGenerator } from './components/FamilyNotes/FamilyScriptGenerator';
 
 const AppContent: React.FC = () => {
   const { currentView, setCurrentView } = useAppContext();
 
+  // Show sticky navigation for main app views (not auth/onboarding)
+  const showStickyNav = [
+    'dashboard', 'behavior-log', 'classroom-log', 'child-profiles', 'classroom-profile',
+    'library', 'reports', 'family-notes', 'profile-settings', 'child-profile-detail'
+  ].includes(currentView);
   return (
     <div className="relative">
+      {showStickyNav && <StickyNavigation />}
       {renderView()}
       <ErrorToastContainer />
     </div>
@@ -77,15 +88,21 @@ const AppContent: React.FC = () => {
       case 'classroom-log':
         return <ClassroomLogFlow />;
       case 'library':
-        return <ResourceLibrary />;
+        return <LearningLibraryComplete />;
       case 'lumied-upsell':
         return <LumiEdUpsell />;
       case 'family-notes':
         return <FamilyNotesManager />;
+      case 'family-script-generator':
+        return <FamilyScriptGenerator />;
       case 'child-profiles':
         return <ChildProfilesManager />;
       case 'classroom-profile':
         return <ClassroomProfileManager />;
+      case 'profile-settings':
+        return <ProfileSettings />;
+      case 'reports':
+        return <DataReports />;
       case 'admin-dashboard':
         return <AdminDashboard />;
       case 'manage-educators':

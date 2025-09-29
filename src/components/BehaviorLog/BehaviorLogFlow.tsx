@@ -293,6 +293,15 @@ export const BehaviorLogFlow: React.FC = () => {
           setAiResponse(null);
           setCurrentStep(steps.length - 1);
         }}
+        child={children.find(c => c.id === behaviorData.childId)}
+        behaviorLog={{
+          ...behaviorData,
+          id: 'temp',
+          educatorId: currentUser?.id || '',
+          severity: behaviorData.severity as 'low' | 'medium' | 'high',
+          stressors: [],
+          createdAt: new Date()
+        }}
       />
     );
   }
