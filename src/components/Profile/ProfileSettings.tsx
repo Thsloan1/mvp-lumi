@@ -10,6 +10,7 @@ import { LEARNING_STYLE_OPTIONS, TEACHING_STYLE_OPTIONS, GRADE_BAND_OPTIONS } fr
 
 export const ProfileSettings: React.FC = () => {
   const { currentUser, setCurrentUser, setCurrentView, toast } = useAppContext();
+  const { currentUser, setCurrentUser, setCurrentView, toast, updateProfile, changePassword } = useAppContext();
   const [activeTab, setActiveTab] = useState<'profile' | 'subscription' | 'billing' | 'security'>('profile');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -94,13 +95,10 @@ export const ProfileSettings: React.FC = () => {
     
     setLoading(true);
     try {
-      // In real implementation, this would call API
-      console.log('Password changed');
+      await changePassword(passwordData.currentPassword, passwordData.newPassword);
       setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
-      toast.success('Password updated!', 'Your password has been changed');
     } catch (error) {
       console.error('Error changing password:', error);
-      toast.error('Password change failed', 'Please try again');
     } finally {
       setLoading(false);
     }

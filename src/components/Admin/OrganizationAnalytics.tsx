@@ -6,7 +6,7 @@ import { Select } from '../UI/Select';
 import { useAppContext } from '../../context/AppContext';
 
 export const OrganizationAnalytics: React.FC = () => {
-  const { setCurrentView } = useAppContext();
+  const { setCurrentView, behaviorLogs, classroomLogs, children, classrooms } = useAppContext();
   const [timeRange, setTimeRange] = useState('30d');
   const [selectedMetric, setSelectedMetric] = useState('all');
 

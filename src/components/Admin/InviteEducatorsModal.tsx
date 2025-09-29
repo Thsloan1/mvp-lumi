@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useEffect } from 'react';
 import { X, Mail, Plus, Minus, Send, Copy, Check, AlertCircle } from 'lucide-react';
 import { Button } from '../UI/Button';
 import { Card } from '../UI/Card';

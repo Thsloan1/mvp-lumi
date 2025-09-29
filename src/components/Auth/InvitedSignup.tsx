@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useEffect } from 'react';
 import { ArrowLeft, Mail, Eye, EyeOff } from 'lucide-react';
 import { Button } from '../UI/Button';
 import { Input } from '../UI/Input';
