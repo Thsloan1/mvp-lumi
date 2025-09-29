@@ -1,13 +1,11 @@
 import React, { useState } from 'react';
-import { Settings, RefreshCw, Database, Users, BarChart3, Download, Upload, Trash2, Play, Code, DollarSign, AlertTriangle, Wrench, BookOpen, CreditCard as Edit, Save, X, Plus } from 'lucide-react';
-import { Button } from '../UI/Button';
+import { Settings, RefreshCw, Database, Users, BarChart3, Download, Upload, Trash2, Play, Code, DollarSign, AlertTriangle, Wrench, BookOpen, CreditCard as Edit, Save, X, Plus } from 'lucide-react'/Button';
 import { Card } from '../UI/Card';
 import { Select } from '../UI/Select';
 import { useAppContext } from '../../context/AppContext';
 import { testDataManager } from '../../data/testData';
 import { getCurrentEnvironment, isTestEnvironment } from '../../config/environments';
 import { DeveloperAnalyticsEngine } from '../../utils/developerAnalytics';
-import { knowledgeLibrary } from '../../data/knowledgeLibrary';
 
 export const DeveloperPortal: React.FC = () => {
   const { setCurrentView, setCurrentUser, toast, behaviorLogs, classroomLogs, children, classrooms } = useAppContext();
@@ -16,9 +14,6 @@ export const DeveloperPortal: React.FC = () => {
   const [selectedTestUser, setSelectedTestUser] = useState('');
   const [selectedUserId, setSelectedUserId] = useState('');
   const [selectedOrgId, setSelectedOrgId] = useState('');
-  const [editingFramework, setEditingFramework] = useState<string | null>(null);
-  const [editingStrategy, setEditingStrategy] = useState<string | null>(null);
-  const [frameworkUpdates, setFrameworkUpdates] = useState<Record<string, any>>({});
   
   const currentEnv = getCurrentEnvironment();
 
@@ -116,6 +111,58 @@ export const DeveloperPortal: React.FC = () => {
       }
       
       toast.success('Quick Login', `Logged in as ${user.fullName}`);
+    }
+  };
+
+  const handleExportKnowledgeBase = () => {
+    const data = knowledgeLibrary.exportKnowledgeBase();
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `lumi-knowledge-base-${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    toast.success('Knowledge Base Exported', 'Clinical foundation data downloaded');
+  };
+
+  const handleImportKnowledgeBase = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const data = JSON.parse(e.target?.result as string);
+          knowledgeLibrary.importKnowledgeBase(data);
+          toast.success('Knowledge Base Imported', 'Clinical foundation updated successfully');
+        } catch (error) {
+          toast.error('Import Failed', 'Please check the file format');
+        }
+      };
+      reader.readAsText(file);
+    }
+  };
+
+  const handleUpdateFramework = (id: string, field: string, value: any) => {
+    setFrameworkUpdates(prev => ({
+      ...prev,
+      [id]: { ...prev[id], [field]: value }
+    }));
+  };
+
+  const handleSaveFramework = (id: string) => {
+    const updates = frameworkUpdates[id];
+    if (updates) {
+      knowledgeLibrary.updateFramework(id, updates);
+      toast.success('Framework Updated', 'Changes saved to knowledge base');
+      setEditingFramework(null);
+      setFrameworkUpdates(prev => {
+        const newUpdates = { ...prev };
+        delete newUpdates[id];
+        return newUpdates;
+      });
     }
   };
 
@@ -586,21 +633,21 @@ export const DeveloperPortal: React.FC = () => {
 
   const renderTechStack = () => (
     <div className="space-y-6">
+      {!systemHealth ? (
+        <div className="text-center py-8">
+          <div className="animate-spin w-6 h-6 border-2 border-purple-600 border-t-transparent rounded-full mx-auto mb-2"></div>
+          <p className="text-sm text-gray-600">Loading system health...</p>
+        </div>
+      ) : (
+      <>
       {/* System Health */}
       <Card className="p-4">
         <h4 className="font-semibold text-gray-900 mb-4">System Health Status</h4>
         <div className="space-y-3">
-          {[
-            { component: 'Frontend (React + TypeScript)', status: 'Healthy', color: 'text-green-600' },
-            { component: 'Backend API (Express + Node.js)', status: 'Healthy', color: 'text-green-600' },
-            { component: 'Authentication System', status: 'Healthy', color: 'text-green-600' },
-            { component: 'AI Strategy Engine', status: 'Healthy', color: 'text-green-600' },
-            { component: 'Analytics Engine', status: 'Healthy', color: 'text-green-600' },
-            { component: 'Knowledge Library', status: 'Healthy', color: 'text-green-600' }
-          ].map((item, index) => (
+          {systemHealth.components.map((item, index) => (
             <div key={index} className="flex justify-between items-center">
-              <span className="text-gray-700 text-sm">{item.component}</span>
-              <span className={`font-medium text-sm ${item.color}`}>✓ {item.status}</span>
+              <span className="text-gray-700 text-sm">{item.name}</span>
+              <span className="font-medium text-sm text-green-600">✓ {item.status}</span>
             </div>
           ))}
         </div>
@@ -612,7 +659,7 @@ export const DeveloperPortal: React.FC = () => {
         <div className="space-y-2">
           <div className="bg-green-50 border border-green-200 p-3 rounded-lg">
             <p className="text-sm font-medium text-green-900">✓ No Critical Errors</p>
-            <p className="text-xs text-green-700">All systems operational</p>
+            <p className="font-bold text-green-600">{systemHealth.performance.loadTime}</p>
           </div>
           <div className="bg-blue-50 border border-blue-200 p-3 rounded-lg">
             <p className="text-sm font-medium text-blue-900">Error Logging Active</p>
@@ -631,18 +678,20 @@ export const DeveloperPortal: React.FC = () => {
           </div>
           <div>
             <p className="text-gray-600">API Response:</p>
-            <p className="font-bold text-green-600">< 500ms</p>
+            <p className="font-bold text-green-600">{systemHealth.performance.apiResponse}</p>
           </div>
           <div>
             <p className="text-gray-600">Memory Usage:</p>
-            <p className="font-bold text-blue-600">Optimized</p>
+            <p className="font-bold text-blue-600">{systemHealth.performance.memoryUsage}</p>
           </div>
           <div>
             <p className="text-gray-600">Bundle Size:</p>
-            <p className="font-bold text-blue-600">Efficient</p>
+            <p className="font-bold text-blue-600">{systemHealth.performance.bundleSize}</p>
           </div>
         </div>
       </Card>
+      </>
+      )}
 
       {/* Tech Stack Info */}
       <Card className="p-4">

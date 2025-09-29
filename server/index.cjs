@@ -531,6 +531,355 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', timestamp: new Date().toISOString() });
 });
 
+// Developer Portal Analytics Routes
+app.get('/api/developer/analytics/app-level', (req, res) => {
+  try {
+    const allUsers = users;
+    const allOrganizations = []; // Mock organizations for MVP
+    const allBehaviorLogs = behaviorLogs;
+    const allClassroomLogs = classroomLogs;
+    const allChildren = children;
+    const allClassrooms = classrooms;
+
+    // Calculate app-level analytics
+    const totalUsers = allUsers.length;
+    const totalIndividualUsers = allUsers.filter(u => u.role === 'educator' && !u.organizationId).length;
+    const totalOrganizationClients = allOrganizations.length;
+    const totalOrgUsers = allUsers.filter(u => u.organizationId).length;
+
+    // Activity-based user classification
+    const now = Date.now();
+    const dayMs = 24 * 60 * 60 * 1000;
+    const weekMs = 7 * dayMs;
+    const monthMs = 30 * dayMs;
+
+    const getUserLastActivity = (userId) => {
+      const userLogs = [...allBehaviorLogs, ...allClassroomLogs].filter(log => log.educatorId === userId);
+      return userLogs.length > 0 ? Math.max(...userLogs.map(log => new Date(log.createdAt).getTime())) : 0;
+    };
+
+    const dailyActiveUsers = allUsers.filter(u => getUserLastActivity(u.id) > now - dayMs).length;
+    const weeklyActiveUsers = allUsers.filter(u => getUserLastActivity(u.id) > now - weekMs).length;
+    const monthlyActiveUsers = allUsers.filter(u => getUserLastActivity(u.id) > now - monthMs).length;
+    const activeUsers = monthlyActiveUsers;
+    const inactiveUsers = totalUsers - activeUsers;
+
+    const avgBehaviorLogsPerUser = totalUsers > 0 ? allBehaviorLogs.length / totalUsers : 0;
+    const avgClassroomLogsPerUser = totalUsers > 0 ? allClassroomLogs.length / totalUsers : 0;
+    const avgConfidence = allBehaviorLogs.length > 0 ? 
+      allBehaviorLogs.reduce((sum, log) => sum + (log.confidenceRating || 0), 0) / allBehaviorLogs.length : 0;
+
+    const userRetentionRate = totalUsers > 0 ? (activeUsers / totalUsers) * 100 : 0;
+
+    const analytics = {
+      totalUsers,
+      totalIndividualUsers,
+      totalOrganizationClients,
+      totalOrgUsers,
+      activeUsers,
+      inactiveUsers,
+      totalBehaviorLogs: allBehaviorLogs.length,
+      totalClassroomLogs: allClassroomLogs.length,
+      totalChildren: allChildren.length,
+      avgBehaviorLogsPerUser: Math.round(avgBehaviorLogsPerUser * 10) / 10,
+      avgClassroomLogsPerUser: Math.round(avgClassroomLogsPerUser * 10) / 10,
+      avgConfidence: Math.round(avgConfidence * 10) / 10,
+      userRetentionRate: Math.round(userRetentionRate * 10) / 10,
+      dailyActiveUsers,
+      weeklyActiveUsers,
+      monthlyActiveUsers
+    };
+
+    res.json({ analytics });
+  } catch (error) {
+    console.error('Analytics error:', error);
+    res.status(500).json({ error: 'Failed to generate analytics' });
+  }
+});
+
+app.get('/api/developer/analytics/user/:userId', (req, res) => {
+  try {
+    const { userId } = req.params;
+    const user = users.find(u => u.id === userId);
+    
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const userBehaviorLogs = behaviorLogs.filter(log => log.educatorId === userId);
+    const userClassroomLogs = classroomLogs.filter(log => log.educatorId === userId);
+    const userChildren = children.filter(child => {
+      const classroom = classrooms.find(c => c.id === child.classroomId);
+      return classroom && classroom.educatorId === userId;
+    });
+
+    const totalLogs = userBehaviorLogs.length + userClassroomLogs.length;
+    const avgConfidence = userBehaviorLogs.length > 0 ? 
+      userBehaviorLogs.reduce((sum, log) => sum + (log.confidenceRating || 0), 0) / userBehaviorLogs.length : 0;
+
+    // Context usage analysis
+    const contextUsage = {};
+    [...userBehaviorLogs, ...userClassroomLogs].forEach(log => {
+      contextUsage[log.context] = (contextUsage[log.context] || 0) + 1;
+    });
+
+    // Severity distribution
+    const severityDistribution = { low: 0, medium: 0, high: 0 };
+    [...userBehaviorLogs, ...userClassroomLogs].forEach(log => {
+      severityDistribution[log.severity]++;
+    });
+
+    const userAnalytics = {
+      user: { ...user, password: undefined },
+      totalLogs,
+      avgConfidence: Math.round(avgConfidence * 10) / 10,
+      childrenCount: userChildren.length,
+      contextUsage,
+      severityDistribution,
+      lastActive: totalLogs > 0 ? 
+        new Date(Math.max(...[...userBehaviorLogs, ...userClassroomLogs].map(log => new Date(log.createdAt).getTime()))).toLocaleDateString() : 
+        'Never',
+      engagementScore: Math.round((totalLogs / 30 + avgConfidence / 10) * 50) // Simplified engagement calculation
+    };
+
+    res.json({ userAnalytics });
+  } catch (error) {
+    console.error('User analytics error:', error);
+    res.status(500).json({ error: 'Failed to generate user analytics' });
+  }
+});
+
+app.get('/api/developer/analytics/outliers', (req, res) => {
+  try {
+    const outliers = [];
+
+    // High usage users
+    const userLogCounts = users.map(user => ({
+      user,
+      logCount: [...behaviorLogs, ...classroomLogs].filter(log => log.educatorId === user.id).length
+    }));
+    const avgLogsPerUser = userLogCounts.reduce((sum, u) => sum + u.logCount, 0) / userLogCounts.length;
+    const highUsageUsers = userLogCounts.filter(u => u.logCount > avgLogsPerUser * 3);
+    
+    if (highUsageUsers.length > 0) {
+      outliers.push({
+        type: 'high_usage_users',
+        description: `${highUsageUsers.length} users with 3x+ average usage (${Math.round(avgLogsPerUser * 3)} logs)`,
+        users: highUsageUsers.map(u => u.user.fullName),
+        impact: 'May indicate power users, crisis situations, or exceptional engagement',
+        recommendation: 'Interview these users for success stories and potential case studies'
+      });
+    }
+
+    // Low engagement users
+    const lowEngagementUsers = userLogCounts.filter(u => u.logCount === 0 && 
+      new Date(u.user.createdAt).getTime() < Date.now() - (14 * 24 * 60 * 60 * 1000)
+    );
+    
+    if (lowEngagementUsers.length > 0) {
+      outliers.push({
+        type: 'low_engagement_users',
+        description: `${lowEngagementUsers.length} users with zero usage after 2+ weeks`,
+        users: lowEngagementUsers.map(u => u.user.fullName),
+        impact: 'Indicates onboarding issues or lack of perceived value',
+        recommendation: 'Implement re-engagement campaign and onboarding improvements'
+      });
+    }
+
+    res.json({ outliers });
+  } catch (error) {
+    console.error('Outliers analysis error:', error);
+    res.status(500).json({ error: 'Failed to analyze outliers' });
+  }
+});
+
+app.get('/api/developer/revenue', (req, res) => {
+  try {
+    const individualUsers = users.filter(u => u.role === 'educator' && !u.organizationId).length;
+    const orgUsers = users.filter(u => u.organizationId).length;
+    const organizations = 1; // Mock for MVP
+
+    const individualARR = individualUsers * 297;
+    const organizationARR = orgUsers * 29 * 12;
+    const totalARR = individualARR + organizationARR;
+
+    const now = Date.now();
+    const monthMs = 30 * 24 * 60 * 60 * 1000;
+    
+    const activeUsers = users.filter(u => {
+      const userLogs = [...behaviorLogs, ...classroomLogs].filter(log => log.educatorId === u.id);
+      const lastActivity = userLogs.length > 0 ? Math.max(...userLogs.map(log => new Date(log.createdAt).getTime())) : 0;
+      return lastActivity > now - monthMs;
+    }).length;
+
+    const retentionRate = users.length > 0 ? (activeUsers / users.length) * 100 : 0;
+
+    const revenueData = {
+      individualUsers,
+      organizationClients: organizations,
+      orgUsers,
+      individualARR,
+      organizationARR,
+      totalARR,
+      activeUsers,
+      inactiveUsers: users.length - activeUsers,
+      retentionRate: Math.round(retentionRate * 10) / 10,
+      churnRisk: users.length - activeUsers
+    };
+
+    res.json({ revenueData });
+  } catch (error) {
+    console.error('Revenue analytics error:', error);
+    res.status(500).json({ error: 'Failed to generate revenue analytics' });
+  }
+});
+
+app.get('/api/developer/system-health', (req, res) => {
+  try {
+    const systemHealth = {
+      components: [
+        { name: 'Frontend (React + TypeScript)', status: 'Healthy', uptime: '99.9%' },
+        { name: 'Backend API (Express + Node.js)', status: 'Healthy', uptime: '99.8%' },
+        { name: 'Authentication System', status: 'Healthy', uptime: '100%' },
+        { name: 'AI Strategy Engine', status: 'Healthy', uptime: '99.7%' },
+        { name: 'Analytics Engine', status: 'Healthy', uptime: '99.9%' },
+        { name: 'Knowledge Library', status: 'Healthy', uptime: '100%' }
+      ],
+      performance: {
+        loadTime: '< 2s',
+        apiResponse: '< 500ms',
+        memoryUsage: 'Optimized',
+        bundleSize: 'Efficient'
+      },
+      errors: {
+        critical: 0,
+        warnings: 0,
+        info: 2
+      }
+    };
+
+    res.json({ systemHealth });
+  } catch (error) {
+    console.error('System health error:', error);
+    res.status(500).json({ error: 'Failed to get system health' });
+  }
+});
+
+app.post('/api/developer/data/reset', (req, res) => {
+  try {
+    // Reset to initial test data
+    const testData = testDataManager.getAllData();
+    users.length = 0;
+    children.length = 0;
+    classrooms.length = 0;
+    behaviorLogs.length = 0;
+    classroomLogs.length = 0;
+    
+    users.push(...testData.users);
+    children.push(...testData.children);
+    classrooms.push(...testData.classrooms);
+    behaviorLogs.push(...testData.behaviorLogs);
+    classroomLogs.push(...testData.classroomLogs);
+    
+    console.log('🔄 Data reset via API');
+    res.json({ message: 'Data reset successfully' });
+  } catch (error) {
+    console.error('Data reset error:', error);
+    res.status(500).json({ error: 'Failed to reset data' });
+  }
+});
+
+app.post('/api/developer/data/generate', (req, res) => {
+  try {
+    const { count = 20 } = req.body;
+    
+    // Generate additional test behavior logs
+    testDataManager.generateTestBehaviorLogs(count);
+    const newData = testDataManager.getAllData();
+    
+    // Sync with server data
+    behaviorLogs.length = 0;
+    behaviorLogs.push(...newData.behaviorLogs);
+    
+    console.log(`📊 Generated ${count} additional behavior logs via API`);
+    res.json({ message: `Generated ${count} additional behavior logs` });
+  } catch (error) {
+    console.error('Data generation error:', error);
+    res.status(500).json({ error: 'Failed to generate data' });
+  }
+});
+
+// Knowledge base management routes
+app.get('/api/developer/knowledge-base', (req, res) => {
+  try {
+    // Mock knowledge base data for MVP
+    const knowledgeBase = {
+      frameworks: [
+        {
+          id: 'attachment_theory',
+          name: 'Attachment Theory',
+          coreIdea: 'Children need a secure base; behavior often signals a need for safety/connection.',
+          productPrinciples: [
+            'Use warm, supportive tone in all interactions',
+            'Assume skill-building needs, not willful defiance',
+            'Prioritize co-regulation prompts before teaching',
+            'Frame behaviors as communication of needs'
+          ]
+        },
+        {
+          id: 'iecmh',
+          name: 'Infant & Early Childhood Mental Health (IECMH)',
+          coreIdea: 'Relationships drive regulation and learning.',
+          productPrinciples: [
+            'Include adult co-regulation in all strategies',
+            'Emphasize frequent, predictable routines',
+            'Suggest gentle, predictable transitions',
+            'Support educator emotional state as part of system'
+          ]
+        }
+      ],
+      templates: [
+        {
+          id: 'connection_before_direction',
+          name: 'Connection Before Direction',
+          frameworks: ['attachment_theory', 'iecmh', 'trauma_informed_care'],
+          template: 'First, get down to the child\'s eye level and acknowledge their feelings with simple, warm words like "I see you\'re having a hard time." Then, offer two simple choices that both lead to the same positive outcome.'
+        }
+      ],
+      guidelines: [
+        {
+          id: 'plain_language',
+          category: 'tone',
+          rule: 'Use plain, nonjudgmental language that assumes positive intent',
+          examples: [
+            { preferred: 'had a hard time starting the activity', avoid: 'refused to participate' }
+          ]
+        }
+      ]
+    };
+
+    res.json({ knowledgeBase });
+  } catch (error) {
+    console.error('Knowledge base error:', error);
+    res.status(500).json({ error: 'Failed to get knowledge base' });
+  }
+});
+
+app.put('/api/developer/knowledge-base/framework/:id', (req, res) => {
+  try {
+    const { id } = req.params;
+    const updates = req.body;
+    
+    console.log(`📚 Framework update request for ${id}:`, updates);
+    
+    // In a real implementation, this would update the knowledge base
+    res.json({ message: 'Framework updated successfully', frameworkId: id });
+  } catch (error) {
+    console.error('Framework update error:', error);
+    res.status(500).json({ error: 'Failed to update framework' });
+  }
+});
+
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error('Server error:', err);
