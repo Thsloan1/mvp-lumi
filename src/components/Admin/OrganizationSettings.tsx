@@ -353,7 +353,7 @@ export const OrganizationSettings: React.FC = () => {
                 onClick={handleTransferOwnership}
                 disabled={!transferEmail || !transferReason}
                 loading={loading}
-                className="bg-red-600 hover:bg-red-700 text-white"
+                className="bg-red-600 hover:bg-red-700"
               >
                 Confirm Transfer
               </Button>
