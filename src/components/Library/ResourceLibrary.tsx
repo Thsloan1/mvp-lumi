@@ -65,8 +65,10 @@ export const ResourceLibrary: React.FC = () => {
     setSearchParams(prev => ({ ...prev, [field]: value }));
   };
 
-  const handleResourceAction = (resource: Resource) => {
+  const handleResourceAccess = (resource: Resource) => {
     if (resource.isPremium) {
+      // Handle premium resource access
+    }
     // Track engagement and download/view
     console.log('Accessing resource:', resource.title);
     // In real implementation, this would track analytics and provide download
@@ -154,9 +156,8 @@ export const ResourceLibrary: React.FC = () => {
                 onClick={() => setShowFilters(!showFilters)}
                 icon={Filter}
               >
-                    {allResources.length} Resources
+                Filters
               </Button>
-              )}
             </div>
 
             {showFilters && (
