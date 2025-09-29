@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
-import { BarChart3, Download, Filter, Calendar, TrendingUp, Users, Heart, FileText } from 'lucide-react';
+import { BarChart3, Download, Filter, Calendar, TrendingUp, Users, Heart, FileText, ArrowLeft } from 'lucide-react';
 import { Button } from '../UI/Button';
 import { Card } from '../UI/Card';
 import { Select } from '../UI/Select';
+import { EmptyState } from '../UI/EmptyState';
 import { useAppContext } from '../../context/AppContext';
 import { AnalyticsEngine, ChildInsight, ClassroomInsight, UnifiedInsight } from '../../utils/analyticsEngine';
 
 export const DataReports: React.FC = () => {
-  const { behaviorLogs, classroomLogs, children, currentUser } = useAppContext();
+  const { behaviorLogs, classroomLogs, children, classrooms, currentUser, setCurrentView } = useAppContext();
   const [selectedReport, setSelectedReport] = useState<'child' | 'classroom' | 'overview'>('overview');
   const [dateRange, setDateRange] = useState('30d');
   const [selectedChild, setSelectedChild] = useState('');
@@ -90,12 +91,73 @@ export const DataReports: React.FC = () => {
     AnalyticsEngine.generateChildInsights(child.id, behaviorLogs, child)
   ).filter(insight => insight.totalLogs > 0);
 
+  const classroomInsights = classrooms.map(classroom =>
+    AnalyticsEngine.generateClassroomInsights(
+      classroom.id,
+      behaviorLogs,
+      classroomLogs,
+      children,
+      classroom
+    )
+  ).filter(insight => insight.totalLogs > 0);
+
   const unifiedInsights = AnalyticsEngine.generateUnifiedInsights(
     behaviorLogs,
     classroomLogs,
     children,
-    []
+    classrooms
   );
+
+  const handleExportReport = () => {
+    const reportData = {
+      reportType: selectedReport,
+      dateRange,
+      generatedAt: new Date().toISOString(),
+      stats: selectedReport === 'overview' ? stats : null,
+      childData: selectedReport === 'child' && selectedChild ? getChildData(selectedChild) : null,
+      classroomData: selectedReport === 'classroom' ? classroomInsights : null,
+      insights: unifiedInsights
+    };
+
+    const content = generateReportContent(reportData);
+    const blob = new Blob([content], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `lumi_${selectedReport}_report_${new Date().toISOString().split('T')[0]}.txt`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  const generateReportContent = (data: any): string => {
+    let content = `LUMI DATA REPORT\n`;
+    content += `Report Type: ${data.reportType.toUpperCase()}\n`;
+    content += `Date Range: ${dateRange}\n`;
+    content += `Generated: ${new Date().toLocaleDateString()}\n`;
+    content += `Educator: ${currentUser?.fullName}\n\n`;
+
+    if (data.stats) {
+      content += `OVERVIEW STATISTICS:\n`;
+      content += `- Total Behaviors: ${data.stats.totalBehaviors}\n`;
+      content += `- Classroom Challenges: ${data.stats.totalClassroom}\n`;
+      content += `- Average Confidence: ${data.stats.avgConfidence}/10\n`;
+      content += `- Strategies Used: ${data.stats.strategiesUsed}\n\n`;
+    }
+
+    if (data.insights && data.insights.length > 0) {
+      content += `UNIFIED INSIGHTS:\n`;
+      data.insights.forEach((insight: any, index: number) => {
+        content += `${index + 1}. ${insight.pattern}\n`;
+        content += `   - Child Level: ${insight.childLevel.affectedChildren} children, ${insight.childLevel.frequency} incidents\n`;
+        content += `   - Classroom Level: ${insight.classroomLevel.affectedClassrooms} classrooms, ${insight.classroomLevel.severity} severity\n`;
+        content += `   - Recommendations: ${insight.recommendations.join(', ')}\n\n`;
+      });
+    }
+
+    return content;
+  };
 
   const renderOverviewReport = () => (
     <div className="space-y-8">
@@ -354,15 +416,13 @@ export const DataReports: React.FC = () => {
     
     if (!selectedChildInsight || !child) {
       return (
-        <Card className="p-12 text-center">
-          <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-[#1A1A1A] mb-2">
-            No Data Available
-          </h3>
-          <p className="text-gray-600">
-            This child doesn't have any behavior logs yet
-          </p>
-        </Card>
+        <EmptyState
+          icon={Users}
+          title="No Data Available"
+          description="This child doesn't have any behavior logs yet"
+          actionLabel="Log First Behavior"
+          onAction={() => setCurrentView('behavior-log')}
+        />
       );
     }
     
@@ -546,12 +606,73 @@ export const DataReports: React.FC = () => {
         </div>
       </Card>
 
+      {/* Classroom Insights */}
+      {classroomInsights.length > 0 && (
+        <Card className="p-6">
+          <h3 className="text-lg font-semibold text-[#1A1A1A] mb-6">
+            Classroom Climate Analysis
+          </h3>
+          
+          <div className="space-y-6">
+            {classroomInsights.map((insight, index) => (
+              <div key={index} className="p-4 bg-[#F8F6F4] rounded-xl">
+                <div className="flex items-center justify-between mb-4">
+                  <h4 className="font-semibold text-[#1A1A1A]">{insight.classroomName}</h4>
+                  <div className="text-right">
+                    <div className="text-lg font-bold text-[#C44E38]">
+                      {insight.groupClimate.score}/10
+                    </div>
+                    <p className="text-xs text-gray-600">Climate Score</p>
+                  </div>
+                </div>
+                
+                <div className="grid md:grid-cols-3 gap-4 text-sm">
+                  <div>
+                    <p className="text-gray-600 mb-1">Top Stressors:</p>
+                    <div className="space-y-1">
+                      {insight.groupClimate.topStressors.slice(0, 2).map((stressor, i) => (
+                        <div key={i} className="text-[#1A1A1A] flex items-center">
+                          <div className="w-1.5 h-1.5 bg-red-500 rounded-full mr-2" />
+                          {stressor}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <p className="text-gray-600 mb-1">Transition Challenges:</p>
+                    <p className="font-medium text-[#1A1A1A]">
+                      {insight.groupClimate.transitionChallenges}%
+                    </p>
+                  </div>
+                  
+                  <div>
+                    <p className="text-gray-600 mb-1">Routine Effectiveness:</p>
+                    <p className="font-medium text-[#1A1A1A]">
+                      {insight.groupClimate.routineEffectiveness}/10
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
       {/* Recent Classroom Challenges */}
       <Card className="p-6">
         <h3 className="text-lg font-semibold text-[#1A1A1A] mb-6">
           Recent Classroom Challenges
         </h3>
         
+        {classroomLogs.length === 0 ? (
+          <EmptyState
+            icon={Users}
+            title="No classroom challenges logged"
+            description="Start logging classroom challenges to see insights and patterns."
+            actionLabel="Log First Challenge"
+            onAction={() => setCurrentView('classroom-log')}
+          />
+        ) : (
         <div className="space-y-4">
           {classroomLogs.slice(-5).reverse().map((log, index) => (
             <div key={index} className="p-4 bg-[#F8F6F4] rounded-xl">
@@ -581,6 +702,7 @@ export const DataReports: React.FC = () => {
             </div>
           ))}
         </div>
+        )}
       </Card>
     </div>
   );
@@ -605,6 +727,7 @@ export const DataReports: React.FC = () => {
                 onChange={setDateRange}
                 options={dateRangeOptions}
               />
+                onClick={handleExportReport}
               <Button variant="outline" icon={Download}>
                 Export Report
               </Button>
