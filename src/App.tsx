@@ -82,6 +82,7 @@ const AppContent: React.FC = () => {
       {renderView()}
       <ToastContainer />
       <TestUserFeedbackWidget module={currentView} />
+      <DeveloperPortal />
     </div>
   );
 
@@ -181,7 +182,6 @@ function App() {
         <AppProvider>
           <div className="min-h-screen bg-gray-50" id="main-content">
             <AppContent />
-            <DeveloperPortal />
           </div>
         </AppProvider>
       </AccessibilityProvider>
