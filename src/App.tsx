@@ -166,6 +166,10 @@ const AppContent: React.FC = () => {
             <InviteEducatorsModal onClose={() => setCurrentView('admin-dashboard')} />
           </div>
         );
+      case 'email-verification':
+        return <EmailVerification />;
+      case 'forgot-password':
+        return <ForgotPassword />;
     }
   }
 };

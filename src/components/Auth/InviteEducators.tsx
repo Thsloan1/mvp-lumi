@@ -14,7 +14,7 @@ interface Educator {
 }
 
 export const InviteEducators: React.FC = () => {
-  const { setCurrentView } = useAppContext();
+  const { setCurrentView, inviteEducators } = useAppContext();
   const [educators, setEducators] = useState<Educator[]>([
     { id: '1', email: '', firstName: '', lastName: '', status: 'pending' }
   ]);
@@ -47,9 +47,20 @@ export const InviteEducators: React.FC = () => {
   };
 
   const sendInvites = () => {
-    // Mark all educators as sent
-    setEducators(educators.map(educator => ({ ...educator, status: 'sent' })));
-    setInvitesSent(true);
+    const validEducators = educators.filter(educator => 
+      educator.email && educator.firstName && educator.lastName
+    );
+    
+    if (validEducators.length === 0) return;
+    
+    inviteEducators(validEducators)
+      .then(() => {
+        setEducators(educators.map(educator => ({ ...educator, status: 'sent' })));
+        setInvitesSent(true);
+      })
+      .catch(error => {
+        console.error('Failed to send invites:', error);
+      });
   };
 
   const copyInviteLink = () => {

@@ -6,7 +6,7 @@ import { Card } from '../UI/Card';
 import { useAppContext } from '../../context/AppContext';
 
 export const AdminSignup: React.FC = () => {
-  const { setCurrentView } = useAppContext();
+  const { setCurrentView, adminSignup } = useAppContext();
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
     fullName: '',
@@ -92,11 +92,14 @@ export const AdminSignup: React.FC = () => {
       return;
     }
 
-    // Simulate API call
-    setTimeout(() => {
-      setCurrentView('organization-plan');
+    try {
+      await adminSignup(formData);
+      // Success - user will be redirected by adminSignup function
+    } catch (error) {
+      // Error is handled by adminSignup function in context
+    } finally {
       setLoading(false);
-    }, 1000);
+    }
   };
 
   return (

@@ -6,7 +6,7 @@ import { Input } from '../UI/Input';
 import { useAppContext } from '../../context/AppContext';
 
 export const OrganizationPlan: React.FC = () => {
-  const { setCurrentView } = useAppContext();
+  const { setCurrentView, createOrganization } = useAppContext();
   const [seatCount, setSeatCount] = useState(5);
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'annual'>('annual');
 
@@ -24,6 +24,12 @@ export const OrganizationPlan: React.FC = () => {
   };
 
   const handleContinue = () => {
+    // Store organization plan data for payment step
+    localStorage.setItem('lumi_org_plan', JSON.stringify({
+      seatCount,
+      billingCycle,
+      totalPrice: billingCycle === 'annual' ? totalPrice * 12 : totalPrice
+    }));
     setCurrentView('organization-payment');
   };
 

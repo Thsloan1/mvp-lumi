@@ -53,6 +53,162 @@ app.put('/api/children/:id', authenticateToken, (req, res) => {
   }
 });
 
+// Admin signup route
+app.post('/api/auth/admin-signup', async (req, res) => {
+  try {
+    const { fullName, email, password, organizationName, organizationType, jobTitle } = req.body;
+
+    // Validation
+    if (!fullName?.trim()) {
+      return res.status(400).json({ error: 'Full name is required' });
+    }
+    if (!email?.trim()) {
+      return res.status(400).json({ error: 'Email is required' });
+    }
+    if (!password || password.length < 8) {
+      return res.status(400).json({ error: 'Password must be at least 8 characters' });
+    }
+    if (!organizationName?.trim()) {
+      return res.status(400).json({ error: 'Organization name is required' });
+    }
+    if (!organizationType) {
+      return res.status(400).json({ error: 'Organization type is required' });
+    }
+    if (!jobTitle?.trim()) {
+      return res.status(400).json({ error: 'Job title is required' });
+    }
+
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ error: 'Please enter a valid email address' });
+    }
+
+    // Password strength validation
+    const hasUppercase = /[A-Z]/.test(password);
+    const hasNumber = /\d/.test(password);
+    if (!hasUppercase || !hasNumber) {
+      return res.status(400).json({ error: 'Password must include at least 8 characters, with a capital letter and a number' });
+    }
+
+    // Check if user exists
+    const existingUser = users.find(u => u.email === email);
+    if (existingUser) {
+      return res.status(400).json({ error: 'User already exists' });
+    }
+
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Create admin user
+    const user = {
+      id: Date.now().toString(),
+      fullName,
+      email,
+      password: hashedPassword,
+      role: 'admin',
+      preferredLanguage: 'english',
+      onboardingStatus: 'incomplete',
+      organizationName,
+      organizationType,
+      jobTitle,
+      createdAt: new Date().toISOString()
+    };
+
+    users.push(user);
+
+    // Generate token
+    const token = jwt.sign(
+      { id: user.id, email: user.email, role: user.role },
+      JWT_SECRET,
+      { expiresIn: '7d' }
+    );
+
+    console.log('Admin user created:', user.fullName, 'for', organizationName);
+
+    res.status(201).json({
+      user: { ...user, password: undefined },
+      token
+    });
+  } catch (error) {
+    console.error('Admin signup error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Organization creation route
+app.post('/api/organizations', authenticateToken, (req, res) => {
+  try {
+    const { name, type, plan, maxSeats, paymentData } = req.body;
+    
+    if (!name || !type || !plan || !maxSeats) {
+      return res.status(400).json({ error: 'Organization details required' });
+    }
+
+    const organization = {
+      id: Date.now().toString(),
+      name,
+      type,
+      plan,
+      maxSeats,
+      activeSeats: 1, // Admin user
+      ownerId: req.user.id,
+      status: 'active',
+      createdAt: new Date().toISOString()
+    };
+
+    // Store organization (in real app, this would be in database)
+    console.log('Organization created:', organization.name);
+    
+    res.status(201).json({ organization });
+  } catch (error) {
+    console.error('Organization creation error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Organization invitations route
+app.post('/api/organizations/invitations', authenticateToken, (req, res) => {
+  try {
+    const { educators } = req.body;
+    
+    if (!educators || !Array.isArray(educators)) {
+      return res.status(400).json({ error: 'Educators list required' });
+    }
+
+    // Validate educator data
+    const validEducators = educators.filter(educator => 
+      educator.email && educator.firstName && educator.lastName
+    );
+
+    if (validEducators.length === 0) {
+      return res.status(400).json({ error: 'No valid educators to invite' });
+    }
+
+    // Generate invitation codes and send emails (simulated)
+    const invitations = validEducators.map(educator => ({
+      id: Date.now().toString() + Math.random(),
+      email: educator.email,
+      firstName: educator.firstName,
+      lastName: educator.lastName,
+      inviteCode: Math.random().toString(36).substring(2, 8).toUpperCase(),
+      status: 'sent',
+      createdAt: new Date().toISOString(),
+      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString() // 7 days
+    }));
+
+    console.log('Invitations sent to:', validEducators.map(e => e.email).join(', '));
+    
+    res.status(201).json({ 
+      invitations,
+      message: `Sent ${validEducators.length} invitation${validEducators.length !== 1 ? 's' : ''}` 
+    });
+  } catch (error) {
+    console.error('Invitation error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 +// Profile update route
 +app.put('/api/user/profile', authenticateToken, (req, res) => {
 +  try {

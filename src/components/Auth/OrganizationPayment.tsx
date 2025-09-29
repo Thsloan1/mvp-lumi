@@ -6,7 +6,7 @@ import { Input } from '../UI/Input';
 import { useAppContext } from '../../context/AppContext';
 
 export const OrganizationPayment: React.FC = () => {
-  const { setCurrentView } = useAppContext();
+  const { setCurrentView, createOrganization } = useAppContext();
   const [loading, setLoading] = useState(false);
   const [paymentData, setPaymentData] = useState({
     cardNumber: '',
@@ -28,11 +28,25 @@ export const OrganizationPayment: React.FC = () => {
     e.preventDefault();
     setLoading(true);
     
-    // Simulate payment processing
-    setTimeout(() => {
+    try {
+      // Get organization plan data
+      const planData = JSON.parse(localStorage.getItem('lumi_org_plan') || '{}');
+      
+      // Create organization
+      await createOrganization({
+        name: 'Organization Name', // Would come from admin signup
+        type: 'school',
+        plan: planData.billingCycle || 'annual',
+        maxSeats: planData.seatCount || 5,
+        paymentData
+      });
+      
       setCurrentView('invite-educators');
+    } catch (error) {
+      // Error handled by createOrganization
+    } finally {
       setLoading(false);
-    }, 2000);
+    }
   };
 
   return (

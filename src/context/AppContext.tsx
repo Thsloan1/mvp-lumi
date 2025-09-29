@@ -12,6 +12,7 @@ interface AppContextType {
   isLoading: boolean;
   signin: (email: string, password: string) => Promise<void>;
   signup: (fullName: string, email: string, password: string) => Promise<void>;
+  adminSignup: (data: any) => Promise<void>;
   signout: () => void;
   updateOnboarding: (data: any) => Promise<void>;
   
@@ -25,6 +26,10 @@ interface AppContextType {
   
   // Profile photo
   uploadProfilePhoto: (file: File) => Promise<string>;
+  
+  // Organization management
+  createOrganization: (data: any) => Promise<void>;
+  inviteEducators: (educators: any[]) => Promise<void>;
   
   // Data
   classrooms: Classroom[];
@@ -273,6 +278,52 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     info('Signed out', 'See you next time!');
   };
 
+  const adminSignup = async (data: any) => {
+    ErrorLogger.logAuthEvent('admin_signup_attempt', { email: data.email });
+    try {
+      const result = await AuthService.apiRequest('/api/auth/admin-signup', {
+        method: 'POST',
+        body: JSON.stringify(data)
+      });
+      setCurrentUser(result.user);
+      ErrorLogger.logAuthEvent('admin_signup_success', { userId: result.user.id });
+      success('Admin account created!', 'Welcome to Lumi');
+      setCurrentView('organization-plan');
+    } catch (err: any) {
+      ErrorLogger.logAuthEvent('admin_signup_error', { email: data.email, error: err.message });
+      error('Admin signup failed', err.message);
+      throw err;
+    }
+  };
+
+  const createOrganization = async (data: any) => {
+    try {
+      const result = await AuthService.apiRequest('/api/organizations', {
+        method: 'POST',
+        body: JSON.stringify(data)
+      });
+      success('Organization created!', 'Your organization is ready');
+      return result.organization;
+    } catch (err: any) {
+      error('Organization creation failed', err.message);
+      throw err;
+    }
+  };
+
+  const inviteEducators = async (educators: any[]) => {
+    try {
+      const result = await AuthService.apiRequest('/api/organizations/invitations', {
+        method: 'POST',
+        body: JSON.stringify({ educators })
+      });
+      success('Invitations sent!', `Invited ${educators.length} educator${educators.length !== 1 ? 's' : ''}`);
+      return result;
+    } catch (err: any) {
+      error('Failed to send invitations', err.message);
+      throw err;
+    }
+  };
+
   const updateOnboarding = async (data: any) => {
     ErrorLogger.logOnboardingEvent('completion_attempt', undefined, { userId: currentUser?.id });
     try {
@@ -287,7 +338,13 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
       
       ErrorLogger.logOnboardingEvent('completed', undefined, { userId: updatedUser.id });
       success('Profile updated!', 'Your preferences have been saved');
-      setCurrentView('onboarding-complete');
+      
+      // Route based on user role
+      if (updatedUser.role === 'admin') {
+        setCurrentView('admin-dashboard');
+      } else {
+        setCurrentView('onboarding-complete');
+      }
     } catch (err: any) {
       ErrorLogger.logOnboardingEvent('completion_error', undefined, { userId: currentUser?.id, error: err.message });
       error('Update failed', err.message);
@@ -418,6 +475,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     isLoading,
     signin,
     signup,
+    adminSignup,
     signout,
     updateOnboarding,
     updateProfile,
@@ -427,6 +485,8 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     requestPasswordReset,
     resetPassword,
     uploadProfilePhoto,
+    createOrganization,
+    inviteEducators,
     classrooms,
     children: apiChildren,
     behaviorLogs,
@@ -440,10 +500,8 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     createClassroom,
     updateClassroom,
     updateChild,
-    updateClassroom,
     currentView,
     setCurrentView,
-    setCurrentUser,
     toast: {
       success,
       error,
