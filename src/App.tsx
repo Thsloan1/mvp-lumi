@@ -120,7 +120,21 @@ const AppContent: React.FC = () => {
       case 'family-notes':
         return <FamilyNotesManager />;
       case 'family-script-generator':
-        return <FamilyScriptGenerator />;
+        return (
+          <div className="min-h-screen bg-white">
+            <div className="max-w-4xl mx-auto px-6 py-8">
+              <Button
+                variant="ghost"
+                onClick={() => setCurrentView('family-notes')}
+                icon={ArrowLeft}
+                className="mb-6 -ml-2"
+              >
+                Back to Family Notes
+              </Button>
+              <FamilyScriptGenerator />
+            </div>
+          </div>
+        );
       case 'child-profiles':
         return <ChildProfilesManager />;
       case 'classroom-profile':

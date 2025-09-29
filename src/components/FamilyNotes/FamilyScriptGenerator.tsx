@@ -6,7 +6,7 @@ import { Input } from '../UI/Input';
 import { Select } from '../UI/Select';
 import { useAppContext } from '../../context/AppContext';
 import { Child, BehaviorLog } from '../../types';
-import { AIService } from '../../services/aiService';
+import { generateComprehensiveFamilyScript } from '../../utils/familyScriptGenerator';
 
 interface FamilyScriptGeneratorProps {
   child?: Child;
@@ -43,18 +43,27 @@ export const FamilyScriptGenerator: React.FC<FamilyScriptGeneratorProps> = ({
     setLoading(true);
     
     try {
-      // Generate real AI family script
-      const script = await AIService.generateFamilyScript({
+      // Generate comprehensive family script
+      const script = generateComprehensiveFamilyScript({
         child: child || {
+          id: 'temp',
           name: scriptData.childName,
           gradeBand: 'Preschool (4-5 years old)',
+          classroomId: 'temp',
           hasIEP: false,
-          hasIFSP: false
+          hasIFSP: false,
+          createdAt: new Date(),
+          updatedAt: new Date()
         },
         behaviorLog: behaviorLog || {
+          id: 'temp',
+          educatorId: currentUser?.id || '',
+          childId: 'temp',
           behaviorDescription: 'general classroom behavior',
           context: scriptData.context || 'classroom activities',
-          severity: 'medium'
+          severity: 'medium' as 'low' | 'medium' | 'high',
+          stressors: [],
+          createdAt: new Date()
         },
         parentName: scriptData.parentName,
         language,
@@ -64,13 +73,15 @@ export const FamilyScriptGenerator: React.FC<FamilyScriptGeneratorProps> = ({
       setGeneratedScript(script);
     } catch (error) {
       console.error('Error generating script:', error);
-      alert('Failed to generate family script. Please try again.');
+      // Fallback to basic script generation
+      const fallbackScript = generateBasicScript();
+      setGeneratedScript(fallbackScript);
     } finally {
       setLoading(false);
     }
   };
 
-  const generateEightPointScript = (): string => {
+  const generateBasicScript = (): string => {
     const childName = scriptData.childName || '[Child Name]';
     const parentName = scriptData.parentName || '[Parent Name]';
     const context = scriptData.context || 'during classroom activities';
@@ -144,19 +155,6 @@ Aquí están los enfoques específicos que estamos usando:
 
 **6. Cómo Usar Estas Estrategias:**
 Comenzamos con conexión y seguridad primero. Una vez que ${childName} está calmado, entonces probamos las estrategias prácticas.
-
-**7. Por Qué Funcionan Estas Estrategias:**
-Estos enfoques están basados en la teoría del apego y la neurociencia del desarrollo. Funcionan porque abordan las necesidades subyacentes de ${childName}.
-
-**8. Beneficios a Largo Plazo:**
-Estas estrategias ayudan a ${childName} a desarrollar regulación emocional, habilidades para resolver problemas, y confianza en las relaciones con adultos.
-
-Me encantaría escuchar sus pensamientos y aprender qué funciona bien para ${childName} en casa.
-
-Saludos cordiales,
-${currentUser?.fullName}`;
-  };
-
   const handleCopy = () => {
     navigator.clipboard.writeText(generatedScript);
     setCopied(true);
@@ -177,11 +175,20 @@ ${currentUser?.fullName}`;
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
+      <div className="text-center">
+        <h1 className="text-3xl font-bold text-[#1A1A1A] mb-2">
+          Family Communication Generator
+        </h1>
+        <p className="text-gray-600">
+          Create personalized communication notes for families
+        </p>
+      </div>
+      
       {/* Script Configuration */}
       <Card className="p-6">
-        <h3 className="text-lg font-semibold text-[#1A1A1A] mb-6">
-          Family Communication Generator
+        <h3 className="text-lg font-semibold text-[#1A1A1A] mb-4">
+          Script Details
         </h3>
         
         <div className="grid md:grid-cols-2 gap-6 mb-6">

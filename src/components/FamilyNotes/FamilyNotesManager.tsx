@@ -5,7 +5,8 @@ import { Card } from '../UI/Card';
 import { Input } from '../UI/Input';
 import { Select } from '../UI/Select';
 import { useAppContext } from '../../context/AppContext';
-import { FAMILY_COMMUNICATION_SCRIPTS, SCRIPT_CATEGORIES } from '../../data/familyScripts';
+import { FAMILY_COMMUNICATION_SCRIPTS, SCRIPT_CATEGORIES, FamilyCommunicationScript } from '../../data/familyScripts';
+import { Copy, Check } from 'lucide-react';
 
 export const FamilyNotesManager: React.FC = () => {
   const { setCurrentView } = useAppContext();
@@ -13,6 +14,8 @@ export const FamilyNotesManager: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState('');
   const [selectedLanguage, setSelectedLanguage] = useState('');
   const [showFilters, setShowFilters] = useState(false);
+  const [selectedScript, setSelectedScript] = useState<FamilyCommunicationScript | null>(null);
+  const [copiedScript, setCopiedScript] = useState<string | null>(null);
 
   const allScripts = FAMILY_COMMUNICATION_SCRIPTS;
 
@@ -40,8 +43,18 @@ export const FamilyNotesManager: React.FC = () => {
   ];
 
   const handleScriptAccess = (script: any) => {
-    // In real implementation, this would open the script editor/viewer
-    console.log('Accessing script:', script.title);
+    setSelectedScript(script);
+  };
+
+  const handleCopyScript = (script: FamilyCommunicationScript) => {
+    navigator.clipboard.writeText(script.script);
+    setCopiedScript(script.id);
+    setTimeout(() => setCopiedScript(null), 2000);
+  };
+
+  const handleCustomizeScript = (script: FamilyCommunicationScript) => {
+    // Navigate to script generator with pre-filled data
+    setCurrentView('family-script-generator');
   };
 
   return (
@@ -214,28 +227,27 @@ export const FamilyNotesManager: React.FC = () => {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => setCurrentView('upgrade')}
+                          onClick={() => console.log('Upgrade required')}
                         >
                           Upgrade to Access
                         </Button>
                       ) : (
-                        <div className="space-y-2">
+                        <div className="flex space-x-2">
                           <Button
-                            onClick={() => handleScriptAccess(script)}
+                            onClick={() => handleCopyScript(script)}
                             size="sm"
-                            icon={Download}
+                            icon={copiedScript === script.id ? Check : Copy}
+                            className={copiedScript === script.id ? 'text-green-600' : ''}
                           >
-                            Use Script
+                            {copiedScript === script.id ? 'Copied!' : 'Copy Script'}
                           </Button>
-                          {script.familyHandoutId && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => setCurrentView('library')}
-                            >
-                              Get Handout
-                            </Button>
-                          )}
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleCustomizeScript(script)}
+                          >
+                            Customize
+                          </Button>
                         </div>
                       )}
                     </div>

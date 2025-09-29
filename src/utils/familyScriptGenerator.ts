@@ -1,5 +1,4 @@
 import { Child, BehaviorLog, AIStrategyResponse } from '../types';
-import { AIService } from '../services/aiService';
 
 interface ScriptGenerationParams {
   child: Child;
@@ -27,7 +26,6 @@ const generateEnglishScript = ({ child, behaviorLog, parentName, additionalNotes
   const childName = child.name;
   const context = behaviorLog.context.replace(/_/g, ' ').toLowerCase();
   const behavior = behaviorLog.behaviorDescription;
-  const strategy = behaviorLog.selectedStrategy || 'connection-based approaches';
   const aiResponse = behaviorLog.aiResponse as AIStrategyResponse;
 
   return `Hi ${parentName},
