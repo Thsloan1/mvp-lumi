@@ -40,14 +40,14 @@ export const AdminDashboard: React.FC = () => {
 
   const fetchOrganizationStats = async () => {
     try {
-      const orgStats = await getOrganizationStats();
+      // For demo, use mock data
       setStats({
-        totalEducators: orgStats.totalEducators || 12,
-        activeSeats: orgStats.activeSeats || 12,
-        maxSeats: orgStats.maxSeats || 15,
-        pendingInvitations: orgStats.pendingInvitations || 3,
-        totalBehaviorLogs: behaviorLogs.length,
-        totalClassroomLogs: classroomLogs.length
+        totalEducators: 12,
+        activeSeats: 12,
+        maxSeats: 15,
+        pendingInvitations: 3,
+        totalBehaviorLogs: behaviorLogs.length || 45,
+        totalClassroomLogs: classroomLogs.length || 12
       });
     } catch (error) {
       // Fallback to mock data if API fails
@@ -56,8 +56,8 @@ export const AdminDashboard: React.FC = () => {
         activeSeats: 12,
         maxSeats: 15,
         pendingInvitations: 3,
-        totalBehaviorLogs: behaviorLogs.length,
-        totalClassroomLogs: classroomLogs.length
+        totalBehaviorLogs: behaviorLogs.length || 45,
+        totalClassroomLogs: classroomLogs.length || 12
       });
     } finally {
       setLoading(false);

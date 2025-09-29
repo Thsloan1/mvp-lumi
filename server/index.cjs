@@ -515,6 +515,26 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', timestamp: new Date().toISOString() });
 });
 
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error('Server error:', err);
+  res.status(500).json({ 
+    error: 'Internal server error',
+    message: process.env.NODE_ENV === 'development' ? err.message : 'Something went wrong'
+  });
+});
+
+// 404 handler
+app.use('*', (req, res) => {
+  res.status(404).json({ error: 'Endpoint not found' });
+});
+
 app.listen(PORT, () => {
   console.log(`🚀 Lumi Core API server running on port ${PORT}`);
+  console.log(`📊 Mock data initialized:`);
+  console.log(`   - Users: ${users.length}`);
+  console.log(`   - Children: ${children.length}`);
+  console.log(`   - Classrooms: ${classrooms.length}`);
+  console.log(`   - Behavior Logs: ${behaviorLogs.length}`);
+  console.log(`   - Classroom Logs: ${classroomLogs.length}`);
 });

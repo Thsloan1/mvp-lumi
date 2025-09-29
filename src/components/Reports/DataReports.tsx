@@ -727,7 +727,13 @@ export const DataReports: React.FC = () => {
                 onChange={setDateRange}
                 options={dateRangeOptions}
               />
+              <Button 
                 onClick={handleExportReport}
+                variant="outline" 
+                icon={Download}
+              >
+                Export Report
+              </Button>
               <Button variant="outline" icon={Download}>
                 Export Report
               </Button>

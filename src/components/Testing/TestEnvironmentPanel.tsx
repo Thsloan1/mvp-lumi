@@ -281,10 +281,10 @@ export const TestEnvironmentPanel: React.FC = () => {
           <div className="bg-white rounded-lg p-3 border border-purple-200">
             <p className="text-xs font-medium text-purple-900 mb-2">Current Data:</p>
             <div className="grid grid-cols-2 gap-2 text-xs text-purple-700">
-              <div>Users: {testDataManager.getUsers().length}</div>
-              <div>Children: {testDataManager.getChildren().length}</div>
-              <div>Behaviors: {testDataManager.getBehaviorLogs().length}</div>
-              <div>Classrooms: {testDataManager.getClassrooms().length}</div>
+              <div>User: {currentUser ? '1' : '0'}</div>
+              <div>View: {currentView}</div>
+              <div>Storage: {Object.keys(localStorage).length} items</div>
+              <div>Session: Active</div>
             </div>
           </div>
         </div>

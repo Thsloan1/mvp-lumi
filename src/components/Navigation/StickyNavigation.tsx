@@ -1,10 +1,14 @@
 import React from 'react';
+import { useEffect } from 'react';
 import { User, Users, BookOpen, BarChart3, Settings, Heart, Home, LogOut } from 'lucide-react';
 import { Button } from '../UI/Button';
 import { useAppContext } from '../../context/AppContext';
 
 export const StickyNavigation: React.FC = () => {
   const { currentView, setCurrentView, currentUser, signout } = useAppContext();
+  
+  // Use keyboard navigation hook
+  useKeyboardNavigation();
 
   const navigationItems = [
     {
@@ -154,7 +158,7 @@ export const StickyNavigation: React.FC = () => {
 export const useKeyboardNavigation = () => {
   const { setCurrentView } = useAppContext();
   
-  React.useEffect(() => {
+  useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Alt + number keys for quick navigation
       if (e.altKey && !e.ctrlKey && !e.shiftKey) {

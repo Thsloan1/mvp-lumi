@@ -1,7 +1,7 @@
 import React from 'react';
-import { useSession } from 'next-auth/react';
 import { FullPageLoading } from '../UI/LoadingState';
 import { WelcomeScreen } from '../Welcome/WelcomeScreen';
+import { useAppContext } from '../../context/AppContext';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -12,17 +12,17 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   children,
   requireOnboarding = true
 }) => {
-  const { data: session, status } = useSession();
+  const { currentUser, isLoading } = useAppContext();
 
-  if (status === 'loading') {
+  if (isLoading) {
     return <FullPageLoading message="Checking your authentication..." />;
   }
 
-  if (!session) {
+  if (!currentUser) {
     return <WelcomeScreen />;
   }
 
-  if (requireOnboarding && session.user?.onboardingStatus === 'INCOMPLETE') {
+  if (requireOnboarding && currentUser.onboardingStatus === 'incomplete') {
     return <FullPageLoading message="Redirecting to onboarding..." />;
   }
 

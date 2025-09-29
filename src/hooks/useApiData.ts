@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { useSession } from 'next-auth/react';
-import { BehaviorLogApi, ClassroomLogApi, ChildApi, ClassroomApi, AIApi } from '../../lib/apiClient';
+import { AuthService } from '../services/authService';
 import { useToast } from './useToast';
+import { useAppContext } from '../context/AppContext';
 
 export const useApiData = () => {
   const { error: showError } = useToast();
@@ -11,19 +11,7 @@ export const useApiData = () => {
     showError('Operation failed', error.message || 'Please try again');
   };
 
-  // Initialize API clients
-  const behaviorLogApi = new BehaviorLogApi();
-  const classroomLogApi = new ClassroomLogApi();
-  const childApi = new ChildApi();
-  const classroomApi = new ClassroomApi();
-  const aiApi = new AIApi();
-
   return {
-    behaviorLogApi,
-    classroomLogApi,
-    childApi,
-    classroomApi,
-    aiApi,
     handleApiError
   };
 };
@@ -32,15 +20,15 @@ export const useApiData = () => {
 export const useBehaviorLogs = () => {
   const [behaviorLogs, setBehaviorLogs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const { behaviorLogApi, handleApiError } = useApiData();
-  const { data: session } = useSession();
+  const { handleApiError } = useApiData();
+  const { currentUser } = useAppContext();
 
   const fetchBehaviorLogs = async () => {
-    if (!session?.user) return;
+    if (!currentUser) return;
     
     try {
       setLoading(true);
-      const response = await behaviorLogApi.getBehaviorLogs();
+      const response = await AuthService.apiRequest('/api/behavior-logs');
       setBehaviorLogs(response.behaviorLogs || []);
     } catch (error) {
       handleApiError(error, { action: 'fetchBehaviorLogs' });
@@ -50,10 +38,13 @@ export const useBehaviorLogs = () => {
   };
 
   const createBehaviorLog = async (data: any) => {
-    if (!session?.user) throw new Error('Not authenticated');
+    if (!currentUser) throw new Error('Not authenticated');
     
     try {
-      const response = await behaviorLogApi.createBehaviorLog(data);
+      const response = await AuthService.apiRequest('/api/behavior-logs', {
+        method: 'POST',
+        body: JSON.stringify(data)
+      });
       setBehaviorLogs(prev => [response.behaviorLog, ...prev]);
       return response.behaviorLog;
     } catch (error) {
@@ -63,10 +54,10 @@ export const useBehaviorLogs = () => {
   };
 
   useEffect(() => {
-    if (session?.user) {
+    if (currentUser) {
       fetchBehaviorLogs();
     }
-  }, [session?.user]);
+  }, [currentUser]);
 
   return {
     behaviorLogs,
@@ -80,15 +71,15 @@ export const useBehaviorLogs = () => {
 export const useClassroomLogs = () => {
   const [classroomLogs, setClassroomLogs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const { classroomLogApi, handleApiError } = useApiData();
-  const { data: session } = useSession();
+  const { handleApiError } = useApiData();
+  const { currentUser } = useAppContext();
 
   const fetchClassroomLogs = async () => {
-    if (!session?.user) return;
+    if (!currentUser) return;
     
     try {
       setLoading(true);
-      const response = await classroomLogApi.getClassroomLogs();
+      const response = await AuthService.apiRequest('/api/classroom-logs');
       setClassroomLogs(response.classroomLogs || []);
     } catch (error) {
       handleApiError(error, { action: 'fetchClassroomLogs' });
@@ -98,10 +89,13 @@ export const useClassroomLogs = () => {
   };
 
   const createClassroomLog = async (data: any) => {
-    if (!session?.user) throw new Error('Not authenticated');
+    if (!currentUser) throw new Error('Not authenticated');
     
     try {
-      const response = await classroomLogApi.createClassroomLog(data);
+      const response = await AuthService.apiRequest('/api/classroom-logs', {
+        method: 'POST',
+        body: JSON.stringify(data)
+      });
       setClassroomLogs(prev => [response.classroomLog, ...prev]);
       return response.classroomLog;
     } catch (error) {
@@ -111,10 +105,10 @@ export const useClassroomLogs = () => {
   };
 
   useEffect(() => {
-    if (session?.user) {
+    if (currentUser) {
       fetchClassroomLogs();
     }
-  }, [session?.user]);
+  }, [currentUser]);
 
   return {
     classroomLogs,
@@ -128,15 +122,15 @@ export const useClassroomLogs = () => {
 export const useChildren = () => {
   const [children, setChildren] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const { childApi, handleApiError } = useApiData();
-  const { data: session } = useSession();
+  const { handleApiError } = useApiData();
+  const { currentUser } = useAppContext();
 
   const fetchChildren = async () => {
-    if (!session?.user) return;
+    if (!currentUser) return;
     
     try {
       setLoading(true);
-      const response = await childApi.getChildren();
+      const response = await AuthService.apiRequest('/api/children');
       setChildren(response.children || []);
     } catch (error) {
       handleApiError(error, { action: 'fetchChildren' });
@@ -146,10 +140,13 @@ export const useChildren = () => {
   };
 
   const createChild = async (data: any) => {
-    if (!session?.user) throw new Error('Not authenticated');
+    if (!currentUser) throw new Error('Not authenticated');
     
     try {
-      const response = await childApi.createChild(data);
+      const response = await AuthService.apiRequest('/api/children', {
+        method: 'POST',
+        body: JSON.stringify(data)
+      });
       setChildren(prev => [...prev, response.child]);
       return response.child;
     } catch (error) {
@@ -159,10 +156,10 @@ export const useChildren = () => {
   };
 
   useEffect(() => {
-    if (session?.user) {
+    if (currentUser) {
       fetchChildren();
     }
-  }, [session?.user]);
+  }, [currentUser]);
 
   return {
     children,
@@ -177,15 +174,15 @@ export const useChildren = () => {
 export const useClassrooms = () => {
   const [classrooms, setClassrooms] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const { classroomApi, handleApiError } = useApiData();
-  const { data: session } = useSession();
+  const { handleApiError } = useApiData();
+  const { currentUser } = useAppContext();
 
   const fetchClassrooms = async () => {
-    if (!session?.user) return;
+    if (!currentUser) return;
     
     try {
       setLoading(true);
-      const response = await classroomApi.getClassrooms();
+      const response = await AuthService.apiRequest('/api/classrooms');
       setClassrooms(response.classrooms || []);
     } catch (error) {
       handleApiError(error, { action: 'fetchClassrooms' });
@@ -195,10 +192,13 @@ export const useClassrooms = () => {
   };
 
   const createClassroom = async (data: any) => {
-    if (!session?.user) throw new Error('Not authenticated');
+    if (!currentUser) throw new Error('Not authenticated');
     
     try {
-      const response = await classroomApi.createClassroom(data);
+      const response = await AuthService.apiRequest('/api/classrooms', {
+        method: 'POST',
+        body: JSON.stringify(data)
+      });
       setClassrooms(prev => [...prev, response.classroom]);
       return response.classroom;
     } catch (error) {
@@ -208,10 +208,10 @@ export const useClassrooms = () => {
   };
 
   useEffect(() => {
-    if (session?.user) {
+    if (currentUser) {
       fetchClassrooms();
     }
-  }, [session?.user]);
+  }, [currentUser]);
 
   return {
     classrooms,

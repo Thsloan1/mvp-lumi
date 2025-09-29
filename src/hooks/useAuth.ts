@@ -1,31 +1,24 @@
-import { useSession, signIn, signOut } from 'next-auth/react';
-import { useRouter } from 'next/router';
 import { useEffect } from 'react';
+import { useAppContext } from '../context/AppContext';
 
 export const useAuth = () => {
-  const { data: session, status } = useSession();
-  const router = useRouter();
+  const { currentUser, isAuthenticated, signin, signout } = useAppContext();
 
-  const user = session?.user;
-  const isLoading = status === 'loading';
-  const isAuthenticated = !!session;
+  const user = currentUser;
+  const isLoading = false; // Managed by AppContext
 
-  const login = async (provider: 'google' = 'google') => {
+  const login = async (email: string, password: string) => {
     try {
-      await signIn(provider, { 
-        callbackUrl: '/dashboard' 
-      });
+      await signin(email, password);
     } catch (error) {
       console.error('Login error:', error);
       throw error;
     }
   };
 
-  const logout = async () => {
+  const logout = () => {
     try {
-      await signOut({ 
-        callbackUrl: '/' 
-      });
+      signout();
     } catch (error) {
       console.error('Logout error:', error);
       throw error;
@@ -34,16 +27,16 @@ export const useAuth = () => {
 
   const requireAuth = () => {
     useEffect(() => {
-      if (!isLoading && !isAuthenticated) {
-        router.push('/auth/signin');
+      if (!isAuthenticated) {
+        // Redirect to signin - handled by App.tsx routing
       }
-    }, [isLoading, isAuthenticated]);
+    }, [isAuthenticated]);
   };
 
   const requireOnboarding = () => {
     useEffect(() => {
-      if (user && user.onboardingStatus === 'INCOMPLETE') {
-        router.push('/onboarding');
+      if (user && user.onboardingStatus === 'incomplete') {
+        // Redirect to onboarding - handled by App.tsx routing
       }
     }, [user]);
   };

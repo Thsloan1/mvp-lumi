@@ -46,11 +46,6 @@ export const AboutYouStep: React.FC<AboutYouStepProps> = ({ data, updateData }) 
             onPhotoUpdate={handlePhotoUpdate}
           />
 
-          <ProfilePhotoUpload
-            currentPhotoUrl={data.profilePhotoUrl}
-            onPhotoUpdate={(photoUrl) => updateData((prev: any) => ({ ...prev, profilePhotoUrl: photoUrl }))}
-          />
-          
           <div className="grid grid-cols-2 gap-4">
             <Input
               label="First Name"

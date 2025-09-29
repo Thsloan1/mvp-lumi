@@ -1,7 +1,7 @@
 import React from 'react';
-import { signIn, signOut, useSession } from 'next-auth/react';
 import { Button } from '../UI/Button';
 import { LogIn, LogOut, User } from 'lucide-react';
+import { useAppContext } from '../../context/AppContext';
 
 interface AuthButtonProps {
   variant?: 'primary' | 'secondary' | 'outline' | 'ghost';
@@ -14,9 +14,9 @@ export const AuthButton: React.FC<AuthButtonProps> = ({
   size = 'md',
   className = ''
 }) => {
-  const { data: session, status } = useSession();
+  const { currentUser, isAuthenticated, signout } = useAppContext();
 
-  if (status === 'loading') {
+  if (!currentUser && isAuthenticated) {
     return (
       <Button disabled variant={variant} size={size} className={className}>
         Loading...
@@ -24,7 +24,7 @@ export const AuthButton: React.FC<AuthButtonProps> = ({
     );
   }
 
-  if (session) {
+  if (currentUser) {
     return (
       <div className="flex items-center space-x-3">
         <div className="flex items-center space-x-2">
@@ -32,11 +32,11 @@ export const AuthButton: React.FC<AuthButtonProps> = ({
             <User className="w-4 h-4 text-blue-600" />
           </div>
           <span className="text-sm font-medium text-[#1A1A1A]">
-            {session.user?.name?.split(' ')[0]}
+            {currentUser.fullName?.split(' ')[0]}
           </span>
         </div>
         <Button
-          onClick={() => signOut()}
+          onClick={() => signout()}
           variant="ghost"
           size={size}
           icon={LogOut}
@@ -50,7 +50,7 @@ export const AuthButton: React.FC<AuthButtonProps> = ({
 
   return (
     <Button
-      onClick={() => signIn('google')}
+      onClick={() => console.log('Social login not implemented in demo')}
       variant={variant}
       size={size}
       icon={LogIn}

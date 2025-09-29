@@ -174,7 +174,8 @@ export const autoGenerateFamilyScript = async (
   language: 'english' | 'spanish' = 'english'
 ): Promise<string> => {
   try {
-    return await AIService.generateFamilyScript({
+    // For MVP, use static generation since AIService is not implemented
+    return generateComprehensiveFamilyScript({
       child,
       behaviorLog,
       parentName: '[Parent Name]',

@@ -105,8 +105,14 @@ export const ReflectionPrompts: React.FC<ReflectionPromptsProps> = ({
       createdAt: new Date()
     };
 
-    // In real app, this would save to backend
-    console.log('Reflection completed:', reflection);
+    // Save reflection to localStorage for demo
+    try {
+      const existingReflections = JSON.parse(localStorage.getItem('lumi_reflections') || '[]');
+      existingReflections.push(reflection);
+      localStorage.setItem('lumi_reflections', JSON.stringify(existingReflections));
+    } catch (error) {
+      console.error('Failed to save reflection:', error);
+    }
     
     // Show encouraging message based on ratings
     const encouragement = getEncouragementMessage();

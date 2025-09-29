@@ -95,6 +95,19 @@ export const ChildProfileDetail: React.FC<ChildProfileDetailProps> = ({ childId 
   };
 
   const recentBehaviors = getRecentBehaviors();
+  
+  // Add mock data if no real data exists
+  const mockRecentBehaviors = recentBehaviors.length === 0 ? [
+    {
+      id: 'mock-1',
+      behaviorDescription: 'Had difficulty during transition to circle time',
+      context: 'transition',
+      severity: 'medium' as const,
+      selectedStrategy: 'Connection Before Direction approach',
+      confidenceRating: 8,
+      createdAt: new Date()
+    }
+  ] : recentBehaviors;
 
   return (
     <div className="min-h-screen bg-white">
@@ -355,7 +368,7 @@ export const ChildProfileDetail: React.FC<ChildProfileDetailProps> = ({ childId 
                 />
               ) : (
                 <div className="space-y-4">
-                  {recentBehaviors.map((log, index) => (
+                  {mockRecentBehaviors.map((log, index) => (
                     <div key={index} className="p-4 bg-[#F8F6F4] rounded-xl">
                       <div className="flex items-start justify-between mb-2">
                         <div className="flex items-center space-x-2">

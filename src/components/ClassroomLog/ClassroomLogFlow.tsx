@@ -14,7 +14,7 @@ import { ReflectionPrompts } from '../Reflection/ReflectionPrompts';
 import { ErrorLogger } from '../../utils/errorLogger';
 
 export const ClassroomLogFlow: React.FC = () => {
-  const { setCurrentView, currentUser, createClassroomLog, classrooms } = useAppContext();
+  const { setCurrentView, currentUser, createClassroomLog, classrooms, toast } = useAppContext();
   const [currentStep, setCurrentStep] = useState(0);
   const [loading, setLoading] = useState(false);
   const [showReflection, setShowReflection] = useState(false);

@@ -92,6 +92,22 @@ export const EducatorDashboard: React.FC = () => {
     }))
   ].sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime()).slice(0, 5);
 
+  // Add mock data if no real data exists for demo
+  const mockRecentActivity = recentActivity.length === 0 ? [
+    {
+      type: 'behavior',
+      description: 'Child had difficulty during transition to circle time',
+      time: new Date().toLocaleDateString(),
+      severity: 'medium' as const
+    },
+    {
+      type: 'classroom',
+      description: 'Multiple children struggling with cleanup routine',
+      time: new Date(Date.now() - 86400000).toLocaleDateString(),
+      severity: 'low' as const
+    }
+  ] : recentActivity;
+
   return (
     <div className="min-h-screen bg-white">
 
@@ -344,7 +360,7 @@ export const EducatorDashboard: React.FC = () => {
                   Recent Activity
                 </h3>
                 
-                {recentActivity.length === 0 ? (
+                {mockRecentActivity.length === 0 ? (
                   <EmptyState
                     icon={Heart}
                     title="Ready to get started?"
@@ -354,7 +370,7 @@ export const EducatorDashboard: React.FC = () => {
                   />
                 ) : (
                   <div className="space-y-4">
-                    {recentActivity.map((activity, index) => (
+                    {mockRecentActivity.map((activity, index) => (
                       <div key={index} className="flex items-start space-x-4 p-4 bg-[#F8F6F4] rounded-xl">
                         <div className={`
                           w-2 h-2 rounded-full mt-2

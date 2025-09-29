@@ -171,8 +171,9 @@ export const BehaviorLogFlow: React.FC = () => {
         setBehaviorData(prev => ({ ...prev, childId: newChild.id }));
         setNewChildName('');
         setShowNewChildForm(false);
+        toast.success('Child added!', `${newChildName} has been added to your classroom`);
       }).catch(() => {
-        toast.error('Failed to create child', 'Please try again');
+        ErrorLogger.error('Failed to create child during behavior log flow');
       });
     }
   };

@@ -414,11 +414,15 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
 
   const updateProfile = async (data: any) => {
     try {
-      const result = await AuthService.apiRequest('/api/user/profile', {
+      await AuthService.apiRequest('/api/user/profile', {
         method: 'PUT',
         body: JSON.stringify(data)
       });
-      setCurrentUser(result.user);
+      
+      // Update local user state
+      if (currentUser) {
+        setCurrentUser({ ...currentUser, ...data });
+      }
       success('Profile updated!', 'Your changes have been saved');
     } catch (err: any) {
       error('Update failed', err.message);
@@ -435,6 +439,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
       success('Password updated!', 'Your password has been changed');
     } catch (err: any) {
       error('Password change failed', err.message);
+      throw err;
       throw err;
     }
   };
