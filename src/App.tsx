@@ -90,6 +90,8 @@ const AppContent: React.FC = () => {
         return <LandingPage />;
       case 'welcome':
         return <WelcomeScreen />;
+     case 'landing':
+       return <LandingPage />;
       case 'educator-signup':
         return <EducatorSignup />;
       case 'admin-signup':
