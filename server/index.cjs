@@ -20,6 +20,22 @@ let classrooms = [];
 let verificationCodes = new Map();
 let resetCodes = new Map();
 
+// Import test data for consistency
+const { testDataManager } = require('./testDataManager.cjs');
+
+// Sync with test data manager
+const syncWithTestData = () => {
+  const testData = testDataManager.getAllData();
+  users = testData.users;
+  children = testData.children;
+  classrooms = testData.classrooms;
+  behaviorLogs = testData.behaviorLogs;
+  classroomLogs = testData.classroomLogs;
+};
+
+// Initialize with test data
+syncWithTestData();
+
 // JWT Secret
 const JWT_SECRET = process.env.JWT_SECRET || 'lumi-secret-key-change-in-production';
 
