@@ -37,7 +37,7 @@ import { DataReports } from './components/Reports/DataReports';
 import { FamilyScriptGenerator } from './components/FamilyNotes/FamilyScriptGenerator';
 import { AccessibilityProvider } from './components/UI/AccessibilityProvider';
 import { ChildProfileDetail } from './components/ChildProfiles/ChildProfileDetail';
-import { TestEnvironmentPanel } from './components/Testing/TestEnvironmentPanel';
+import { DeveloperPortal } from './components/Testing/TestEnvironmentPanel';
 
 const AppContent: React.FC = () => {
   const { currentView, setCurrentView, currentUser, isLoading, isAuthenticated } = useAppContext();
@@ -172,7 +172,7 @@ function App() {
           <div className="min-h-screen bg-gray-50" id="main-content">
             <AppContent />
             <ToastContainer />
-            <TestEnvironmentPanel />
+            <DeveloperPortal />
           </div>
         </AppProvider>
       </AccessibilityProvider>
