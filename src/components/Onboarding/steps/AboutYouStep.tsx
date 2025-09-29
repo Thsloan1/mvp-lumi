@@ -1,9 +1,8 @@
 import React from 'react';
-import { User, Camera } from 'lucide-react';
+import { User, School } from 'lucide-react';
 import { Input } from '../../UI/Input';
 import { Select } from '../../UI/Select';
 import { Card } from '../../UI/Card';
-import { LEARNING_STYLE_OPTIONS } from '../../../data/constants';
 import { ProfilePhotoUpload } from '../../Profile/ProfilePhotoUpload';
 import { useAppContext } from '../../../context/AppContext';
 
@@ -31,10 +30,6 @@ export const AboutYouStep: React.FC<AboutYouStepProps> = ({ data, updateData }) 
     { value: 'spanish', label: 'Spanish' },
   ];
 
-  const learningStyleOptions = LEARNING_STYLE_OPTIONS.map(option => ({
-    value: option,
-    label: option
-  }));
 
   return (
     <div className="space-y-8">
@@ -80,6 +75,11 @@ export const AboutYouStep: React.FC<AboutYouStepProps> = ({ data, updateData }) 
             options={languageOptions}
             required
           />
+        </div>
+      </Card>
+    </div>
+  );
+};
 
           <Select
             label="Learning Style"
