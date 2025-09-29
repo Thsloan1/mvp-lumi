@@ -155,6 +155,13 @@ Aquí están los enfoques específicos que estamos usando:
 
 **6. Cómo Usar Estas Estrategias:**
 Comenzamos con conexión y seguridad primero. Una vez que ${childName} está calmado, entonces probamos las estrategias prácticas.
+
+Me encantaría escuchar sus pensamientos y aprender qué funciona bien para ${childName} en casa.
+
+Saludos cordiales,
+${currentUser?.fullName}`;
+  };
+
   const handleCopy = () => {
     navigator.clipboard.writeText(generatedScript);
     setCopied(true);
