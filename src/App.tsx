@@ -38,6 +38,7 @@ import { FamilyScriptGenerator } from './components/FamilyNotes/FamilyScriptGene
 import { AccessibilityProvider } from './components/UI/AccessibilityProvider';
 import { ChildProfileDetail } from './components/ChildProfiles/ChildProfileDetail';
 import { DeveloperPortal } from './components/Testing/TestEnvironmentPanel';
+import { TestUserFeedbackWidget } from './components/Testing/TestUserFeedbackWidget';
 
 const AppContent: React.FC = () => {
   const { currentView, setCurrentView, currentUser, isLoading, isAuthenticated } = useAppContext();
