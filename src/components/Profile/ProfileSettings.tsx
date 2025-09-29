@@ -1,14 +1,15 @@
 import React, { useState } from 'react';
-import { User, Bell, CreditCard, Shield, Save, Eye, EyeOff } from 'lucide-react';
+import { User, Bell, CreditCard, Shield, Save, Eye, EyeOff, ArrowLeft } from 'lucide-react';
 import { Button } from '../UI/Button';
 import { Card } from '../UI/Card';
 import { Input } from '../UI/Input';
 import { Select } from '../UI/Select';
+import { ProfilePhotoUpload } from './ProfilePhotoUpload';
 import { useAppContext } from '../../context/AppContext';
 import { LEARNING_STYLE_OPTIONS, TEACHING_STYLE_OPTIONS, GRADE_BAND_OPTIONS } from '../../data/constants';
 
 export const ProfileSettings: React.FC = () => {
-  const { currentUser, setCurrentUser } = useAppContext();
+  const { currentUser, setCurrentUser, setCurrentView, toast } = useAppContext();
   const [activeTab, setActiveTab] = useState<'profile' | 'subscription' | 'billing' | 'security'>('profile');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -18,7 +19,8 @@ export const ProfileSettings: React.FC = () => {
     email: currentUser?.email || '',
     preferredLanguage: currentUser?.preferredLanguage || 'english',
     learningStyle: currentUser?.learningStyle || '',
-    teachingStyle: currentUser?.teachingStyle || ''
+    teachingStyle: currentUser?.teachingStyle || '',
+    profilePhotoUrl: currentUser?.profilePhotoUrl || ''
   });
 
   const [passwordData, setPasswordData] = useState({
@@ -67,15 +69,18 @@ export const ProfileSettings: React.FC = () => {
           email: profileData.email,
           preferredLanguage: profileData.preferredLanguage as 'english' | 'spanish',
           learningStyle: profileData.learningStyle,
-          teachingStyle: profileData.teachingStyle
+          teachingStyle: profileData.teachingStyle,
+          profilePhotoUrl: profileData.profilePhotoUrl
         };
         setCurrentUser(updatedUser);
       }
       
       // In real implementation, this would call API
       console.log('Profile updated:', profileData);
+      toast.success('Profile updated!', 'Your changes have been saved');
     } catch (error) {
       console.error('Error updating profile:', error);
+      toast.error('Update failed', 'Please try again');
     } finally {
       setLoading(false);
     }
@@ -83,6 +88,7 @@ export const ProfileSettings: React.FC = () => {
 
   const handlePasswordChange = async () => {
     if (passwordData.newPassword !== passwordData.confirmPassword) {
+      toast.error('Password mismatch', 'Passwords do not match');
       return;
     }
     
@@ -91,11 +97,17 @@ export const ProfileSettings: React.FC = () => {
       // In real implementation, this would call API
       console.log('Password changed');
       setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+      toast.success('Password updated!', 'Your password has been changed');
     } catch (error) {
       console.error('Error changing password:', error);
+      toast.error('Password change failed', 'Please try again');
     } finally {
       setLoading(false);
     }
+  };
+
+  const handlePhotoUpdate = (photoUrl: string) => {
+    setProfileData(prev => ({ ...prev, profilePhotoUrl: photoUrl }));
   };
 
   const renderProfileTab = () => (
@@ -104,6 +116,13 @@ export const ProfileSettings: React.FC = () => {
         <h3 className="text-lg font-semibold text-[#1A1A1A] mb-6">
           Personal Information
         </h3>
+        
+        <div className="mb-8">
+          <ProfilePhotoUpload
+            currentPhotoUrl={profileData.profilePhotoUrl}
+            onPhotoUpdate={handlePhotoUpdate}
+          />
+        </div>
         
         <div className="grid md:grid-cols-2 gap-6">
           <Input
@@ -189,6 +208,15 @@ export const ProfileSettings: React.FC = () => {
             </label>
           ))}
         </div>
+        
+        <div className="mt-8 pt-6 border-t border-[#E6E2DD]">
+          <Button
+            onClick={() => toast.success('Notifications updated!', 'Your preferences have been saved')}
+            icon={Save}
+          >
+            Save Notification Preferences
+          </Button>
+        </div>
       </Card>
     </div>
   );
@@ -249,6 +277,62 @@ export const ProfileSettings: React.FC = () => {
           <Button variant="ghost" className="text-red-600">
             Cancel Subscription
           </Button>
+        </div>
+      </Card>
+      
+      <Card className="p-6">
+        <h3 className="text-lg font-semibold text-[#1A1A1A] mb-6">
+          Subscription Benefits
+        </h3>
+        
+        <div className="grid md:grid-cols-2 gap-6">
+          <div>
+            <h4 className="font-medium text-[#1A1A1A] mb-3">What's Included</h4>
+            <ul className="space-y-2 text-sm text-gray-700">
+              <li className="flex items-center">
+                <div className="w-2 h-2 bg-green-500 rounded-full mr-2" />
+                Unlimited behavior strategies
+              </li>
+              <li className="flex items-center">
+                <div className="w-2 h-2 bg-green-500 rounded-full mr-2" />
+                Classroom management tools
+              </li>
+              <li className="flex items-center">
+                <div className="w-2 h-2 bg-green-500 rounded-full mr-2" />
+                Family communication notes
+              </li>
+              <li className="flex items-center">
+                <div className="w-2 h-2 bg-green-500 rounded-full mr-2" />
+                Personal reflection tracking
+              </li>
+              <li className="flex items-center">
+                <div className="w-2 h-2 bg-green-500 rounded-full mr-2" />
+                Mobile app access
+              </li>
+            </ul>
+          </div>
+          
+          <div>
+            <h4 className="font-medium text-[#1A1A1A] mb-3">Premium Features</h4>
+            <ul className="space-y-2 text-sm text-gray-700">
+              <li className="flex items-center">
+                <div className="w-2 h-2 bg-yellow-500 rounded-full mr-2" />
+                Advanced analytics
+              </li>
+              <li className="flex items-center">
+                <div className="w-2 h-2 bg-yellow-500 rounded-full mr-2" />
+                Priority support
+              </li>
+              <li className="flex items-center">
+                <div className="w-2 h-2 bg-yellow-500 rounded-full mr-2" />
+                Exclusive webinars
+              </li>
+              <li className="flex items-center">
+                <div className="w-2 h-2 bg-yellow-500 rounded-full mr-2" />
+                Early access to new features
+              </li>
+            </ul>
+          </div>
         </div>
       </Card>
     </div>
@@ -400,6 +484,15 @@ export const ProfileSettings: React.FC = () => {
       <div className="max-w-4xl mx-auto px-6 py-8">
         {/* Header */}
         <div className="mb-8">
+          <Button
+            variant="ghost"
+            onClick={() => setCurrentView('dashboard')}
+            icon={ArrowLeft}
+            className="mb-6 -ml-2"
+          >
+            Back to Dashboard
+          </Button>
+          
           <h1 className="text-3xl font-bold text-[#1A1A1A] mb-2">
             Profile & Settings
           </h1>
