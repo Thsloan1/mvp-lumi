@@ -79,6 +79,7 @@ const AppContent: React.FC = () => {
       {showStickyNav && <StickyNavigation />}
       {renderView()}
       <ToastContainer />
+      <TestUserFeedbackWidget module={currentView} />
     </div>
   );
 
@@ -172,9 +173,7 @@ function App() {
         <AppProvider>
           <div className="min-h-screen bg-gray-50" id="main-content">
             <AppContent />
-            <ToastContainer />
             <DeveloperPortal />
-            <TestUserFeedbackWidget module={currentView} />
           </div>
         </AppProvider>
       </AccessibilityProvider>
