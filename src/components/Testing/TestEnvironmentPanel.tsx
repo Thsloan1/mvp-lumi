@@ -14,6 +14,9 @@ export const DeveloperPortal: React.FC = () => {
   const [selectedTestUser, setSelectedTestUser] = useState('');
   const [selectedUserId, setSelectedUserId] = useState('');
   const [selectedOrgId, setSelectedOrgId] = useState('');
+  const [editingFramework, setEditingFramework] = useState<string | null>(null);
+  const [editingStrategy, setEditingStrategy] = useState<string | null>(null);
+  const [frameworkUpdates, setFrameworkUpdates] = useState<Record<string, any>>({});
   
   const currentEnv = getCurrentEnvironment();
 
@@ -24,6 +27,7 @@ export const DeveloperPortal: React.FC = () => {
 
   const modules = [
     { id: 'testing', label: 'Testing Environment', icon: Play },
+    { id: 'knowledge', label: 'Core Knowledge Foundation', icon: BookOpen },
     { id: 'knowledge', label: 'Core Knowledge Foundation', icon: BookOpen },
     { id: 'client-data', label: 'Client Data', icon: Database },
     { id: 'analytics', label: 'Analytics & Reports', icon: BarChart3 },
