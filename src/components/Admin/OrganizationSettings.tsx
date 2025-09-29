@@ -95,12 +95,12 @@ export const OrganizationSettings: React.FC = () => {
     
     setLoading(true);
     try {
-      await organizationApi.transferOwnership(transferEmail, transferReason);
+      await transferOwnership(transferEmail, transferReason);
       setShowTransferOwnership(false);
       setTransferEmail('');
       setTransferReason('');
     } catch (error) {
-      handleApiError(error, { action: 'transferOwnership', transferEmail });
+      console.error('Failed to transfer ownership:', error);
     } finally {
       setLoading(false);
     }

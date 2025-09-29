@@ -32,6 +32,15 @@ interface AppContextType {
   createOrganization: (data: any) => Promise<void>;
   inviteEducators: (educators: any[]) => Promise<void>;
   
+  // Admin-specific functions
+  getOrganizationStats: () => Promise<any>;
+  updateOrganizationSettings: (settings: any) => Promise<void>;
+  transferOwnership: (newOwnerEmail: string, reason: string) => Promise<void>;
+  upgradeSubscription: (newPlan: any) => Promise<void>;
+  cancelSubscription: () => Promise<void>;
+  addSeats: (seatCount: number) => Promise<void>;
+  removeSeats: (seatCount: number) => Promise<void>;
+  
   // Invitation management
   invitationApi: InvitationApi;
   organizationApi: OrganizationApi;
@@ -538,6 +547,91 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     uploadProfilePhoto,
     createOrganization,
     inviteEducators,
+    getOrganizationStats: async () => {
+      try {
+        return await AuthService.apiRequest('/api/organizations/stats');
+      } catch (err: any) {
+        handleApiError(err, { action: 'getOrganizationStats' });
+        throw err;
+      }
+    },
+    updateOrganizationSettings: async (settings: any) => {
+      try {
+        const result = await AuthService.apiRequest('/api/organizations/settings', {
+          method: 'PUT',
+          body: JSON.stringify(settings)
+        });
+        success('Settings updated!', 'Organization settings have been saved');
+        return result;
+      } catch (err: any) {
+        handleApiError(err, { action: 'updateOrganizationSettings' });
+        throw err;
+      }
+    },
+    transferOwnership: async (newOwnerEmail: string, reason: string) => {
+      try {
+        const result = await AuthService.apiRequest('/api/organizations/transfer-ownership', {
+          method: 'POST',
+          body: JSON.stringify({ newOwnerEmail, reason })
+        });
+        success('Ownership transferred!', 'Organization ownership has been transferred');
+        return result;
+      } catch (err: any) {
+        handleApiError(err, { action: 'transferOwnership' });
+        throw err;
+      }
+    },
+    upgradeSubscription: async (newPlan: any) => {
+      try {
+        const result = await AuthService.apiRequest('/api/subscriptions/upgrade', {
+          method: 'POST',
+          body: JSON.stringify(newPlan)
+        });
+        success('Subscription upgraded!', 'Your plan has been updated');
+        return result;
+      } catch (err: any) {
+        handleApiError(err, { action: 'upgradeSubscription' });
+        throw err;
+      }
+    },
+    cancelSubscription: async () => {
+      try {
+        const result = await AuthService.apiRequest('/api/subscriptions/cancel', {
+          method: 'POST'
+        });
+        warning('Subscription cancelled', 'Your subscription will end at the current period');
+        return result;
+      } catch (err: any) {
+        handleApiError(err, { action: 'cancelSubscription' });
+        throw err;
+      }
+    },
+    addSeats: async (seatCount: number) => {
+      try {
+        const result = await AuthService.apiRequest('/api/subscriptions/add-seats', {
+          method: 'POST',
+          body: JSON.stringify({ seatCount })
+        });
+        success('Seats added!', `Added ${seatCount} educator seats to your plan`);
+        return result;
+      } catch (err: any) {
+        handleApiError(err, { action: 'addSeats' });
+        throw err;
+      }
+    },
+    removeSeats: async (seatCount: number) => {
+      try {
+        const result = await AuthService.apiRequest('/api/subscriptions/remove-seats', {
+          method: 'POST',
+          body: JSON.stringify({ seatCount })
+        });
+        success('Seats removed!', `Removed ${seatCount} educator seats from your plan`);
+        return result;
+      } catch (err: any) {
+        handleApiError(err, { action: 'removeSeats' });
+        throw err;
+      }
+    },
     invitationApi,
     organizationApi,
     handleApiError,

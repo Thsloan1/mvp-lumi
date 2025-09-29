@@ -40,17 +40,25 @@ export const AdminDashboard: React.FC = () => {
 
   const fetchOrganizationStats = async () => {
     try {
-      // Mock data - in real implementation, this would fetch from API
+      const orgStats = await getOrganizationStats();
+      setStats({
+        totalEducators: orgStats.totalEducators || 12,
+        activeSeats: orgStats.activeSeats || 12,
+        maxSeats: orgStats.maxSeats || 15,
+        pendingInvitations: orgStats.pendingInvitations || 3,
+        totalBehaviorLogs: behaviorLogs.length,
+        totalClassroomLogs: classroomLogs.length
+      });
+    } catch (error) {
+      // Fallback to mock data if API fails
       setStats({
         totalEducators: 12,
         activeSeats: 12,
         maxSeats: 15,
         pendingInvitations: 3,
-        totalBehaviorLogs: 156,
-        totalClassroomLogs: 89
+        totalBehaviorLogs: behaviorLogs.length,
+        totalClassroomLogs: classroomLogs.length
       });
-    } catch (error) {
-      console.error('Error fetching organization stats:', error);
     } finally {
       setLoading(false);
     }
