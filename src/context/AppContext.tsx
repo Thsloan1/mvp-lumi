@@ -3,6 +3,7 @@ import { User, Classroom, BehaviorLog, ClassroomLog, Child } from '../types';
 import { useToast } from '../hooks/useToast';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { AuthService } from '../services/authService';
+import { OrganizationApi, InvitationApi } from '../services/apiClient';
 import { ErrorLogger } from '../utils/errorLogger';
 
 interface AppContextType {
@@ -30,6 +31,13 @@ interface AppContextType {
   // Organization management
   createOrganization: (data: any) => Promise<void>;
   inviteEducators: (educators: any[]) => Promise<void>;
+  
+  // Invitation management
+  invitationApi: InvitationApi;
+  organizationApi: OrganizationApi;
+  handleApiError: (error: any, context?: any) => void;
+  validateInvitation: (token: string) => Promise<any>;
+  acceptInvitation: (token: string, userData: any) => Promise<void>;
   
   // Data
   classrooms: Classroom[];
@@ -91,6 +99,15 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   const [classroomLogs, setClassroomLogs] = useState<ClassroomLog[]>([]);
   
   const { success, error, warning, info } = useToast();
+  
+  // Initialize API clients
+  const organizationApi = new OrganizationApi({ onError: (err) => error(err.message, err.details) });
+  const invitationApi = new InvitationApi({ onError: (err) => error(err.message, err.details) });
+  
+  const handleApiError = (apiError: any, context?: any) => {
+    ErrorLogger.error('API Error', { error: apiError.message, context });
+    error('Operation failed', apiError.message || 'Please try again');
+  };
   
   // Email verification functions
   const verifyEmail = async (code: string) => {
@@ -324,6 +341,40 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     }
   };
 
+  const validateInvitation = async (token: string) => {
+    try {
+      const response = await invitationApi.validateInvitation(token);
+      return response;
+    } catch (err: any) {
+      handleApiError(err, { action: 'validateInvitation', token });
+      throw err;
+    }
+  };
+
+  const acceptInvitation = async (token: string, userData: any) => {
+    try {
+      const result = await invitationApi.acceptInvitation(token);
+      
+      // Create user account with invitation data
+      const newUser = {
+        id: Date.now().toString(),
+        fullName: userData.fullName,
+        email: result.invitation.email,
+        role: 'educator',
+        preferredLanguage: 'english',
+        onboardingStatus: 'incomplete',
+        organizationId: result.invitation.organizationId,
+        createdAt: new Date().toISOString()
+      };
+      
+      setCurrentUser(newUser);
+      success('Invitation accepted!', 'Welcome to the organization');
+    } catch (err: any) {
+      handleApiError(err, { action: 'acceptInvitation', token });
+      throw err;
+    }
+  };
+
   const updateOnboarding = async (data: any) => {
     ErrorLogger.logOnboardingEvent('completion_attempt', undefined, { userId: currentUser?.id });
     try {
@@ -487,6 +538,11 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     uploadProfilePhoto,
     createOrganization,
     inviteEducators,
+    invitationApi,
+    organizationApi,
+    handleApiError,
+    validateInvitation,
+    acceptInvitation,
     classrooms,
     children: apiChildren,
     behaviorLogs,

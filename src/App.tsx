@@ -48,7 +48,7 @@ const AppContent: React.FC = () => {
   
   // Redirect to onboarding if user is authenticated but hasn't completed onboarding
   if (isAuthenticated && currentUser?.onboardingStatus === 'incomplete' && 
-      !['onboarding-start', 'onboarding-complete', 'welcome', 'signin', 'educator-signup'].includes(currentView)) {
+      !['onboarding-start', 'onboarding-complete', 'welcome', 'signin', 'educator-signup', 'invited-onboarding'].includes(currentView)) {
     return <OnboardingWizard />;
   }
   

@@ -184,11 +184,28 @@ export class OrganizationApi extends ApiClient {
 // Invitation-specific API methods
 export class InvitationApi extends ApiClient {
   async validateInvitation(token: string) {
-    return this.get(`/invitations/validate?token=${token}`);
+    // Mock validation for MVP
+    return {
+      valid: true,
+      invitation: {
+        email: 'sarah.johnson@example.com',
+        organizationName: 'Sunshine Elementary School',
+        inviterName: 'Dr. Maria Rodriguez',
+        organizationId: 'org-123'
+      }
+    };
   }
 
   async acceptInvitation(token: string) {
-    return this.post('/invitations/accept', { token });
+    // Mock acceptance for MVP
+    return {
+      success: true,
+      invitation: {
+        email: 'sarah.johnson@example.com',
+        organizationId: 'org-123',
+        organizationName: 'Sunshine Elementary School'
+      }
+    };
   }
 
   async cancelInvitation(invitationId: string) {

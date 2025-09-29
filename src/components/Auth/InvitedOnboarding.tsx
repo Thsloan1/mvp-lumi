@@ -72,6 +72,15 @@ export const InvitedOnboarding: React.FC = () => {
           <p className="text-sm text-gray-500 mt-4">
             You can always update your preferences later in settings
           </p>
+          
+          <div className="mt-6">
+            <Button
+              onClick={() => setCurrentView('dashboard')}
+              variant="ghost"
+            >
+              Skip onboarding for now
+            </Button>
+          </div>
         </div>
       </div>
     </div>

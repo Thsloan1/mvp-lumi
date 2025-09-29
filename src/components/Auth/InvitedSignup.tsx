@@ -6,12 +6,12 @@ import { Card } from '../UI/Card';
 import { useAppContext } from '../../context/AppContext';
 
 export const InvitedSignup: React.FC = () => {
-  const { setCurrentView, invitationApi, handleApiError } = useAppContext();
+  const { setCurrentView, validateInvitation, acceptInvitation, handleApiError } = useAppContext();
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
     inviteCode: '',
     fullName: '',
-    email: 'sarah.johnson@example.com', // Pre-filled from invite
+    email: '', // Will be pre-filled from invite
     password: ''
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -23,20 +23,24 @@ export const InvitedSignup: React.FC = () => {
   });
 
   useEffect(() => {
+    validateInvitationFromUrl();
+  }, []);
+
+  useEffect(() => {
     validateInvitation();
   }, []);
 
-  const validateInvitation = async () => {
+  const validateInvitationFromUrl = async () => {
     const urlParams = new URLSearchParams(window.location.search);
     const token = urlParams.get('token');
     
     if (!token) {
-      handleApiError({ message: 'Invalid invitation link' }, { action: 'validateInvitation' });
+      handleApiError({ message: 'Invalid invitation link' }, { action: 'validateInvitationFromUrl' });
       return;
     }
 
     try {
-      const response = await invitationApi.validateInvitation(token);
+      const response = await validateInvitation(token);
       if (response.valid) {
         setInvitationValid(true);
         setOrganizationInfo({
@@ -45,10 +49,10 @@ export const InvitedSignup: React.FC = () => {
         });
         setFormData(prev => ({ ...prev, email: response.invitation.email }));
       } else {
-        handleApiError({ message: response.error }, { action: 'validateInvitation' });
+        handleApiError({ message: response.error }, { action: 'validateInvitationFromUrl' });
       }
     } catch (error) {
-      handleApiError(error, { action: 'validateInvitation' });
+      handleApiError(error, { action: 'validateInvitationFromUrl' });
     }
   };
 
@@ -105,7 +109,11 @@ export const InvitedSignup: React.FC = () => {
         throw new Error('Invalid invitation token');
       }
 
-      await invitationApi.acceptInvitation(token);
+      await acceptInvitation(token, {
+        fullName: formData.fullName,
+        password: formData.password,
+        inviteCode: formData.inviteCode
+      });
       setCurrentView('invited-onboarding');
     } catch (error) {
       handleApiError(error, { action: 'acceptInvitation' });
