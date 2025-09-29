@@ -8,7 +8,7 @@ import { ProgressDots } from '../UI/ProgressDots';
 import { useAppContext } from '../../context/AppContext';
 import { ClassroomLog } from '../../types';
 import { STRESSOR_OPTIONS } from '../../data/constants';
-import { generateClassroomStrategy } from '../../utils/mockAI';
+import { AIService } from '../../services/aiService';
 import { ClassroomStrategyResponse } from './ClassroomStrategyResponse';
 
 export const ClassroomLogFlow: React.FC = () => {
@@ -106,21 +106,22 @@ export const ClassroomLogFlow: React.FC = () => {
     setLoading(true);
     
     try {
-      const response = await generateClassroomStrategy(
-        classroomData.challengeDescription,
-        classroomData.context,
-        classroomData.severity,
-        classroomData.stressors,
-        'preschool', // would come from classroom context
-        15, // would come from classroom context
-        classroomData.educatorMood,
-        currentUser?.teachingStyle
-      );
+      const response = await AIService.generateClassroomStrategy({
+        challengeDescription: classroomData.challengeDescription,
+        context: classroomData.context,
+        severity: classroomData.severity as 'low' | 'medium' | 'high',
+        gradeLevel: 'preschool',
+        classSize: 15,
+        stressors: classroomData.stressors,
+        educatorMood: classroomData.educatorMood,
+        teachingStyle: currentUser?.teachingStyle
+      });
       
       setAiResponse(response);
       setCurrentStep(steps.length);
     } catch (error) {
       console.error('Error generating strategy:', error);
+      alert('Failed to generate strategy. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -131,8 +132,8 @@ export const ClassroomLogFlow: React.FC = () => {
       classroomId: classrooms[0]?.id || 'default-classroom',
       challengeDescription: classroomData.challengeDescription,
       context: classroomData.context,
-      severity: classroomData.severity.toUpperCase(),
-      educatorMood: classroomData.educatorMood ? classroomData.educatorMood.toUpperCase() : null,
+      severity: classroomData.severity,
+      educatorMood: classroomData.educatorMood,
       stressors: classroomData.stressors,
       aiResponse: aiResponse,
       selectedStrategy: strategy,

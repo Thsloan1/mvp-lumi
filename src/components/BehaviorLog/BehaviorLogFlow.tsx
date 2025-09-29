@@ -18,7 +18,7 @@ import {
   OUTCOME_OPTIONS,
   CONTEXT_TRIGGER_OPTIONS
 } from '../../data/constants';
-import { generateChildBehaviorStrategy } from '../../utils/mockAI';
+import { AIService } from '../../services/aiService';
 import { BehaviorStrategyResponse } from './BehaviorStrategyResponse';
 
 export const BehaviorLogFlow: React.FC = () => {
@@ -222,23 +222,25 @@ export const BehaviorLogFlow: React.FC = () => {
     try {
       // Generate AI strategy
       const selectedChild = children.find(c => c.id === behaviorData.childId);
-      const response = await generateChildBehaviorStrategy(
-        behaviorData.behaviorDescription,
-        behaviorData.context,
-        behaviorData.timeOfDay,
-        behaviorData.severity,
-        [], // stressors would come from classroom context
-        currentUser?.teachingStyle,
-        'preschool', // would come from classroom context
-        behaviorData.educatorMood,
-        currentUser?.learningStyle,
-        selectedChild
-      );
+      const response = await AIService.generateChildBehaviorStrategy({
+        behaviorDescription: behaviorData.behaviorDescription,
+        context: behaviorData.context,
+        timeOfDay: behaviorData.timeOfDay,
+        severity: behaviorData.severity as 'low' | 'medium' | 'high',
+        ageGroup: 'preschool',
+        stressors: [],
+        educatorMood: behaviorData.educatorMood,
+        teachingStyle: currentUser?.teachingStyle,
+        learningStyle: currentUser?.learningStyle,
+        child: selectedChild
+      });
       
       setAiResponse(response);
       setCurrentStep(steps.length); // Move to response screen
     } catch (error) {
       console.error('Error generating strategy:', error);
+      // Show error to user
+      alert('Failed to generate strategy. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -250,8 +252,8 @@ export const BehaviorLogFlow: React.FC = () => {
       behaviorDescription: behaviorData.behaviorDescription,
       context: behaviorData.context,
       timeOfDay: behaviorData.timeOfDay,
-      severity: behaviorData.severity.toUpperCase(),
-      educatorMood: behaviorData.educatorMood ? behaviorData.educatorMood.toUpperCase() : null,
+      severity: behaviorData.severity,
+      educatorMood: behaviorData.educatorMood,
       stressors: [],
       aiResponse: aiResponse,
       selectedStrategy: strategy,

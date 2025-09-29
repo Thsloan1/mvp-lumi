@@ -6,6 +6,7 @@ import { Input } from '../UI/Input';
 import { Select } from '../UI/Select';
 import { useAppContext } from '../../context/AppContext';
 import { Child, BehaviorLog } from '../../types';
+import { AIService } from '../../services/aiService';
 
 interface FamilyScriptGeneratorProps {
   child?: Child;
@@ -42,13 +43,28 @@ export const FamilyScriptGenerator: React.FC<FamilyScriptGeneratorProps> = ({
     setLoading(true);
     
     try {
-      // Simulate AI generation with comprehensive 8-point format
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Generate real AI family script
+      const script = await AIService.generateFamilyScript({
+        child: child || {
+          name: scriptData.childName,
+          gradeBand: 'Preschool (4-5 years old)',
+          hasIEP: false,
+          hasIFSP: false
+        },
+        behaviorLog: behaviorLog || {
+          behaviorDescription: 'general classroom behavior',
+          context: scriptData.context || 'classroom activities',
+          severity: 'medium'
+        },
+        parentName: scriptData.parentName,
+        language,
+        additionalNotes: scriptData.additionalNotes
+      });
       
-      const script = generateEightPointScript();
       setGeneratedScript(script);
     } catch (error) {
       console.error('Error generating script:', error);
+      alert('Failed to generate family script. Please try again.');
     } finally {
       setLoading(false);
     }

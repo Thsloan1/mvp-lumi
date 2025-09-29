@@ -1,4 +1,5 @@
 import { Child, BehaviorLog, AIStrategyResponse } from '../types';
+import { AIService } from '../services/aiService';
 
 interface ScriptGenerationParams {
   child: Child;
@@ -169,16 +170,28 @@ const getBehaviorEmotionSpanish = (behavior: string): string => {
 };
 
 // Auto-generate family script from strategy response
-export const autoGenerateFamilyScript = (
+export const autoGenerateFamilyScript = async (
   child: Child,
   behaviorLog: BehaviorLog,
   language: 'english' | 'spanish' = 'english'
-): string => {
-  return generateComprehensiveFamilyScript({
-    child,
-    behaviorLog,
-    parentName: '[Parent Name]',
-    language,
-    additionalNotes: undefined
-  });
+): Promise<string> => {
+  try {
+    return await AIService.generateFamilyScript({
+      child,
+      behaviorLog,
+      parentName: '[Parent Name]',
+      language,
+      additionalNotes: undefined
+    });
+  } catch (error) {
+    console.error('Error auto-generating family script:', error);
+    // Fallback to static generation
+    return generateComprehensiveFamilyScript({
+      child,
+      behaviorLog,
+      parentName: '[Parent Name]',
+      language,
+      additionalNotes: undefined
+    });
+  }
 };
