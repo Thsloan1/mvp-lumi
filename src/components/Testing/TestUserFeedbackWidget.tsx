@@ -148,7 +148,7 @@ export const TestUserFeedbackWidget: React.FC<TestUserFeedbackWidgetProps> = ({
           {/* Tester Info */}
           <div className="bg-white rounded-lg p-3 border border-green-200">
             <h4 className="font-medium text-green-900 mb-2 text-sm">Tester Information</h4>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="space-y-2">
               <Input
                 label="Your Name"
                 value={feedbackData.testerInfo.name}
@@ -158,15 +158,29 @@ export const TestUserFeedbackWidget: React.FC<TestUserFeedbackWidgetProps> = ({
                 }))}
                 placeholder="Enter your name"
               />
-              <Input
-                label="Access Code"
-                value={feedbackData.testerInfo.accessCode}
-                onChange={(value) => setFeedbackData(prev => ({
-                  ...prev,
-                  testerInfo: { ...prev.testerInfo, accessCode: value }
-                }))}
-                placeholder="Your access code"
-              />
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Access Code
+                </label>
+                <div className="flex items-center space-x-2">
+                  <Input
+                    value={feedbackData.testerInfo.accessCode}
+                    onChange={(value) => setFeedbackData(prev => ({
+                      ...prev,
+                      testerInfo: { ...prev.testerInfo, accessCode: value }
+                    }))}
+                    placeholder="Enter your access code"
+                    className="flex-1"
+                  />
+                  <Button
+                    onClick={handleCopyAccessCode}
+                    variant="ghost"
+                    size="sm"
+                    icon={copiedCode ? Check : Copy}
+                    className={`${copiedCode ? 'text-green-600' : 'text-gray-500'} px-2`}
+                  />
+                </div>
+              </div>
             </div>
           </div>
 

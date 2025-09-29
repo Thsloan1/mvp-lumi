@@ -912,6 +912,8 @@ export const DeveloperPortal: React.FC = () => {
         {/* Module Content */}
         <div>
           {activeModule === 'testing' && renderTestingEnvironment()}
+          {activeModule === 'user-management' && renderUserManagement()}
+          {activeModule === 'feedback' && renderFeedbackReviews()}
           {activeModule === 'client-data' && renderClientData()}
           {activeModule === 'analytics' && renderAnalyticsReports()}
           {activeModule === 'revenue' && renderRevenueData()}
