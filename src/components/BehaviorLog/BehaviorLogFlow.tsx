@@ -6,13 +6,15 @@ import { Select } from '../UI/Select';
 import { Card } from '../UI/Card';
 import { ProgressDots } from '../UI/ProgressDots';
 import { useAppContext } from '../../context/AppContext';
-import { BehaviorLog, Child } from '../../types';
+import { BehaviorLog, Child, AIStrategyResponse } from '../../types';
 import { 
   CONTEXT_OPTIONS, 
   TIME_OF_DAY_OPTIONS
 } from '../../data/constants';
 import { AuthService } from '../../services/authService';
 import { BehaviorStrategyResponse } from './BehaviorStrategyResponse';
+import { ReflectionPrompts } from '../Reflection/ReflectionPrompts';
+import { ErrorLogger } from '../../utils/errorLogger';
 
 export const BehaviorLogFlow: React.FC = () => {
   const { setCurrentView, currentUser, createBehaviorLog, children, createChild, toast } = useAppContext();
@@ -35,7 +37,9 @@ export const BehaviorLogFlow: React.FC = () => {
     outcome: [] as string[],
     contextTrigger: [] as string[]
   });
-  const [aiResponse, setAiResponse] = useState(null);
+  const [aiResponse, setAiResponse] = useState<AIStrategyResponse | null>(null);
+  const [showReflection, setShowReflection] = useState(false);
+  const [savedBehaviorLogId, setSavedBehaviorLogId] = useState<string | null>(null);
 
   const steps = [
     { title: "Which child?", field: 'childId' },
@@ -246,12 +250,26 @@ export const BehaviorLogFlow: React.FC = () => {
       aiResponse: aiResponse,
       selectedStrategy: strategy,
       confidenceRating: confidence
-    }).then(() => {
-        setCurrentView('dashboard');
+    }).then((result) => {
+        setSavedBehaviorLogId(result.id);
+        setShowReflection(true);
     }).catch(() => {
-        toast.error('Failed to save behavior log', 'Please try again');
+        ErrorLogger.error('Failed to save behavior log');
       });
   };
+
+  const handleReflectionComplete = () => {
+    setCurrentView('dashboard');
+  };
+
+  if (showReflection && savedBehaviorLogId) {
+    return (
+      <ReflectionPrompts
+        behaviorLogId={savedBehaviorLogId}
+        onComplete={handleReflectionComplete}
+      />
+    );
+  }
 
   const isStepValid = () => {
     switch (currentStep) {

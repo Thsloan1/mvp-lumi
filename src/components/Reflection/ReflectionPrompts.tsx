@@ -108,6 +108,12 @@ export const ReflectionPrompts: React.FC<ReflectionPromptsProps> = ({
     // In real app, this would save to backend
     console.log('Reflection completed:', reflection);
     
+    // Show encouraging message based on ratings
+    const encouragement = getEncouragementMessage();
+    if (encouragement) {
+      // Could show a final encouragement screen or toast
+    }
+    
     if (onComplete) {
       onComplete();
     }
