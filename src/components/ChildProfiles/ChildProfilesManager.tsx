@@ -243,8 +243,7 @@ export const ChildProfilesManager: React.FC = () => {
                       size="sm"
                       className="flex-1"
                       onClick={() => {
-                        // Navigate to child profile view
-                        console.log('View profile for', child.name);
+                        setCurrentView(`child-profile-detail-${child.id}`);
                       }}
                     >
                       View Profile

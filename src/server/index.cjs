@@ -26,6 +26,33 @@
    }
  });
 
+// Update child
+app.put('/api/children/:id', authenticateToken, (req, res) => {
+  try {
+    const childIndex = children.findIndex(c => c.id === req.params.id);
+    if (childIndex === -1) {
+      return res.status(404).json({ error: 'Child not found' });
+    }
+
+    // Verify ownership through classroom
+    const child = children[childIndex];
+    const classroom = classrooms.find(c => c.id === child.classroomId);
+    if (!classroom || classroom.educatorId !== req.user.id) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    children[childIndex] = {
+      ...children[childIndex],
+      ...req.body,
+      updatedAt: new Date().toISOString()
+    };
+
+    res.json({ child: children[childIndex] });
+  } catch (error) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 +// Profile update route
 +app.put('/api/user/profile', authenticateToken, (req, res) => {
 +  try {

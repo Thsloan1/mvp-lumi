@@ -14,6 +14,7 @@ export const ClassroomProfileManager: React.FC = () => {
   const { currentUser, classrooms, setClassrooms, behaviorLogs, classroomLogs, children, updateClassroom } = useAppContext();
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState<Partial<Classroom>>({});
+  const [loading, setLoading] = useState(false);
 
   // For MVP, we'll use a default classroom or create one if none exists
   const currentClassroom = classrooms.length > 0 ? classrooms[0] : null;
@@ -43,6 +44,7 @@ export const ClassroomProfileManager: React.FC = () => {
 
   const handleSave = () => {
     if (currentClassroom && editData) {
+      setLoading(true);
       updateClassroom(currentClassroom.id, editData)
         .then(() => {
           setIsEditing(false);
@@ -50,6 +52,9 @@ export const ClassroomProfileManager: React.FC = () => {
         })
         .catch(error => {
           console.error('Failed to update classroom:', error);
+        })
+        .finally(() => {
+          setLoading(false);
         });
     }
   };
@@ -132,7 +137,7 @@ export const ClassroomProfileManager: React.FC = () => {
               </Button>
             ) : (
               <div className="flex space-x-2">
-                <Button onClick={handleSave} icon={Save}>
+                <Button onClick={handleSave} loading={loading} icon={Save}>
                   Save Changes
                 </Button>
                 <Button variant="ghost" onClick={handleCancel} icon={X}>

@@ -36,6 +36,7 @@ import { ProfileSettings } from './components/Profile/ProfileSettings';
 import { DataReports } from './components/Reports/DataReports';
 import { FamilyScriptGenerator } from './components/FamilyNotes/FamilyScriptGenerator';
 import { AccessibilityProvider } from './components/UI/AccessibilityProvider';
+import { ChildProfileDetail } from './components/ChildProfiles/ChildProfileDetail';
 
 const AppContent: React.FC = () => {
   const { currentView, setCurrentView, currentUser, isLoading, isAuthenticated } = useAppContext();
@@ -139,6 +140,13 @@ const AppContent: React.FC = () => {
         return <ChildProfilesManager />;
       case 'classroom-profile':
         return <ClassroomProfileManager />;
+      default:
+        // Handle dynamic child profile detail routes
+        if (currentView.startsWith('child-profile-detail-')) {
+          const childId = currentView.replace('child-profile-detail-', '');
+          return <ChildProfileDetail childId={childId} />;
+        }
+        return <WelcomeScreen />;
       case 'profile-settings':
         return <ProfileSettings />;
       case 'reports':
@@ -158,8 +166,6 @@ const AppContent: React.FC = () => {
             <InviteEducatorsModal onClose={() => setCurrentView('admin-dashboard')} />
           </div>
         );
-      default:
-        return <WelcomeScreen />;
     }
   }
 };

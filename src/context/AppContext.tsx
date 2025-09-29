@@ -39,6 +39,7 @@ interface AppContextType {
   createChild: (data: any) => Promise<any>;
   createClassroom: (data: any) => Promise<any>;
   updateClassroom: (id: string, data: any) => Promise<any>;
+  updateChild: (id: string, data: any) => Promise<any>;
   setChildren: (children: Child[]) => void;
   setClassrooms: (classrooms: Classroom[]) => void;
   
@@ -395,6 +396,21 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     }
   };
 
+  const updateChild = async (id: string, data: any) => {
+    try {
+      const result = await AuthService.apiRequest(`/api/children/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(data)
+      });
+      setApiChildren(prev => prev.map(c => c.id === id ? result.child : c));
+      success('Child profile updated!', 'Changes have been saved');
+      return result.child;
+    } catch (err: any) {
+      error('Failed to update child', err.message);
+      throw err;
+    }
+  };
+
   const value: AppContextType = {
     currentUser,
     setCurrentUser,
@@ -423,6 +439,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     createChild,
     createClassroom,
     updateClassroom,
+    updateChild,
     updateClassroom,
     currentView,
     setCurrentView,
