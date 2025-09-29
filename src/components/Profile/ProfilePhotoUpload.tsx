@@ -3,6 +3,7 @@ import { Camera, Upload, X, Check, User, AlertCircle } from 'lucide-react';
 import { Button } from '../UI/Button';
 import { Card } from '../UI/Card';
 import { useAppContext } from '../../context/AppContext';
+import { ImageUtils } from '../../utils/imageUtils';
 
 interface ProfilePhotoUploadProps {
   currentPhotoUrl?: string;
@@ -22,44 +23,33 @@ export const ProfilePhotoUpload: React.FC<ProfilePhotoUploadProps> = ({
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const validateFile = (file: File): string | null => {
-    // Check file type
-    if (!file.type.startsWith('image/')) {
-      return 'Please select an image file (JPG, PNG, GIF, WebP)';
-    }
-
-    // Check file size (5MB limit)
-    if (file.size > 5 * 1024 * 1024) {
-      return 'Image must be smaller than 5MB';
-    }
-
-    // Check image dimensions (optional - can be added later)
-    return null;
-  };
-
   const handleFileSelect = (file: File) => {
     setError(null);
     
-    const validationError = validateFile(file);
-    if (validationError) {
-      setError(validationError);
-      toast.error('Invalid file', validationError);
+    const validation = ImageUtils.validateImageFile(file);
+    if (!validation.valid) {
+      setError(validation.error || 'Invalid file');
+      toast.error('Invalid file', validation.error || 'Please select a valid image');
       return;
     }
 
-    // Create preview
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      setPreviewUrl(e.target?.result as string);
-    };
-    reader.onerror = () => {
-      setError('Failed to read file');
-      toast.error('Upload failed', 'Could not read the selected file');
-    };
-    reader.readAsDataURL(file);
+    // Create preview using utility
+    ImageUtils.createImagePreview(file)
+      .then(preview => {
+        setPreviewUrl(preview);
+        uploadFile(file);
+      })
+      .catch(err => {
+        setError('Failed to read file');
+        toast.error('Upload failed', 'Could not read the selected file');
+      });
+  };
 
-    // Upload file
-    uploadFile(file);
+  const handleRemovePhoto = () => {
+    setPreviewUrl(null);
+    onPhotoUpdate('');
+    setError(null);
+    toast.info('Photo removed', 'Profile photo has been removed');
   };
 
   const uploadFile = async (file: File) => {
