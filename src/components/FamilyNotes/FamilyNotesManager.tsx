@@ -5,7 +5,7 @@ import { Card } from '../UI/Card';
 import { Input } from '../UI/Input';
 import { Select } from '../UI/Select';
 import { useAppContext } from '../../context/AppContext';
-import { FAMILY_COMMUNICATION_SCRIPTS, SCRIPT_CATEGORIES } from '../../data/familyScripts';
+import { FAMILY_COMMUNICATION_SCRIPTS, PREMIUM_FAMILY_SCRIPTS, SCRIPT_CATEGORIES } from '../../data/familyScripts';
 
 export const FamilyNotesManager: React.FC = () => {
   const { setCurrentView } = useAppContext();
@@ -14,7 +14,7 @@ export const FamilyNotesManager: React.FC = () => {
   const [selectedLanguage, setSelectedLanguage] = useState('');
   const [showFilters, setShowFilters] = useState(false);
 
-  const allScripts = FAMILY_COMMUNICATION_SCRIPTS;
+  const allScripts = [...FAMILY_COMMUNICATION_SCRIPTS, ...PREMIUM_FAMILY_SCRIPTS];
 
   const filteredScripts = allScripts.filter(script => {
     const matchesSearch = !searchQuery || 
@@ -212,23 +212,33 @@ export const FamilyNotesManager: React.FC = () => {
                     <div className="flex space-x-2">
                       {script.isPremium ? (
                         <Button
-                  <div className="space-y-2">
-                    <Button
-                      onClick={() => handleScriptAccess(script)}
-                      size="sm"
-                      icon={Download}
-                    >
-                      Use Script
-                    </Button>
-                    {script.familyHandoutId && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setCurrentView('library')}
-                      >
-                        Get Handout
-                      </Button>
-                    )}
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setCurrentView('premium')}
+                        >
+                          Upgrade for Access
+                        </Button>
+                      ) : (
+                        <div className="space-y-2">
+                          <Button
+                            onClick={() => handleScriptAccess(script)}
+                            size="sm"
+                            icon={Download}
+                          >
+                            Use Script
+                          </Button>
+                          {script.familyHandoutId && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setCurrentView('library')}
+                            >
+                              Get Handout
+                            </Button>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               </Card>
