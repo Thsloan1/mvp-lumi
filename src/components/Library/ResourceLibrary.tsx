@@ -1,9 +1,10 @@
 import React, { useState, useMemo } from 'react';
-import { Search, Filter, Download, ExternalLink, Star, Lock } from 'lucide-react';
+import { Search, Filter, Download, ExternalLink, Star, Lock, BookOpen, FileText } from 'lucide-react';
 import { Button } from '../UI/Button';
 import { Card } from '../UI/Card';
 import { Input } from '../UI/Input';
 import { Select } from '../UI/Select';
+import { EmptyState } from '../UI/EmptyState';
 import { useAppContext } from '../../context/AppContext';
 import { Resource, ResourceSearch } from '../../types';
 import { STARTER_LIBRARY, RESOURCE_CATEGORIES, RESOURCE_TYPES, SETTINGS } from '../../data/starterLibrary';
@@ -67,11 +68,20 @@ export const ResourceLibrary: React.FC = () => {
 
   const handleResourceAccess = (resource: Resource) => {
     if (resource.isPremium) {
-      // Handle premium resource access
+      setCurrentView('subscription-plan');
+      return;
     }
-    // Track engagement and download/view
+    
+    // Track engagement
     console.log('Accessing resource:', resource.title);
-    // In real implementation, this would track analytics and provide download
+    
+    // Simulate download/view
+    const link = document.createElement('a');
+    link.href = `data:text/plain;charset=utf-8,${encodeURIComponent(generateResourceContent(resource))}`;
+    link.download = `${resource.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.txt`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   const clearFilters = () => {
@@ -297,20 +307,13 @@ export const ResourceLibrary: React.FC = () => {
         </div>
 
         {filteredResources.length === 0 && (
-          <div className="text-center py-12">
-            <div className="w-16 h-16 bg-[#F8F6F4] rounded-full flex items-center justify-center mx-auto mb-4">
-              <Search className="w-8 h-8 text-gray-400" />
-            </div>
-            <h3 className="text-lg font-medium text-[#1A1A1A] mb-2">
-              No resources found
-            </h3>
-            <p className="text-gray-600 mb-6">
-              Try adjusting your search or filters to find what you're looking for.
-            </p>
-            <Button onClick={clearFilters}>
-              Clear Filters
-            </Button>
-          </div>
+          <EmptyState
+            icon={Search}
+            title="No resources found"
+            description="Try adjusting your search or filters to find what you're looking for."
+            actionLabel="Clear Filters"
+            onAction={clearFilters}
+          />
         )}
       </div>
     </div>

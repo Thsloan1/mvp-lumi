@@ -212,6 +212,47 @@ export const STARTER_LIBRARY: Resource[] = [
     isPremium: false,
     createdAt: new Date('2024-01-01'),
     updatedAt: new Date('2024-01-01')
+  },
+
+  // Premium Resources (for upsell demonstration)
+  {
+    id: 'advanced-sel-toolkit',
+    title: 'Advanced SEL Toolkit: Emotional Intelligence Building',
+    description: 'Comprehensive social-emotional learning activities and assessments for building emotional intelligence in young children.',
+    type: 'toolkit',
+    category: 'development',
+    ageGroups: ['Preschool (4-5 years old)', 'Transitional Kindergarten (4-5 years old)', 'Kindergarten'],
+    settings: ['classroom', 'childcare'],
+    language: 'bilingual',
+    isPremium: true,
+    createdAt: new Date('2024-01-01'),
+    updatedAt: new Date('2024-01-01')
+  },
+  {
+    id: 'trauma-informed-strategies',
+    title: 'Trauma-Informed Classroom Strategies',
+    description: 'Specialized approaches for supporting children who have experienced trauma, with safety-first protocols.',
+    type: 'guide',
+    category: 'behavior',
+    ageGroups: ['Toddlers (2-3 years old)', 'Preschool (4-5 years old)', 'Transitional Kindergarten (4-5 years old)'],
+    settings: ['classroom', 'childcare'],
+    language: 'bilingual',
+    isPremium: true,
+    createdAt: new Date('2024-01-01'),
+    updatedAt: new Date('2024-01-01')
+  },
+  {
+    id: 'iep-ifsp-collaboration',
+    title: 'IEP/IFSP Collaboration Toolkit',
+    description: 'Comprehensive guide for working with families and specialists to support children with individualized plans.',
+    type: 'toolkit',
+    category: 'communication',
+    ageGroups: ['Infants (<2 years old)', 'Toddlers (2-3 years old)', 'Preschool (4-5 years old)'],
+    settings: ['classroom', 'childcare', 'home'],
+    language: 'bilingual',
+    isPremium: true,
+    createdAt: new Date('2024-01-01'),
+    updatedAt: new Date('2024-01-01')
   }
 ];
 
