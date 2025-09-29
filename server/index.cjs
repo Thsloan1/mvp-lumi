@@ -4,8 +4,10 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 require('dotenv').config();
 
-const app = express();
 const PORT = process.env.PORT || 3001;
+
+// Initialize Express app
+const app = express();
 
 // Middleware
 app.use(cors());
