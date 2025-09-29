@@ -87,7 +87,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   } = useClassroomLogs();
 
   const {
-    children,
+    children: childrenData,
     loading: childrenLoading,
     createChild,
     updateChild,
@@ -111,7 +111,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     createClassroom,
     updateClassroom,
     refetchClassrooms,
-    children,
+    children: childrenData,
     childrenLoading,
     createChild,
     updateChild,
