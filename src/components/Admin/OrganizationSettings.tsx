@@ -27,8 +27,7 @@ interface SubscriptionData {
 }
 
 export const OrganizationSettings: React.FC = () => {
-  const { setCurrentView, organizationApi, handleApiError } = useAppContext();
-  const { setCurrentView, currentUser, updateOrganizationSettings, transferOwnership, upgradeSubscription, cancelSubscription } = useAppContext();
+  const { setCurrentView, organizationApi, handleApiError, currentUser, updateOrganizationSettings, transferOwnership, upgradeSubscription, cancelSubscription } = useAppContext();
   const [activeTab, setActiveTab] = useState<'general' | 'subscription' | 'ownership'>('general');
   const [loading, setLoading] = useState(false);
   const [showTransferOwnership, setShowTransferOwnership] = useState(false);

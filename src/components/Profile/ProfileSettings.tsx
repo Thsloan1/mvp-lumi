@@ -9,7 +9,6 @@ import { useAppContext } from '../../context/AppContext';
 import { LEARNING_STYLE_OPTIONS, TEACHING_STYLE_OPTIONS, GRADE_BAND_OPTIONS } from '../../data/constants';
 
 export const ProfileSettings: React.FC = () => {
-  const { currentUser, setCurrentUser, setCurrentView, toast } = useAppContext();
   const { currentUser, setCurrentUser, setCurrentView, toast, updateProfile, changePassword } = useAppContext();
   const [activeTab, setActiveTab] = useState<'profile' | 'subscription' | 'billing' | 'security'>('profile');
   const [loading, setLoading] = useState(false);
