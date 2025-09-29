@@ -9,12 +9,23 @@ import { getCurrentEnvironment, isTestEnvironment } from '../../config/environme
 import { DeveloperAnalyticsEngine } from '../../utils/developerAnalytics';
 
 export const DeveloperPortal: React.FC = () => {
-  const { currentView, setCurrentView, currentUser, setCurrentUser, toast, behaviorLogs, classroomLogs, children, classrooms } = useAppContext();
+  const { currentView, setCurrentView, currentUser, setCurrentUser, toast, behaviorLogs, classroomLogs, children, classrooms, inviteEducators } = useAppContext();
   const [isOpen, setIsOpen] = useState(false);
-  const [activeModule, setActiveModule] = useState<'testing' | 'client-data' | 'analytics' | 'revenue' | 'tech-stack'>('testing');
+  const [activeModule, setActiveModule] = useState<'testing' | 'user-management' | 'feedback' | 'client-data' | 'analytics' | 'revenue' | 'tech-stack'>('testing');
   const [selectedTestUser, setSelectedTestUser] = useState('');
   const [selectedUserId, setSelectedUserId] = useState('');
   const [selectedOrgId, setSelectedOrgId] = useState('');
+  const [testUsers, setTestUsers] = useState<any[]>([]);
+  const [newTestUser, setNewTestUser] = useState({
+    email: '',
+    fullName: '',
+    role: 'tester',
+    accessLevel: 'full',
+    modules: [] as string[],
+    expiresAt: ''
+  });
+  const [feedback, setFeedback] = useState<any[]>([]);
+  const [showInviteForm, setShowInviteForm] = useState(false);
   const [systemHealth] = useState({
     components: [
       { name: 'Authentication Service', status: 'Operational' },
@@ -40,7 +51,8 @@ export const DeveloperPortal: React.FC = () => {
 
   const modules = [
     { id: 'testing', label: 'Testing Environment', icon: Play },
-    { id: 'knowledge', label: 'Core Knowledge Foundation', icon: BookOpen },
+    { id: 'user-management', label: 'Test User Management', icon: Users },
+    { id: 'feedback', label: 'Feedback & Reviews', icon: MessageCircle },
     { id: 'knowledge', label: 'Core Knowledge Foundation', icon: BookOpen },
     { id: 'client-data', label: 'Client Data', icon: Database },
     { id: 'analytics', label: 'Analytics & Reports', icon: BarChart3 },
@@ -244,6 +256,82 @@ export const DeveloperPortal: React.FC = () => {
   };
 
   const analytics = generateAnalytics();
+
+  // Initialize test users and feedback from localStorage
+  React.useEffect(() => {
+    const savedTestUsers = JSON.parse(localStorage.getItem('lumi_test_users') || '[]');
+    const savedFeedback = JSON.parse(localStorage.getItem('lumi_test_feedback') || '[]');
+    setTestUsers(savedTestUsers);
+    setFeedback(savedFeedback);
+  }, []);
+
+  const saveTestUsers = (users: any[]) => {
+    setTestUsers(users);
+    localStorage.setItem('lumi_test_users', JSON.stringify(users));
+  };
+
+  const saveFeedback = (feedbackData: any[]) => {
+    setFeedback(feedbackData);
+    localStorage.setItem('lumi_test_feedback', JSON.stringify(feedbackData));
+  };
+
+  const generateAccessCode = () => {
+    return Math.random().toString(36).substring(2, 8).toUpperCase();
+  };
+
+  const handleCreateTestUser = () => {
+    if (!newTestUser.email || !newTestUser.fullName) {
+      toast.error('Missing Information', 'Email and full name are required');
+      return;
+    }
+
+    const accessCode = generateAccessCode();
+    const testUser = {
+      id: Date.now().toString(),
+      ...newTestUser,
+      accessCode,
+      status: 'invited',
+      createdAt: new Date().toISOString(),
+      lastActive: null,
+      feedbackSubmitted: 0
+    };
+
+    const updatedUsers = [...testUsers, testUser];
+    saveTestUsers(updatedUsers);
+    
+    // Reset form
+    setNewTestUser({
+      email: '',
+      fullName: '',
+      role: 'tester',
+      accessLevel: 'full',
+      modules: [],
+      expiresAt: ''
+    });
+    setShowInviteForm(false);
+    
+    toast.success('Test User Created', `Access code: ${accessCode}`);
+  };
+
+  const handleRemoveTestUser = (userId: string) => {
+    const updatedUsers = testUsers.filter(user => user.id !== userId);
+    saveTestUsers(updatedUsers);
+    toast.info('Test User Removed', 'User access revoked');
+  };
+
+  const handleModuleToggle = (module: string) => {
+    const currentModules = newTestUser.modules || [];
+    const isSelected = currentModules.includes(module);
+    
+    let newModules;
+    if (isSelected) {
+      newModules = currentModules.filter(m => m !== module);
+    } else {
+      newModules = [...currentModules, module];
+    }
+    
+    setNewTestUser(prev => ({ ...prev, modules: newModules }));
+  };
 
   const renderTestingEnvironment = () => (
     <div className="space-y-6">
