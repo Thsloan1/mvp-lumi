@@ -182,6 +182,7 @@ function App() {
           <div className="min-h-screen bg-gray-50" id="main-content">
             <AppContent />
             <ToastContainer />
+            <TestEnvironmentPanel />
           </div>
         </AppProvider>
       </AccessibilityProvider>
