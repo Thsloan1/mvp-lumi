@@ -890,7 +890,7 @@ export const DeveloperPortal: React.FC = () => {
               <div>Environment: {currentEnv.name}</div>
               <div>View: {currentView}</div>
               <div>User: {currentUser?.fullName?.split(' ')[0] || 'None'}</div>
-              <div>Data: {testDataManager.getUsers().length} users</div>
+              <div>Test Users: {testUsers.length} active</div>
             </div>
           </div>
         </div>

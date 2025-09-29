@@ -173,6 +173,7 @@ function App() {
             <AppContent />
             <ToastContainer />
             <DeveloperPortal />
+            <TestUserFeedbackWidget module={currentView} />
           </div>
         </AppProvider>
       </AccessibilityProvider>
