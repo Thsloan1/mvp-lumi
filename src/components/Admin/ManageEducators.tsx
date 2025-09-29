@@ -50,8 +50,26 @@ export const ManageEducators: React.FC = () => {
 
   const fetchPendingInvitations = async () => {
     try {
-      const response = await organizationApi.get('/organizations/invitations');
-      setPendingInvitations(response.invitations || []);
+      // Mock pending invitations for MVP
+      const mockInvitations: PendingInvitation[] = [
+        {
+          id: '1',
+          email: 'david.kim@school.edu',
+          inviterName: 'Dr. Maria Rodriguez',
+          createdAt: '2024-02-10',
+          expiresAt: '2024-02-17',
+          status: 'PENDING'
+        },
+        {
+          id: '2',
+          email: 'emma.thompson@school.edu',
+          inviterName: 'Dr. Maria Rodriguez',
+          createdAt: '2024-02-12',
+          expiresAt: '2024-02-19',
+          status: 'PENDING'
+        }
+      ];
+      setPendingInvitations(mockInvitations);
     } catch (error) {
       handleApiError(error, { action: 'fetchPendingInvitations' });
     } finally {

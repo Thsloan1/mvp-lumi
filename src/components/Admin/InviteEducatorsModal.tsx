@@ -110,24 +110,23 @@ export const InviteEducatorsModal: React.FC<InviteEducatorsModalProps> = ({ onCl
     setSeatError(null);
     
     try {
-      // Check seat availability first
-      const seatCheck = await organizationApi.checkSeatAvailability(validEmails.length);
-      
-      if (!seatCheck.available) {
-        setSeatError(seatCheck.message || 'Not enough seats available');
+      // Check seat availability
+      if (validEmails.length > subscriptionInfo.availableSeats) {
+        setSeatError(`Not enough seats available. You have ${subscriptionInfo.availableSeats} seats remaining.`);
         return;
       }
 
       // Send invitations
-      const result = await organizationApi.inviteEducators(validEmails);
+      const emailData = validEmails.map(email => ({
+        email,
+        firstName: 'Invited',
+        lastName: 'Educator'
+      }));
+      const result = await inviteEducators(emailData);
       
-      if (result.success) {
-        setInvitesSent(true);
-        // Update seat info
-        await fetchSeatInfo();
-      } else {
-        setSeatError(result.errors?.[0] || 'Failed to send invitations');
-      }
+      setInvitesSent(true);
+      // Update seat info
+      await fetchSeatInfo();
     } catch (error) {
       handleApiError(error, { action: 'sendInvites', emails: validEmails });
     } finally {

@@ -95,12 +95,12 @@ export const OrganizationSettings: React.FC = () => {
     
     setLoading(true);
     try {
-      await transferOwnership(transferEmail, transferReason);
+      await organizationApi.transferOwnership(transferEmail, transferReason);
       setShowTransferOwnership(false);
       setTransferEmail('');
       setTransferReason('');
     } catch (error) {
-      console.error('Failed to transfer ownership:', error);
+      handleApiError(error, { action: 'transferOwnership', transferEmail });
     } finally {
       setLoading(false);
     }
@@ -251,13 +251,23 @@ export const OrganizationSettings: React.FC = () => {
         </div>
         
         <div className="mt-8 pt-6 border-t border-[#E6E2DD] flex space-x-3">
-          <Button variant="outline">
+          <Button 
+            variant="outline"
+            onClick={() => upgradeSubscription({ plan: 'premium' })}
+          >
             Upgrade Plan
           </Button>
-          <Button variant="outline">
+          <Button 
+            variant="outline"
+            onClick={() => console.log('Add more seats')}
+          >
             Add More Seats
           </Button>
-          <Button variant="ghost" className="text-red-600">
+          <Button 
+            variant="ghost" 
+            className="text-red-600"
+            onClick={() => cancelSubscription()}
+          >
             Cancel Subscription
           </Button>
         </div>

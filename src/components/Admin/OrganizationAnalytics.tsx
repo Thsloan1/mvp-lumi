@@ -27,9 +27,10 @@ export const OrganizationAnalytics: React.FC = () => {
 
   // Mock analytics data
   const analyticsData = {
-    totalStrategies: 245,
+    totalStrategies: behaviorLogs.length + classroomLogs.length,
     totalEducators: 12,
-    avgConfidence: 7.8,
+    avgConfidence: behaviorLogs.length > 0 ? 
+      behaviorLogs.reduce((sum, log) => sum + (log.confidenceRating || 0), 0) / behaviorLogs.length : 0,
     resourceDownloads: 156,
     trends: {
       strategiesGrowth: '+23%',

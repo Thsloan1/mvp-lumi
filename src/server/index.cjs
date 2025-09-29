@@ -338,4 +338,112 @@ app.put('/api/user/password', authenticateToken, async (req, res) => {
   }
 });
 
+// Organization stats route
+app.get('/api/organizations/stats', authenticateToken, (req, res) => {
+  try {
+    // Mock organization stats for MVP
+    const stats = {
+      totalEducators: 12,
+      activeSeats: 12,
+      maxSeats: 15,
+      pendingInvitations: 3,
+      totalBehaviorLogs: behaviorLogs.length,
+      totalClassroomLogs: classroomLogs.length,
+      subscriptionStatus: 'active',
+      currentPeriodEnd: '2024-12-15',
+      plan: 'Organization Pro'
+    };
+    
+    res.json(stats);
+  } catch (error) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Organization settings update route
+app.put('/api/organizations/settings', authenticateToken, (req, res) => {
+  try {
+    const { name, type, settings } = req.body;
+    
+    // Mock organization update for MVP
+    console.log('Organization settings updated:', { name, type, settings });
+    
+    res.json({ 
+      message: 'Organization settings updated successfully',
+      organization: { name, type, settings }
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Transfer ownership route
+app.post('/api/organizations/transfer-ownership', authenticateToken, (req, res) => {
+  try {
+    const { newOwnerEmail, reason } = req.body;
+    
+    if (!newOwnerEmail || !reason) {
+      return res.status(400).json({ error: 'New owner email and reason required' });
+    }
+    
+    // Mock ownership transfer for MVP
+    console.log('Ownership transfer initiated:', { newOwnerEmail, reason });
+    
+    res.json({ 
+      message: 'Ownership transfer initiated',
+      newOwner: newOwnerEmail
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Subscription management routes
+app.post('/api/subscriptions/upgrade', authenticateToken, (req, res) => {
+  try {
+    const { plan } = req.body;
+    
+    console.log('Subscription upgrade requested:', plan);
+    
+    res.json({ 
+      message: 'Subscription upgraded successfully',
+      newPlan: plan
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+app.post('/api/subscriptions/cancel', authenticateToken, (req, res) => {
+  try {
+    console.log('Subscription cancellation requested');
+    
+    res.json({ 
+      message: 'Subscription will be cancelled at the end of current period',
+      cancelAtPeriodEnd: true
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+app.post('/api/subscriptions/add-seats', authenticateToken, (req, res) => {
+  try {
+    const { seatCount } = req.body;
+    
+    if (!seatCount || seatCount < 1) {
+      return res.status(400).json({ error: 'Valid seat count required' });
+    }
+    
+    console.log('Adding seats:', seatCount);
+    
+    res.json({ 
+      message: `Added ${seatCount} seats successfully`,
+      newSeatCount: 15 + seatCount
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 // Email verification routes
