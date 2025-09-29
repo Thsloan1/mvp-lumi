@@ -16,6 +16,7 @@ import { SubscriptionPlan } from './components/Auth/SubscriptionPlan';
 import { PaymentScreen } from './components/Auth/PaymentScreen';
 import { OnboardingWizard } from './components/Onboarding/OnboardingWizard';
 import { OnboardingComplete } from './components/Onboarding/OnboardingComplete';
+import { OnboardingCompleteNew } from './components/Onboarding/OnboardingCompleteNew';
 import { EducatorDashboard } from './components/Dashboard/EducatorDashboard';
 import { BehaviorLogFlow } from './components/BehaviorLog/BehaviorLogFlow';
 import { ClassroomLogFlow } from './components/ClassroomLog/ClassroomLogFlow';
@@ -118,6 +119,8 @@ const AppContent: React.FC = () => {
         return <OnboardingWizard />;
       case 'onboarding-complete':
         return <OnboardingComplete />;
+      case 'onboarding-complete-new':
+        return <OnboardingCompleteNew />;
       case 'dashboard':
         return <EducatorDashboard />;
       case 'behavior-log':

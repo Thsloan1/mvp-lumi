@@ -410,7 +410,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
       if (updatedUser.role === 'admin') {
         setCurrentView('admin-dashboard');
       } else {
-        setCurrentView('onboarding-complete');
+        setCurrentView('onboarding-complete-new');
       }
     } catch (err: any) {
       ErrorLogger.logOnboardingEvent('completion_error', undefined, { userId: currentUser?.id, error: err.message });

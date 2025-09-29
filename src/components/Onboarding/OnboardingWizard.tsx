@@ -11,6 +11,7 @@ import { ClassroomStep } from './steps/ClassroomStep';
 import { EnvironmentStep } from './steps/EnvironmentStep';
 import { TeachingStyleStep } from './steps/TeachingStyleStep';
 import { ReviewStep } from './steps/ReviewStep';
+import { BehaviorFocusStep } from './BehaviorFocusStep';
 
 export const OnboardingWizard: React.FC = () => {
   const { setCurrentView, currentUser, updateOnboarding } = useAppContext();
@@ -37,7 +38,10 @@ export const OnboardingWizard: React.FC = () => {
     hasIFSP: false,
     ifspCount: 0,
     stressors: [] as string[],
-    teachingStyle: ''
+    teachingStyle: '',
+    behaviorFocus: [] as string[],
+    specificBehavior: '',
+    behaviorConfidence: ''
   });
 
   const steps = [
@@ -47,6 +51,7 @@ export const OnboardingWizard: React.FC = () => {
     { component: ClassroomStep, title: 'Your Classroom' },
     { component: EnvironmentStep, title: 'Classroom Environment' },
     { component: TeachingStyleStep, title: 'Teaching Style' },
+    { component: BehaviorFocusStep, title: 'Behavior Focus' },
     { component: ReviewStep, title: 'Review & Confirm' }
   ];
 
@@ -70,7 +75,8 @@ export const OnboardingWizard: React.FC = () => {
       onboardingData: {
         hasClassroom: !!onboardingData.classroomName,
         stressorCount: onboardingData.stressors?.length || 0,
-        gradeBand: onboardingData.gradeBand
+        gradeBand: onboardingData.gradeBand,
+        behaviorFocusCount: onboardingData.behaviorFocus?.length || 0
       }
     });
     
@@ -79,6 +85,8 @@ export const OnboardingWizard: React.FC = () => {
       preferredLanguage: onboardingData.preferredLanguage,
       learningStyle: onboardingData.learningStyle,
       teachingStyle: onboardingData.teachingStyle,
+      behaviorFocus: onboardingData.behaviorFocus,
+      behaviorConfidence: onboardingData.behaviorConfidence,
       classroomData: {
         name: onboardingData.classroomName,
         gradeBand: onboardingData.gradeBand,
@@ -124,6 +132,8 @@ export const OnboardingWizard: React.FC = () => {
         return onboardingData.stressors.length > 0;
       case 5: // Teaching Style
         return onboardingData.teachingStyle;
+      case 6: // Behavior Focus
+        return onboardingData.behaviorFocus.length > 0;
       default:
         return true;
     }
