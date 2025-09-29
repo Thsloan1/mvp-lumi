@@ -346,21 +346,32 @@ export const EducatorDashboard: React.FC = () => {
                 
                 {recentActivity.length === 0 ? (
                   <div className="text-center py-12">
-                    <div className="w-16 h-16 bg-[#F8F6F4] rounded-full flex items-center justify-center mx-auto mb-4">
-                      <Heart className="w-8 h-8 text-[#C44E38]" />
-                    </div>
-                    <h4 className="text-lg font-medium text-[#1A1A1A] mb-2">
-                      Ready to get started?
-                    </h4>
-                    <p className="text-gray-600 mb-6">
-                      Log your first behavior or classroom challenge to see personalized strategies.
-                    </p>
-                    <Button
-                      onClick={() => setCurrentView('behavior-log')}
-                      icon={Plus}
-                    >
-                      Log First Behavior
-                    </Button>
+                    {behaviorLogsLoading || classroomLogsLoading ? (
+                      <div className="space-y-4">
+                        <div className="animate-pulse">
+                          <div className="h-4 bg-[#F8F6F4] rounded w-3/4 mx-auto mb-2"></div>
+                          <div className="h-4 bg-[#F8F6F4] rounded w-1/2 mx-auto"></div>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="w-16 h-16 bg-[#F8F6F4] rounded-full flex items-center justify-center mx-auto mb-4">
+                          <Heart className="w-8 h-8 text-[#C44E38]" />
+                        </div>
+                        <h4 className="text-lg font-medium text-[#1A1A1A] mb-2">
+                          Ready to get started?
+                        </h4>
+                        <p className="text-gray-600 mb-6">
+                          Log your first behavior or classroom challenge to see personalized strategies.
+                        </p>
+                        <Button
+                          onClick={() => setCurrentView('behavior-log')}
+                          icon={Plus}
+                        >
+                          Log First Behavior
+                        </Button>
+                      </>
+                    )}
                   </div>
                 ) : (
                   <div className="space-y-4">
