@@ -22,9 +22,14 @@ import { FamilyNotesManager } from './components/FamilyNotes/FamilyNotesManager'
 import { ChildProfilesManager } from './components/ChildProfiles/ChildProfilesManager';
 import { ClassroomProfileManager } from './components/ClassroomProfile/ClassroomProfileManager';
 import { SignIn } from './components/Auth/SignIn';
+import { AdminDashboard } from './components/Admin/AdminDashboard';
+import { ManageEducators } from './components/Admin/ManageEducators';
+import { InviteEducatorsModal } from './components/Admin/InviteEducatorsModal';
+import { OrganizationSettings } from './components/Admin/OrganizationSettings';
+import { OrganizationAnalytics } from './components/Admin/OrganizationAnalytics';
 
 const AppContent: React.FC = () => {
-  const { currentView } = useAppContext();
+  const { currentView, setCurrentView } = useAppContext();
 
   const renderView = () => {
     switch (currentView) {
@@ -72,6 +77,21 @@ const AppContent: React.FC = () => {
         return <ChildProfilesManager />;
       case 'classroom-profile':
         return <ClassroomProfileManager />;
+      case 'admin-dashboard':
+        return <AdminDashboard />;
+      case 'manage-educators':
+        return <ManageEducators />;
+      case 'organization-settings':
+        return <OrganizationSettings />;
+      case 'organization-analytics':
+        return <OrganizationAnalytics />;
+      case 'invite-educators-modal':
+        return (
+          <div>
+            <AdminDashboard />
+            <InviteEducatorsModal onClose={() => setCurrentView('admin-dashboard')} />
+          </div>
+        );
       default:
         return <WelcomeScreen />;
     }
