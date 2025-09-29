@@ -1,14 +1,11 @@
 import React, { useState } from 'react';
-import { Settings, RefreshCw, Database, Users, BarChart3, Download, Upload, Trash2, Play, Code, DollarSign, AlertTriangle, Wrench, BookOpen, CreditCard as Edit, Save, X, Plus } from 'lucide-react';
-import { Button } from '../UI/Button';
+import { Settings, RefreshCw, Database, Users, BarChart3, Download, Upload, Trash2, Play, Code, DollarSign, AlertTriangle, Wrench, BookOpen, CreditCard as Edit, Save, X, Plus } from 'lucide-react'/Button';
 import { Card } from '../UI/Card';
 import { Select } from '../UI/Select';
-import { Input } from '../UI/Input';
 import { useAppContext } from '../../context/AppContext';
 import { testDataManager } from '../../data/testData';
 import { getCurrentEnvironment, isTestEnvironment } from '../../config/environments';
 import { DeveloperAnalyticsEngine } from '../../utils/developerAnalytics';
-import { knowledgeLibrary, TheoreticalFramework, StrategyTemplate, LanguageGuideline } from '../../data/knowledgeLibrary';
 
 export const DeveloperPortal: React.FC = () => {
   const { setCurrentView, setCurrentUser, toast, behaviorLogs, classroomLogs, children, classrooms } = useAppContext();
@@ -17,10 +14,6 @@ export const DeveloperPortal: React.FC = () => {
   const [selectedTestUser, setSelectedTestUser] = useState('');
   const [selectedUserId, setSelectedUserId] = useState('');
   const [selectedOrgId, setSelectedOrgId] = useState('');
-  const [editingFramework, setEditingFramework] = useState<string | null>(null);
-  const [editingStrategy, setEditingStrategy] = useState<string | null>(null);
-  const [editingGuideline, setEditingGuideline] = useState<string | null>(null);
-  const [frameworkUpdates, setFrameworkUpdates] = useState<Record<string, Partial<TheoreticalFramework>>>({});
   
   const currentEnv = getCurrentEnvironment();
 
@@ -628,11 +621,11 @@ export const DeveloperPortal: React.FC = () => {
         <div className="grid grid-cols-2 gap-4 text-sm">
           <div>
             <p className="text-gray-600">Load Time:</p>
-            <p className="font-bold text-green-600">{'< 2s'}</p>
+            <p className="font-bold text-green-600">< 2s</p>
           </div>
           <div>
             <p className="text-gray-600">API Response:</p>
-            <p className="font-bold text-green-600">{'< 500ms'}</p>
+            <p className="font-bold text-green-600">< 500ms</p>
           </div>
           <div>
             <p className="text-gray-600">Memory Usage:</p>
