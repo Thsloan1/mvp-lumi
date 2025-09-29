@@ -274,6 +274,10 @@ export const BehaviorStrategyResponse: React.FC<BehaviorStrategyResponseProps> =
                   <MessageCircle className="w-5 h-5 mr-2" />
                   Comprehensive Family Communication
                 </h3>
+              </div>
+            </Card>
+          )}
+
           {/* LumiEd Integration */}
           <LumiEdIntegration 
             context="behavior-strategy"
