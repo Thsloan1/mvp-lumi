@@ -116,6 +116,7 @@ export const StickyNavigation: React.FC = () => {
               <User className="w-4 h-4 text-blue-600" />
             </button>
           </div>
+        </div>
       </div>
     </nav>
   );
