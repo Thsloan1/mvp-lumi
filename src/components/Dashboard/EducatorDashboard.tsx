@@ -88,21 +88,6 @@ export const EducatorDashboard: React.FC = () => {
     }))
   ].sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime()).slice(0, 5);
 
-  const recentActivity = [
-    ...behaviorLogs.slice(-3).map(log => ({
-      type: 'behavior',
-      description: log.behaviorDescription,
-      time: new Date(log.createdAt).toLocaleDateString(),
-      severity: log.severity
-    })),
-    ...classroomLogs.slice(-2).map(log => ({
-      type: 'classroom',
-      description: log.challengeDescription,
-      time: new Date(log.createdAt).toLocaleDateString(),
-      severity: log.severity
-    }))
-  ].sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime()).slice(0, 5);
-
   return (
     <div className="min-h-screen bg-white">
       {/* Header */}
