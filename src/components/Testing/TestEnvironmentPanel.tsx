@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Settings, RefreshCw, Database, Users, BarChart3, Download, Upload, Trash2, Play, Code, DollarSign, AlertTriangle, Wrench, BookOpen, Edit, Save, X, Plus, MessageCircle, Shield, CheckCircle, Zap, Mail, Copy, Star, Clock } from 'lucide-react';
+import { Settings, RefreshCw, Database, Users, BarChart3, Download, Upload, Trash2, Play, Code, DollarSign, AlertTriangle, Wrench, BookOpen, CreditCard as Edit, Save, X, Plus, MessageCircle, Shield, CheckCircle, Zap, Mail, Copy, Star, Clock } from 'lucide-react';
 import { Button } from '../UI/Button';
 import { Card } from '../UI/Card';
 import { Select } from '../UI/Select';
@@ -1193,6 +1193,8 @@ export const DeveloperPortal: React.FC = () => {
           Security Report
         </Button>
       </div>
+      </>
+      )}
     </div>
   );
 
