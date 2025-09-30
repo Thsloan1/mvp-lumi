@@ -65,7 +65,7 @@ export const GRADE_BAND_OPTIONS = [
 
 export const LEARNING_STYLE_OPTIONS = [
   'I learn best with visuals',
-  'I prefer listening to explanations',
+  'I prefer listening to explanations', 
   'I like written step-by-step guides',
   'A mix of all works for me'
 ];

@@ -39,10 +39,10 @@ export const AboutYouStep: React.FC<AboutYouStepProps> = ({ data, updateData }) 
   ];
 
   const learningStyleOptions = [
-    { value: 'visual', label: 'Visual' },
-    { value: 'auditory', label: 'Auditory' },
-    { value: 'kinesthetic', label: 'Kinesthetic' },
-    { value: 'reading', label: 'Reading/Writing' },
+    { value: 'I learn best with visuals', label: 'I learn best with visuals' },
+    { value: 'I prefer listening to explanations', label: 'I prefer listening to explanations' },
+    { value: 'I like written step-by-step guides', label: 'I like written step-by-step guides' },
+    { value: 'A mix of all works for me', label: 'A mix of all works for me' }
   ];
 
   return (
