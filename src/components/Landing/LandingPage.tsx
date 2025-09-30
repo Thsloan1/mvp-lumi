@@ -129,34 +129,34 @@ export const LandingPage: React.FC = () => {
                 <Heart className="w-5 h-5 text-white" />
               </div>
               <span className="text-xl font-bold text-[#1A1A1A]">Lumi</span>
-              <span className="text-xs text-[#615E59]">Classroom Behavior Coach™</span>
+              <span className="text-sm text-[#615E59]">Classroom Behavior Coach™</span>
             </div>
 
             {/* Desktop Navigation */}
             <nav className="hidden md:flex items-center space-x-8" role="navigation" aria-label="Main navigation">
               <button 
                 onClick={() => scrollToSection('story')}
-                className="text-[#615E59] hover:text-[#1A1A1A] transition-colors focus:outline-none focus:ring-2 focus:ring-[#C44E38] rounded-lg px-2 py-1"
+                className="text-sm text-[#615E59] hover:text-[#1A1A1A] transition-colors focus:outline-none focus:ring-2 focus:ring-[#C44E38] rounded-lg px-2 py-1"
                 aria-label="Learn about Lumi's story"
               >
                 About
               </button>
               <button 
                 onClick={() => scrollToSection('features')}
-                className="text-[#615E59] hover:text-[#1A1A1A] transition-colors focus:outline-none focus:ring-2 focus:ring-[#C44E38] rounded-lg px-2 py-1"
+                className="text-sm text-[#615E59] hover:text-[#1A1A1A] transition-colors focus:outline-none focus:ring-2 focus:ring-[#C44E38] rounded-lg px-2 py-1"
                 aria-label="View Lumi features"
               >
                 Features
               </button>
               <button 
                 onClick={() => scrollToSection('how-it-works')}
-                className="text-[#615E59] hover:text-[#1A1A1A] transition-colors"
+                className="text-sm text-[#615E59] hover:text-[#1A1A1A] transition-colors"
               >
                 How It Works
               </button>
               <button 
                 onClick={() => scrollToSection('team')}
-                className="text-[#615E59] hover:text-[#1A1A1A] transition-colors"
+                className="text-sm text-[#615E59] hover:text-[#1A1A1A] transition-colors"
               >
                 Team
               </button>
@@ -164,7 +164,7 @@ export const LandingPage: React.FC = () => {
                 <Button
                   onClick={() => handleCTAClick('signin')}
                   variant="ghost"
-                  size="sm"
+                  className="text-sm"
                   aria-label="Sign in to your account"
                 >
                   Sign In
