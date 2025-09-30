@@ -129,6 +129,19 @@ export const EducatorSignup: React.FC = () => {
             </Button>
             
             <Button
+              className="w-full justify-center border border-black bg-white text-black hover:bg-black hover:text-white hover:border-black transition-all duration-200 group"
+              size="lg"
+              onClick={() => {
+                // Handle Microsoft signup
+                console.log('Microsoft signup');
+              }}
+            >
+              <svg className="w-5 h-5 mr-3 text-black group-hover:text-white transition-colors duration-200" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M11.4 24H0V12.6h11.4V24zM24 24H12.6V12.6H24V24zM11.4 11.4H0V0h11.4v11.4zM24 11.4H12.6V0H24v11.4z"/>
+              </svg>
+              <span className="text-black group-hover:text-white transition-colors duration-200">Continue with Microsoft</span>
+            </Button>
+            <Button
               className="w-full justify-center border border-black bg-white text-black hover:bg-black hover:text-white hover:border-black transition-all duration-200"
               size="lg"
               onClick={() => {
