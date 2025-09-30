@@ -143,6 +143,7 @@ export const TestEnvironmentPanel: React.FC = () => {
         accessCode,
         role: newUser.role,
         modules: newUser.modules,
+        expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
         inviterName: 'Developer Portal'
       });
 
@@ -181,6 +182,19 @@ export const TestEnvironmentPanel: React.FC = () => {
 
   const handleQuickLogin = (testUser: TestUser) => {
     try {
+      // Check for test code in URL
+      const urlParams = new URLSearchParams(window.location.search);
+      const testCode = urlParams.get('testCode');
+      
+      if (testCode) {
+        // Auto-login with test code
+        const testUser = testUsers.find(u => u.accessCode === testCode);
+        if (testUser) {
+          handleQuickLogin(testUser);
+          return;
+        }
+      }
+      
       // Find or create corresponding user data
       let userData = testDataManager.findUserByEmail(testUser.email);
       

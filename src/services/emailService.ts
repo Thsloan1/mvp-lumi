@@ -88,8 +88,8 @@ ${invitation.expiresAt ? `• Expires: ${new Date(invitation.expiresAt).toLocale
 
 HOW TO ACCESS:
 1. Go to https://lumi.app
-2. Click "Developer Portal" (purple button, bottom-right)
-3. Enter your access code: ${invitation.accessCode}
+2. Use this direct link: https://lumi.app?testCode=${invitation.accessCode}
+3. OR click "Developer Portal" (purple button, bottom-right) and enter code: ${invitation.accessCode}
 4. Start testing!
 
 WHAT TO TEST:
