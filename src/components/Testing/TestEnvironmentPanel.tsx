@@ -9,6 +9,7 @@ import { testDataManager } from '../../data/testData';
 import { getCurrentEnvironment, isTestEnvironment } from '../../config/environments';
 import { EmailService } from '../../services/emailService';
 import { safeLocalStorageGet, safeLocalStorageSet } from '../../utils/jsonUtils';
+import React from 'react';
 
 interface TestUser {
   id: string;
