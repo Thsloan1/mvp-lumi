@@ -1,11 +1,10 @@
-import React, { useState } from 'react';
-import { useEffect } from 'react';
-import { ArrowLeft, ArrowRight } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { ArrowLeft, ArrowRight, CheckCircle } from 'lucide-react';
 import { Button } from '../UI/Button';
 import { ProgressDots } from '../UI/ProgressDots';
 import { useAppContext } from '../../context/AppContext';
 import { ErrorLogger } from '../../utils/errorLogger';
-import { safeLocalStorageGet, safeLocalStorageSet } from '../../utils/jsonUtils';
+import { safeJsonParse, safeJsonStringify } from '../../utils/jsonUtils';
 import { AboutYouStep } from './steps/AboutYouStep';
 import { SchoolInfoStep } from './steps/SchoolInfoStep';
 import { EducatorBackgroundStep } from './steps/EducatorBackgroundStep';
@@ -13,66 +12,53 @@ import { ClassroomStep } from './steps/ClassroomStep';
 import { EnvironmentStep } from './steps/EnvironmentStep';
 import { TeachingStyleStep } from './steps/TeachingStyleStep';
 import { ReviewStep } from './steps/ReviewStep';
-import { BehaviorFocusStep } from './BehaviorFocusStep';
+import { BehaviorFocusStep } from '../BehaviorFocusStep';
+
+const TOTAL_STEPS = 8;
+const STORAGE_KEY = 'lumi_onboarding_progress';
 
 export const OnboardingWizard: React.FC = () => {
   const { setCurrentView, currentUser, updateOnboarding, toast } = useAppContext();
-  const [currentStep, setCurrentStep] = useState(0);
-  
-  // Initialize with saved data or defaults
+
+  // Safe state initialization using function to prevent JSON parsing errors
+  const [currentStep, setCurrentStep] = useState(() => {
+    const savedProgress = safeJsonParse(localStorage.getItem(STORAGE_KEY), {});
+    return savedProgress.step || 0;
+  });
+
   const [onboardingData, setOnboardingData] = useState(() => {
-    const savedData = safeLocalStorageGet('lumi_onboarding_progress', {});
-    return {
-    firstName: currentUser?.fullName?.split(' ')[0] || '',
-    lastName: currentUser?.fullName?.split(' ').slice(1).join(' ') || '',
-    profilePhotoUrl: '',
-    preferredLanguage: 'english',
-    learningStyle: '',
-    schoolName: '',
-    roomNumber: '',
-    schoolDistrict: '',
-    county: '',
-    yearsOfExperience: '',
-    highestEducation: '',
-    role: '',
-    classroomName: '',
-    gradeBand: '',
-    studentCount: '',
-    classroomInRatioTeachers: '',
-    hasIEP: false,
-    iepCount: 0,
-    hasIFSP: false,
-    ifspCount: 0,
-    stressors: [] as string[],
-    teachingStyle: '',
-    behaviorFocus: [] as string[],
-    specificBehavior: '',
-      behaviorConfidence: '',
-      ...savedData
+    const savedProgress = safeJsonParse(localStorage.getItem(STORAGE_KEY), {});
+    return savedProgress.data || {
+      // Initialize with safe defaults
+      firstName: currentUser?.fullName?.split(' ')[0] || '',
+      lastName: currentUser?.fullName?.split(' ').slice(1).join(' ') || '',
+      profilePhotoUrl: '',
+      preferredLanguage: 'english',
+      learningStyle: '',
+      schoolName: '',
+      roomNumber: '',
+      schoolDistrict: '',
+      county: '',
+      yearsOfExperience: '',
+      highestEducation: '',
+      role: '',
+      classroomName: '',
+      gradeBand: '',
+      studentCount: '',
+      classroomInRatioTeachers: '',
+      hasIEP: false,
+      iepCount: 0,
+      hasIFSP: false,
+      ifspCount: 0,
+      stressors: [],
+      teachingStyle: '',
+      behaviorFocus: [],
+      specificBehavior: '',
+      behaviorConfidence: ''
     };
   });
 
-  // Auto-save onboarding progress whenever data changes
-  useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      safeLocalStorageSet('lumi_onboarding_progress', onboardingData);
-    }, 500); // Debounce saves by 500ms
-
-    return () => clearTimeout(timeoutId);
-  }, [onboardingData]);
-
-  // Load saved step progress
-  useEffect(() => {
-    const savedStep = safeLocalStorageGet('lumi_onboarding_step', 0);
-    if (savedStep > 0 && savedStep < steps.length) {
-      setCurrentStep(savedStep);
-    }
-  }, []);
-
-  // Auto-save current step
-  useEffect(() => {
-    safeLocalStorageSet('lumi_onboarding_step', currentStep);
-  }, [currentStep]);
+  const [loading, setLoading] = useState(false);
 
   const steps = [
     { component: AboutYouStep, title: 'About You' },
@@ -85,104 +71,98 @@ export const OnboardingWizard: React.FC = () => {
     { component: ReviewStep, title: 'Review & Confirm' }
   ];
 
-  const CurrentStepComponent = steps[currentStep].component;
+  // Safe auto-save effect
+  useEffect(() => {
+    try {
+      const dataToSave = { step: currentStep, data: onboardingData };
+      const jsonString = safeJsonStringify(dataToSave);
+      localStorage.setItem(STORAGE_KEY, jsonString);
+    } catch (error) {
+      console.warn('Failed to save onboarding progress:', error);
+    }
+  }, [currentStep, onboardingData]);
 
   const handleNext = () => {
-    // Auto-save before moving to next step
-    autoSaveProgress();
-    
     if (currentStep < steps.length - 1) {
-      setCurrentStep(currentStep + 1);
+      setCurrentStep(prevStep => prevStep + 1);
     }
   };
 
   const handlePrevious = () => {
-    // Auto-save before moving to previous step
-    autoSaveProgress();
-    
     if (currentStep > 0) {
-      setCurrentStep(currentStep - 1);
+      setCurrentStep(prevStep => prevStep - 1);
     }
   };
 
-  const autoSaveProgress = () => {
-    try {
-      safeLocalStorageSet('lumi_onboarding_progress', onboardingData);
-      safeLocalStorageSet('lumi_onboarding_step', currentStep);
-      
-      // Show subtle feedback for auto-save
-      toast.info('Progress saved', 'Your information has been saved automatically');
-    } catch (error) {
-      console.warn('Failed to auto-save onboarding progress:', error);
-    }
-  };
-
-  const clearSavedProgress = () => {
-    try {
-      localStorage.removeItem('lumi_onboarding_progress');
-      localStorage.removeItem('lumi_onboarding_step');
-    } catch (error) {
-      console.warn('Failed to clear saved progress:', error);
-    }
-  };
-
-  const handleComplete = () => {
-    ErrorLogger.logOnboardingEvent('completion_initiated', steps.length - 1, { 
-      userId: currentUser?.id,
-      onboardingData: {
-        hasClassroom: !!onboardingData.classroomName,
-        stressorCount: onboardingData.stressors?.length || 0,
-        gradeBand: onboardingData.gradeBand,
-        behaviorFocusCount: onboardingData.behaviorFocus?.length || 0
-      }
-    });
+  const handleComplete = async () => {
+    setLoading(true);
     
-    const updateData = {
-      fullName: `${onboardingData.firstName} ${onboardingData.lastName}`,
-      preferredLanguage: onboardingData.preferredLanguage,
-      learningStyle: onboardingData.learningStyle,
-      teachingStyle: onboardingData.teachingStyle,
-      behaviorFocus: onboardingData.behaviorFocus,
-      behaviorConfidence: onboardingData.behaviorConfidence,
-      profilePhotoUrl: onboardingData.profilePhotoUrl,
-      yearsOfExperience: onboardingData.yearsOfExperience,
-      highestEducation: onboardingData.highestEducation,
-      role: onboardingData.role,
-      schoolName: onboardingData.schoolName,
-      roomNumber: onboardingData.roomNumber,
-      schoolDistrict: onboardingData.schoolDistrict,
-      county: onboardingData.county,
-      classroomData: {
-        name: onboardingData.classroomName,
-        gradeBand: onboardingData.gradeBand,
-        studentCount: parseInt(onboardingData.studentCount),
-        teacherStudentRatio: onboardingData.classroomInRatioTeachers ? `1:${Math.floor(parseInt(onboardingData.studentCount) / parseInt(onboardingData.classroomInRatioTeachers))}` : '1:8',
-        stressors: onboardingData.stressors,
-        iepCount: onboardingData.iepCount,
-        ifspCount: onboardingData.ifspCount
-      }
-    };
-    
-    updateOnboarding(updateData)
-      .then(() => {
-        // Clear saved progress after successful completion
-        clearSavedProgress();
-        // Success - user will be redirected by updateOnboarding
-      })
-      .catch((error) => {
-        console.error('Onboarding failed:', error);
-        // Error toast is shown by updateOnboarding
+    try {
+      ErrorLogger.logOnboardingEvent('completion_initiated', currentStep, { 
+        userId: currentUser?.id,
+        onboardingData: {
+          hasClassroom: !!onboardingData.classroomName,
+          stressorCount: onboardingData.stressors?.length || 0,
+          gradeBand: onboardingData.gradeBand,
+          behaviorFocusCount: onboardingData.behaviorFocus?.length || 0
+        }
       });
-  };
 
-  // Track step completion
-  const handleStepComplete = (stepIndex: number) => {
-    // Auto-save when completing a step
-    autoSaveProgress();
-    ErrorLogger.logOnboardingEvent('step_completed', stepIndex, {
-      userId: currentUser?.id,
-      stepData: steps[stepIndex].title
-    });
+      // Prepare complete onboarding data
+      const completeData = {
+        fullName: `${onboardingData.firstName} ${onboardingData.lastName}`,
+        preferredLanguage: onboardingData.preferredLanguage,
+        learningStyle: onboardingData.learningStyle,
+        teachingStyle: onboardingData.teachingStyle,
+        profilePhotoUrl: onboardingData.profilePhotoUrl,
+        yearsOfExperience: onboardingData.yearsOfExperience,
+        highestEducation: onboardingData.highestEducation,
+        role: onboardingData.role,
+        schoolName: onboardingData.schoolName,
+        roomNumber: onboardingData.roomNumber,
+        schoolDistrict: onboardingData.schoolDistrict,
+        county: onboardingData.county,
+        behaviorFocus: onboardingData.behaviorFocus,
+        behaviorConfidence: onboardingData.behaviorConfidence,
+        specificBehavior: onboardingData.specificBehavior,
+        classroomData: {
+          name: onboardingData.classroomName,
+          gradeBand: onboardingData.gradeBand,
+          studentCount: parseInt(onboardingData.studentCount) || 15,
+          teacherStudentRatio: onboardingData.classroomInRatioTeachers ? 
+            `1:${Math.floor(parseInt(onboardingData.studentCount) / parseInt(onboardingData.classroomInRatioTeachers))}` : 
+            '1:8',
+          stressors: onboardingData.stressors || [],
+          iepCount: onboardingData.iepCount || 0,
+          ifspCount: onboardingData.ifspCount || 0
+        }
+      };
+
+      console.log('Submitting onboarding data:', completeData);
+
+      await updateOnboarding(completeData);
+      
+      // Clear saved progress after successful completion
+      try {
+        localStorage.removeItem(STORAGE_KEY);
+      } catch (error) {
+        console.warn('Failed to clear onboarding progress:', error);
+      }
+      
+      ErrorLogger.logOnboardingEvent('completed', currentStep, { userId: currentUser?.id });
+      
+    } catch (error) {
+      console.error('Onboarding completion failed:', error);
+      ErrorLogger.logOnboardingEvent('completion_error', currentStep, { 
+        userId: currentUser?.id, 
+        error: error.message 
+      });
+      
+      // Don't clear progress on error so user can retry
+      toast.error('Onboarding failed', error.message || 'Please try again');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const isStepValid = () => {
@@ -196,17 +176,27 @@ export const OnboardingWizard: React.FC = () => {
         return onboardingData.yearsOfExperience && onboardingData.highestEducation && onboardingData.role;
       case 3: // Classroom
         return onboardingData.classroomName && onboardingData.gradeBand && 
-               onboardingData.studentCount && onboardingData.teacherStudentRatio;
+               onboardingData.studentCount && onboardingData.classroomInRatioTeachers;
       case 4: // Environment
-        return onboardingData.stressors.length > 0;
+        return onboardingData.stressors && onboardingData.stressors.length > 0;
       case 5: // Teaching Style
         return onboardingData.teachingStyle;
       case 6: // Behavior Focus
         return true; // Allow skipping behavior focus
+      case 7: // Review
+        return true;
       default:
         return true;
     }
   };
+
+  const CurrentStepComponent = steps[currentStep]?.component;
+
+  if (!CurrentStepComponent) {
+    // Fallback if step is corrupted
+    setCurrentStep(0);
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-white">
@@ -214,11 +204,11 @@ export const OnboardingWizard: React.FC = () => {
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-2xl font-bold text-[#1A1A1A] mb-4">
-            Onboarding Wizard
+            Complete Your Profile
           </h1>
           <ProgressDots total={steps.length} current={currentStep} />
           <p className="text-sm text-gray-600 mt-4">
-            Step {currentStep + 1} of {steps.length}: {steps[currentStep].title}
+            Step {currentStep + 1} of {steps.length}: {steps[currentStep]?.title}
           </p>
         </div>
 
@@ -245,16 +235,15 @@ export const OnboardingWizard: React.FC = () => {
             <Button
               onClick={handleComplete}
               disabled={!isStepValid()}
+              loading={loading}
               size="lg"
+              icon={CheckCircle}
             >
               Complete Setup
             </Button>
           ) : (
             <Button
-              onClick={() => {
-                handleStepComplete(currentStep);
-                handleNext();
-              }}
+              onClick={handleNext}
               disabled={!isStepValid()}
               icon={ArrowRight}
               iconPosition="right"

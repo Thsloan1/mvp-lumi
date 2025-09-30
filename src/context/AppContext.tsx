@@ -394,10 +394,14 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   const updateOnboarding = async (data: any) => {
     ErrorLogger.logOnboardingEvent('completion_attempt', undefined, { userId: currentUser?.id });
     try {
+      console.log('Starting onboarding update with data:', data);
+      
       const response = await AuthService.apiRequest('/api/user/onboarding', {
         method: 'PUT',
         body: JSON.stringify(data)
       });
+      
+      console.log('Onboarding API response:', response);
       
       if (!response || !response.user) {
         throw new Error('Invalid response from server');
@@ -427,7 +431,12 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         setCurrentView('onboarding-complete-new');
       }
     } catch (err: any) {
-      console.error('Onboarding error details:', err);
+      console.error('Onboarding error details:', {
+        error: err,
+        message: err.message,
+        stack: err.stack,
+        data: data
+      });
       ErrorLogger.logOnboardingEvent('completion_error', undefined, { userId: currentUser?.id, error: err.message });
       error('Onboarding failed', err.message || 'Please try again');
       throw err;

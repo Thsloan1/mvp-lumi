@@ -98,6 +98,8 @@ export class AuthService {
 
   static async updateOnboarding(data: any): Promise<User> {
     try {
+      console.log('AuthService: Sending onboarding data:', data);
+      
       const response = await fetch('/api/user/onboarding', {
         method: 'PUT',
         headers: {
@@ -107,28 +109,48 @@ export class AuthService {
         body: JSON.stringify(data)
       });
 
+      console.log('AuthService: Response status:', response.status);
+      console.log('AuthService: Response headers:', Object.fromEntries(response.headers.entries()));
+      
       if (!response.ok) {
-        let errorData;
+        let errorData = {};
         try {
-          errorData = await response.json();
+          const responseText = await response.text();
+          console.log('AuthService: Error response text:', responseText);
+          
+          if (responseText.trim()) {
+            errorData = JSON.parse(responseText);
+          } else {
+            throw new Error('Empty response from server');
+          }
         } catch (parseError) {
+          console.error('AuthService: Failed to parse error response:', parseError);
           throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
         throw new Error(errorData.error || 'Update failed');
       }
 
-      let result;
+      let result = {};
       try {
-        result = await response.json();
+        const responseText = await response.text();
+        console.log('AuthService: Success response text:', responseText);
+        
+        if (responseText.trim()) {
+          result = JSON.parse(responseText);
+        } else {
+          throw new Error('Empty success response from server');
+        }
       } catch (parseError) {
         console.error('Failed to parse onboarding response:', parseError);
         throw new Error('Invalid response from server');
       }
       
       if (!result || !result.user) {
+        console.error('AuthService: Invalid result structure:', result);
         throw new Error('Invalid response format');
       }
       
+      console.log('AuthService: Onboarding completed successfully:', result.user);
       return result.user;
     } catch (error) {
       console.error('Onboarding API error:', error);
