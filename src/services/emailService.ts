@@ -281,8 +281,6 @@ Human Potential Partners`;
   // Send feedback notification to development team
   static async sendFeedbackNotification(feedback: any): Promise<boolean> {
     try {
-      const template = this.generateFeedbackNotificationTemplate(feedback);
-      
       // In development, log to console
       if (import.meta.env.VITE_ENVIRONMENT === 'development' || import.meta.env.VITE_ENVIRONMENT === 'test') {
         console.log('📧 FEEDBACK NOTIFICATION');
@@ -291,6 +289,9 @@ Human Potential Partners`;
         console.log('Category:', feedback.category);
         console.log('Priority:', feedback.priority);
         console.log('Feedback:', feedback.feedback);
+        
+        // Show visual notification
+        this.showFeedbackNotification(feedback);
         return true;
       }
 
@@ -300,6 +301,45 @@ Human Potential Partners`;
       console.error('Failed to send feedback notification:', error);
       return false;
     }
+  }
+
+  // Show visual notification for feedback
+  private static showFeedbackNotification(feedback: any) {
+    const notification = document.createElement('div');
+    notification.innerHTML = `
+      <div style="
+        position: fixed; 
+        top: 20px; 
+        left: 20px; 
+        background: #10B981; 
+        color: white; 
+        padding: 15px 20px; 
+        border-radius: 8px; 
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        z-index: 10000;
+        max-width: 350px;
+        font-family: Inter, sans-serif;
+      ">
+        <div style="font-weight: bold; margin-bottom: 5px;">📝 Feedback Received!</div>
+        <div style="font-size: 14px; opacity: 0.9;">
+          From: ${feedback.testerName}<br>
+          Rating: ${feedback.rating}/5 stars<br>
+          Category: ${feedback.category}
+        </div>
+        <div style="font-size: 12px; margin-top: 8px; opacity: 0.8;">
+          Check Developer Portal → Feedback tab for details
+        </div>
+      </div>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // Auto-remove after 4 seconds
+    setTimeout(() => {
+      if (notification.parentNode) {
+        notification.parentNode.removeChild(notification);
+      }
+    }, 4000);
   }
 
   private static generateFeedbackNotificationTemplate(feedback: any): EmailTemplate {

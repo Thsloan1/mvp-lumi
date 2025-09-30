@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Mail, Send, Copy, Download, RefreshCw, CheckCircle, AlertTriangle, Eye } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Mail, Send, Copy, Download, RefreshCw, CheckCircle, AlertTriangle, Eye, Trash2 } from 'lucide-react';
 import { Button } from '../UI/Button';
 import { Card } from '../UI/Card';
 import { useAppContext } from '../../context/AppContext';
@@ -9,28 +9,28 @@ export const EmailDeliveryPanel: React.FC = () => {
   const { toast } = useAppContext();
   const [pendingEmails, setPendingEmails] = useState<any[]>([]);
   const [copiedEmail, setCopiedEmail] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
-  React.useEffect(() => {
+  useEffect(() => {
     loadPendingEmails();
   }, []);
 
   const loadPendingEmails = () => {
     try {
+      setLoading(true);
       const emails = EmailService.getPendingEmails();
-      console.log('📧 Refreshing pending emails:', emails.length, 'emails found');
+      console.log('📧 Loading pending emails:', emails.length, 'found');
       setPendingEmails(emails);
+      
       if (emails.length > 0) {
-        toast.info('Emails Refreshed', `Found ${emails.length} pending email${emails.length !== 1 ? 's' : ''}`);
+        toast.info('Emails Loaded', `Found ${emails.length} pending email${emails.length !== 1 ? 's' : ''}`);
       }
     } catch (error) {
       console.error('Failed to load pending emails:', error);
-      toast.error('Refresh Failed', 'Could not load pending emails');
+      toast.error('Load Failed', 'Could not load pending emails');
+    } finally {
+      setLoading(false);
     }
-  };
-
-  const forceRefreshEmails = () => {
-    console.log('🔄 Force refreshing email delivery panel...');
-    loadPendingEmails();
   };
 
   const clearPendingEmail = (emailIndex: number) => {
@@ -66,18 +66,22 @@ export const EmailDeliveryPanel: React.FC = () => {
     }
   };
 
-  const resendEmail = (email: any) => {
+  const resendEmail = async (email: any) => {
     try {
-      // Simulate resending email
-      EmailService.sendTestUserInvitation({
+      const emailSent = await EmailService.sendTestUserInvitation({
         name: email.to.split('@')[0],
         email: email.to,
         accessCode: email.accessCode,
         role: 'tester',
         modules: ['all'],
-        inviterName: 'Developer'
+        inviterName: 'Developer Portal'
       });
-      toast.success('Email Resent', 'Invitation email sent again');
+      
+      if (emailSent) {
+        toast.success('Email Resent!', 'Invitation email sent again');
+      } else {
+        toast.error('Resend Failed', 'Could not resend email');
+      }
     } catch (error) {
       console.error('Failed to resend email:', error);
       toast.error('Resend Failed', 'Could not resend email');
@@ -127,7 +131,8 @@ ${email.content}`;
         </div>
         <div className="flex space-x-2">
           <Button
-            onClick={forceRefreshEmails}
+            onClick={loadPendingEmails}
+            loading={loading}
             size="sm"
             variant="outline"
             icon={RefreshCw}
@@ -148,7 +153,7 @@ ${email.content}`;
                 onClick={clearAllPendingEmails}
                 size="sm"
                 variant="outline"
-                icon={RefreshCw}
+                icon={Trash2}
                 className="text-red-600"
               >
                 Clear All
@@ -251,28 +256,6 @@ ${email.content}`;
             ))}
           </div>
         )}
-      </Card>
-
-      {/* Email Templates */}
-      <Card className="p-4">
-        <h4 className="font-medium text-[#1A1A1A] mb-4">
-          Email Templates
-        </h4>
-        
-        <div className="space-y-2 text-sm">
-          <div className="flex items-center space-x-2">
-            <CheckCircle className="w-4 h-4 text-green-600" />
-            <span>Test User Invitation Template</span>
-          </div>
-          <div className="flex items-center space-x-2">
-            <CheckCircle className="w-4 h-4 text-green-600" />
-            <span>Feedback Notification Template</span>
-          </div>
-          <div className="flex items-center space-x-2">
-            <AlertTriangle className="w-4 h-4 text-yellow-600" />
-            <span>Access Code Reminder Template (TODO)</span>
-          </div>
-        </div>
       </Card>
 
       {/* Development Instructions */}

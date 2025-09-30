@@ -510,6 +510,7 @@ export class TestDataManager {
     } else {
       this.users.push(user);
     }
+    console.log('👤 User added/updated:', user.fullName, user.email);
   }
   updateChild(id: string, updates: Partial<Child>): void {
     const index = this.children.findIndex(c => c.id === id);

@@ -1,58 +1,62 @@
-import React, { useState } from 'react';
-import { Settings, RefreshCw, Database, Users, BarChart3, Download, Upload, Trash2, Play, Code, DollarSign, AlertTriangle, Wrench, BookOpen, CreditCard as Edit, Save, X, Plus, MessageCircle, Shield, CheckCircle, Zap, Mail, Copy, Star, Clock } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Code, Users, Database, Settings, Download, Upload, RefreshCw, Play, Book, Zap, FileText, ArrowLeft, BarChart3, TrendingUp, AlertTriangle, Eye, Filter, X, Mail, Copy, Check, Star, Clock, Plus, Trash2, Send } from 'lucide-react';
 import { Button } from '../UI/Button';
 import { Card } from '../UI/Card';
-import { Select } from '../UI/Select';
 import { Input } from '../UI/Input';
+import { Select } from '../UI/Select';
 import { useAppContext } from '../../context/AppContext';
 import { testDataManager } from '../../data/testData';
 import { getCurrentEnvironment, isTestEnvironment } from '../../config/environments';
-import { DeveloperAnalyticsEngine } from '../../utils/developerAnalytics';
-import { knowledgeLibrary } from '../../data/knowledgeLibrary';
-import { safeLocalStorageGet, safeLocalStorageSet } from '../../utils/jsonUtils';
-import { SecurityCompliancePanel } from './SecurityCompliancePanel';
 import { EmailService } from '../../services/emailService';
 import { EmailDeliveryPanel } from './EmailDeliveryPanel';
+import { safeLocalStorageGet, safeLocalStorageSet } from '../../utils/jsonUtils';
 
-export const DeveloperPortal: React.FC = () => {
-  const { currentView, setCurrentView, currentUser, setCurrentUser, toast, behaviorLogs, classroomLogs, children, classrooms, inviteEducators } = useAppContext();
+interface TestUser {
+  id: string;
+  name: string;
+  email: string;
+  accessCode: string;
+  role: 'educator' | 'admin' | 'tester';
+  modules: string[];
+  createdAt: string;
+  lastActive?: string;
+  feedbackSubmitted?: number;
+  status: 'active' | 'expired' | 'revoked';
+  expiresAt?: string;
+}
+
+interface TestFeedback {
+  id: string;
+  testUserId: string;
+  module: string;
+  rating: number;
+  feedback: string;
+  category: string;
+  priority: string;
+  submittedAt: string;
+  userAgent: string;
+  url: string;
+}
+
+export const TestEnvironmentPanel: React.FC = () => {
+  const { currentUser, setCurrentUser, setCurrentView, toast } = useAppContext();
   const [isOpen, setIsOpen] = useState(false);
-  const [activeModule, setActiveModule] = useState<'testing' | 'user-management' | 'feedback' | 'client-data' | 'analytics' | 'revenue' | 'tech-stack' | 'security'>('testing');
-  const [selectedTestUser, setSelectedTestUser] = useState('');
-  const [selectedUserId, setSelectedUserId] = useState('');
-  const [selectedOrgId, setSelectedOrgId] = useState('');
-  const [testUsers, setTestUsers] = useState<any[]>([]);
-  const [editingFramework, setEditingFramework] = useState<string | null>(null);
-  const [frameworkUpdates, setFrameworkUpdates] = useState<Record<string, any>>({});
-  const [newTestUser, setNewTestUser] = useState({
-    email: '',
-    fullName: '',
-    role: 'tester',
-    accessLevel: 'full',
-    modules: [] as string[],
-    expiresAt: ''
-  });
-  const [feedback, setFeedback] = useState<any[]>(() => 
+  const [activeTab, setActiveTab] = useState<'users' | 'scenarios' | 'data' | 'analytics' | 'email' | 'feedback'>('users');
+  const [testUsers, setTestUsers] = useState<TestUser[]>(() => 
+    safeLocalStorageGet('lumi_test_users', [])
+  );
+  const [testFeedback, setTestFeedback] = useState<TestFeedback[]>(() => 
     safeLocalStorageGet('lumi_test_feedback', [])
   );
-  const [copiedCode, setCopiedCode] = useState<string | null>(null);
-  const [showInviteForm, setShowInviteForm] = useState(false);
-  const [systemHealth] = useState({
-    components: [
-      { name: 'Authentication Service', status: 'Operational' },
-      { name: 'Data Storage', status: 'Operational' },
-      { name: 'AI Engine', status: 'Operational' },
-      { name: 'Analytics Engine', status: 'Operational' },
-      { name: 'Error Logging', status: 'Operational' },
-      { name: 'API Gateway', status: 'Operational' }
-    ],
-    performance: {
-      loadTime: '< 2s',
-      memoryUsage: '45MB',
-      bundleSize: '2.1MB'
-    }
+  const [newUser, setNewUser] = useState({
+    name: '',
+    email: '',
+    role: 'educator' as 'educator' | 'admin' | 'tester',
+    modules: ['all'] as string[]
   });
-  
+  const [copiedCode, setCopiedCode] = useState<string | null>(null);
+  const [sendingEmail, setSendingEmail] = useState<string | null>(null);
+
   const currentEnv = getCurrentEnvironment();
 
   // Only show in test environments
@@ -60,1169 +64,598 @@ export const DeveloperPortal: React.FC = () => {
     return null;
   }
 
-  const modules = [
-    { id: 'testing', label: 'Testing Environment', icon: Play },
-    { id: 'user-management', label: 'Test User Management', icon: Users },
-    { id: 'email-delivery', label: 'Email Delivery', icon: Mail },
-    { id: 'feedback', label: 'Feedback & Reviews', icon: MessageCircle },
-    { id: 'security', label: 'Security & Compliance', icon: Shield },
-    { id: 'client-data', label: 'Client Data', icon: Database },
-    { id: 'analytics', label: 'Analytics & Reports', icon: BarChart3 },
-    { id: 'revenue', label: 'Revenue & Subscriptions', icon: DollarSign },
-    { id: 'tech-stack', label: 'Tech Stack & Fixes', icon: Wrench }
-  ];
-
-  const STATIC_TEST_USERS = [
-    { value: 'educator-1', label: 'Sarah Johnson (Educator - Complete)' },
-    { value: 'educator-2', label: 'Maria Rodriguez (Educator - Spanish)' },
-    { value: 'admin-1', label: 'Dr. Michael Chen (Admin)' },
-    { value: 'educator-new', label: 'Emma Thompson (New - Incomplete)' }
-  ];
-
-  const testScenarios = [
-    {
-      id: 'fresh-educator',
-      name: 'Fresh Educator',
-      description: 'New educator with no data - test onboarding flow',
-      action: () => {
-        testDataManager.resetData();
-        setCurrentUser(null);
-        setCurrentView('welcome');
-        toast.info('Test Scenario', 'Fresh educator setup ready');
-      }
-    },
-    {
-      id: 'experienced-educator',
-      name: 'Experienced Educator',
-      description: 'Educator with children and behavior logs',
-      action: () => {
-        testDataManager.resetData();
-        testDataManager.addSampleData();
-        testDataManager.generateTestBehaviorLogs(15);
-        const user = testDataManager.getUsers().find(u => u.id === 'educator-1');
-        if (user) {
-          setCurrentUser(user);
-          setCurrentView('dashboard');
-          toast.success('Test Scenario', 'Experienced educator loaded');
-        }
-      }
-    },
-    {
-      id: 'admin-setup',
-      name: 'Admin Setup',
-      description: 'Admin user with organization management',
-      action: () => {
-        testDataManager.resetData();
-        const user = testDataManager.getUsers().find(u => u.id === 'admin-1');
-        if (user) {
-          setCurrentUser(user);
-          setCurrentView('admin-dashboard');
-          toast.success('Test Scenario', 'Admin dashboard loaded');
-        }
-      }
-    },
-    {
-      id: 'invited-user',
-      name: 'Invited User',
-      description: 'Test invitation acceptance flow',
-      action: () => {
-        testDataManager.resetData();
-        setCurrentUser(null);
-        window.history.pushState({}, '', '?token=test-invite-token-123');
-        setCurrentView('invited-signup');
-        toast.info('Test Scenario', 'Invitation flow ready');
-      }
-    }
-  ];
-
-  const handleQuickLogin = () => {
-    if (!selectedTestUser) return;
-    
-    const user = testDataManager.getUsers().find(u => u.id === selectedTestUser);
-    if (user) {
-      setCurrentUser(user);
-      
-      if (user.role === 'admin') {
-        setCurrentView('admin-dashboard');
-      } else if (user.onboardingStatus === 'incomplete') {
-        setCurrentView('onboarding-start');
-      } else {
-        setCurrentView('dashboard');
-      }
-      
-      toast.success('Quick Login', `Logged in as ${user.fullName}`);
-    }
-  };
-
-  const handleExportKnowledgeBase = () => {
-    const data = knowledgeLibrary.exportKnowledgeBase();
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `lumi-knowledge-base-${new Date().toISOString().split('T')[0]}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    toast.success('Knowledge Base Exported', 'Clinical foundation data downloaded');
-  };
-
-  const handleImportKnowledgeBase = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        try {
-          const data = JSON.parse(e.target?.result as string);
-          knowledgeLibrary.importKnowledgeBase(data);
-          toast.success('Knowledge Base Imported', 'Clinical foundation updated successfully');
-        } catch (error) {
-          toast.error('Import Failed', 'Please check the file format');
-        }
-      };
-      reader.readAsText(file);
-    }
-  };
-
-  const handleUpdateFramework = (id: string, field: string, value: any) => {
-    setFrameworkUpdates(prev => ({
-      ...prev,
-      [id]: { ...prev[id], [field]: value }
-    }));
-  };
-
-  const handleSaveFramework = (id: string) => {
-    const updates = frameworkUpdates[id];
-    if (updates) {
-      knowledgeLibrary.updateFramework(id, updates);
-      toast.success('Framework Updated', 'Changes saved to knowledge base');
-      setEditingFramework(null);
-      setFrameworkUpdates(prev => {
-        const newUpdates = { ...prev };
-        delete newUpdates[id];
-        return newUpdates;
-      });
-    }
-  };
-
-  const handleResetData = () => {
-    testDataManager.resetData();
-    setCurrentUser(null);
-    setCurrentView('welcome');
-    toast.info('Data Reset', 'All test data reset to initial state');
-  };
-
-  const handleGenerateData = () => {
-    testDataManager.addSampleData();
-    testDataManager.generateTestBehaviorLogs(20);
-    toast.success('Data Generated', 'Additional test data created');
-  };
-
-  const exportTestData = () => {
-    const data = {
-      users: testDataManager.getUsers(),
-      children: testDataManager.getChildren(),
-      classrooms: testDataManager.getClassrooms(),
-      behaviorLogs: testDataManager.getBehaviorLogs(),
-      classroomLogs: testDataManager.getClassroomLogs(),
-      organizations: testDataManager.getOrganizations(),
-      invitations: testDataManager.getInvitations(),
-      exportedAt: new Date().toISOString()
-    };
-
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `lumi-test-data-${new Date().toISOString().split('T')[0]}.json`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-  };
-
-  // Generate comprehensive analytics
-  const generateAnalytics = () => {
-    const allUsers = testDataManager.getUsers();
-    const allOrganizations = testDataManager.getOrganizations();
-    const allBehaviorLogs = testDataManager.getBehaviorLogs();
-    const allClassroomLogs = testDataManager.getClassroomLogs();
-    const allChildren = testDataManager.getChildren();
-    const allClassrooms = testDataManager.getClassrooms();
-
-    const appLevel = DeveloperAnalyticsEngine.generateAppLevelAnalytics(
-      allUsers, allOrganizations, allBehaviorLogs, allClassroomLogs, allChildren, allClassrooms
-    );
-    
-    const insights = DeveloperAnalyticsEngine.generatePlatformInsights(
-      allUsers, allOrganizations, allBehaviorLogs, allClassroomLogs
-    );
-
-    return {
-      appLevel,
-      insights,
-      users: allUsers,
-      organizations: allOrganizations
-    };
-  };
-
-  const analytics = generateAnalytics();
-
-  // Initialize test users and feedback from localStorage
-  React.useEffect(() => {
-    const savedTestUsers = safeLocalStorageGet('lumi_test_users', []);
-    setTestUsers(savedTestUsers);
-  }, []);
-
-  const saveTestUsers = (users: any[]) => {
-    setTestUsers(users);
-    safeLocalStorageSet('lumi_test_users', users);
-  };
-
-  const generateAccessCode = () => {
+  const generateAccessCode = (): string => {
     return Math.random().toString(36).substring(2, 8).toUpperCase();
   };
 
-  const handleCreateTestUser = () => {
-    if (!newTestUser.email || !newTestUser.fullName) {
-      toast.error('Missing Information', 'Email and full name are required');
+  const createTestUser = async () => {
+    if (!newUser.name || !newUser.email) {
+      toast.error('Missing Information', 'Please provide name and email');
       return;
     }
 
-    const accessCode = generateAccessCode();
-    const testUser = {
-      id: Date.now().toString(),
-      ...newTestUser,
-      accessCode,
-      status: 'invited',
-      createdAt: new Date().toISOString(),
-      lastActive: null,
-      feedbackSubmitted: 0
-    };
+    // Check if user already exists
+    const existingUser = testUsers.find(u => u.email === newUser.email);
+    if (existingUser) {
+      toast.error('User Exists', 'A test user with this email already exists');
+      return;
+    }
 
-    const updatedUsers = [...testUsers, testUser];
-    saveTestUsers(updatedUsers);
-    
-    // Send invitation email
-    EmailService.sendTestUserInvitation({
-      name: newTestUser.fullName,
-      email: newTestUser.email,
-      accessCode,
-      role: newTestUser.role,
-      modules: newTestUser.modules,
-      expiresAt: newTestUser.expiresAt,
-      inviterName: currentUser?.fullName || 'Lumi Team'
-    }).then(sent => {
-      if (sent) {
-        toast.success('Invitation Sent!', `Email sent to ${newTestUser.email} with access code`);
+    setSendingEmail(newUser.email);
+
+    try {
+      const accessCode = generateAccessCode();
+      const testUser: TestUser = {
+        id: Date.now().toString(),
+        name: newUser.name,
+        email: newUser.email,
+        accessCode,
+        role: newUser.role,
+        modules: newUser.modules,
+        createdAt: new Date().toISOString(),
+        status: 'active',
+        expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString() // 30 days
+      };
+
+      // Send invitation email
+      const emailSent = await EmailService.sendTestUserInvitation({
+        name: newUser.name,
+        email: newUser.email,
+        accessCode,
+        role: newUser.role,
+        modules: newUser.modules,
+        inviterName: 'Developer Portal'
+      });
+
+      if (emailSent) {
+        // Add to test users list
+        const updatedUsers = [...testUsers, testUser];
+        setTestUsers(updatedUsers);
+        safeLocalStorageSet('lumi_test_users', updatedUsers);
+
+        // Reset form
+        setNewUser({
+          name: '',
+          email: '',
+          role: 'educator',
+          modules: ['all']
+        });
+
+        toast.success('Test User Created!', `Invitation sent to ${newUser.email}`);
       } else {
-        toast.warning('Email Failed', 'Access code created but email delivery failed');
+        toast.error('Email Failed', 'Could not send invitation email');
       }
-    });
-    
-    // Reset form
-    setNewTestUser({
-      email: '',
-      fullName: '',
-      role: 'tester',
-      accessLevel: 'full',
-      modules: [],
-      expiresAt: ''
-    });
-    setShowInviteForm(false);
-  };
-
-  const handleRemoveTestUser = (userId: string) => {
-    const updatedUsers = testUsers.filter(user => user.id !== userId);
-    saveTestUsers(updatedUsers);
-    toast.info('Test User Removed', 'User access revoked');
-  };
-
-  const handleExportInvitations = () => {
-    const invitationData = testUsers.map(user => ({
-      name: user.fullName,
-      email: user.email,
-      accessCode: user.accessCode,
-      role: user.role,
-      modules: user.modules.join(', '),
-      status: user.status,
-      expiresAt: user.expiresAt || 'No expiration'
-    }));
-
-    const csvContent = [
-      'Name,Email,Access Code,Role,Modules,Status,Expires',
-      ...invitationData.map(row => 
-        `"${row.name}","${row.email}","${row.accessCode}","${row.role}","${row.modules}","${row.status}","${row.expiresAt}"`
-      )
-    ].join('\n');
-
-    const blob = new Blob([csvContent], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `lumi-test-invitations-${new Date().toISOString().split('T')[0]}.csv`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-    
-    toast.success('Invitations Exported', 'CSV file downloaded with all access codes');
-  };
-
-  const handleCopyAllCodes = () => {
-    const codes = testUsers.map(user => `${user.fullName}: ${user.accessCode}`).join('\n');
-    navigator.clipboard.writeText(codes);
-    setCopiedCode('all');
-    setTimeout(() => setCopiedCode(null), 2000);
-    toast.success('Access Codes Copied', 'All codes copied to clipboard');
+    } catch (error) {
+      console.error('Failed to create test user:', error);
+      toast.error('Creation Failed', 'Could not create test user');
+    } finally {
+      setSendingEmail(null);
+    }
   };
 
   const handleCopyAccessCode = (accessCode: string) => {
     navigator.clipboard.writeText(accessCode);
     setCopiedCode(accessCode);
     setTimeout(() => setCopiedCode(null), 2000);
-    toast.success('Access Code Copied', 'Code copied to clipboard');
+    toast.success('Access Code Copied!', 'Ready to share with tester');
+  };
+
+  const handleQuickLogin = (testUser: TestUser) => {
+    try {
+      // Find or create corresponding user data
+      let userData = testDataManager.findUserByEmail(testUser.email);
+      
+      if (!userData) {
+        // Create user data for test user
+        userData = {
+          id: testUser.id,
+          fullName: testUser.name,
+          email: testUser.email,
+          role: testUser.role,
+          preferredLanguage: 'english',
+          learningStyle: 'I learn best with visuals',
+          teachingStyle: 'We learn together',
+          createdAt: new Date(),
+          onboardingStatus: testUser.role === 'admin' ? 'complete' : 'incomplete'
+        };
+        testDataManager.addOrUpdateUser(userData);
+      }
+
+      // Set as current user
+      setCurrentUser(userData);
+      
+      // Route based on user state
+      if (userData.role === 'admin') {
+        setCurrentView('admin-dashboard');
+      } else if (userData.onboardingStatus === 'incomplete') {
+        setCurrentView('onboarding-start');
+      } else {
+        setCurrentView('dashboard');
+      }
+
+      // Update test user activity
+      const updatedUsers = testUsers.map(u => 
+        u.id === testUser.id 
+          ? { ...u, lastActive: new Date().toISOString() }
+          : u
+      );
+      setTestUsers(updatedUsers);
+      safeLocalStorageSet('lumi_test_users', updatedUsers);
+
+      setIsOpen(false);
+      toast.success('Logged In!', `Switched to ${testUser.name}`);
+    } catch (error) {
+      console.error('Quick login failed:', error);
+      toast.error('Login Failed', 'Could not log in as test user');
+    }
+  };
+
+  const handleResendInvitation = async (testUser: TestUser) => {
+    setSendingEmail(testUser.email);
+    
+    try {
+      const emailSent = await EmailService.sendTestUserInvitation({
+        name: testUser.name,
+        email: testUser.email,
+        accessCode: testUser.accessCode,
+        role: testUser.role,
+        modules: testUser.modules,
+        inviterName: 'Developer Portal'
+      });
+
+      if (emailSent) {
+        toast.success('Invitation Resent!', `Email sent to ${testUser.email}`);
+      } else {
+        toast.error('Resend Failed', 'Could not resend invitation');
+      }
+    } catch (error) {
+      console.error('Failed to resend invitation:', error);
+      toast.error('Resend Failed', 'Could not resend invitation');
+    } finally {
+      setSendingEmail(null);
+    }
+  };
+
+  const removeTestUser = (userId: string) => {
+    const updatedUsers = testUsers.filter(u => u.id !== userId);
+    setTestUsers(updatedUsers);
+    safeLocalStorageSet('lumi_test_users', updatedUsers);
+    toast.success('Test User Removed', 'User removed from test environment');
+  };
+
+  const runTestScenario = (scenario: string) => {
+    try {
+      switch (scenario) {
+        case 'fresh-educator':
+          testDataManager.resetData();
+          toast.success('Fresh Educator Ready', 'Clean environment for new user testing');
+          break;
+        case 'experienced-educator':
+          testDataManager.resetData();
+          testDataManager.addSampleData();
+          testDataManager.generateTestBehaviorLogs(20);
+          toast.success('Experienced Educator Ready', 'Environment loaded with sample data');
+          break;
+        case 'admin-setup':
+          testDataManager.resetData();
+          toast.success('Admin Setup Ready', 'Clean environment for organization testing');
+          break;
+        case 'invited-user':
+          testDataManager.resetData();
+          window.history.pushState({}, '', '?token=test-invite-token-123');
+          toast.success('Invited User Ready', 'Invitation flow ready for testing');
+          break;
+        default:
+          toast.warning('Unknown Scenario', 'Scenario not implemented');
+      }
+    } catch (error) {
+      console.error('Failed to run test scenario:', error);
+      toast.error('Scenario Failed', 'Could not set up test scenario');
+    }
+  };
+
+  const exportTestUsers = () => {
+    try {
+      const exportData = {
+        testUsers,
+        testFeedback,
+        exportedAt: new Date().toISOString(),
+        environment: currentEnv.name
+      };
+
+      const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `lumi-test-users-${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      
+      toast.success('Test Users Exported', 'Test user data downloaded');
+    } catch (error) {
+      console.error('Failed to export test users:', error);
+      toast.error('Export Failed', 'Could not export test users');
+    }
   };
 
   const renderUserManagement = () => (
     <div className="space-y-6">
-      {/* Test User Creation */}
-      <Card className="p-4">
+      {/* Create New Test User */}
+      <Card className="p-6">
+        <h3 className="text-lg font-semibold text-[#1A1A1A] mb-4">
+          Create Test User
+        </h3>
+        
+        <div className="grid md:grid-cols-2 gap-4 mb-4">
+          <Input
+            label="Name"
+            value={newUser.name}
+            onChange={(value) => setNewUser(prev => ({ ...prev, name: value }))}
+            placeholder="Enter tester name"
+          />
+          <Input
+            label="Email"
+            type="email"
+            value={newUser.email}
+            onChange={(value) => setNewUser(prev => ({ ...prev, email: value }))}
+            placeholder="Enter email address"
+          />
+        </div>
+
+        <div className="mb-4">
+          <Select
+            label="Role"
+            value={newUser.role}
+            onChange={(value) => setNewUser(prev => ({ ...prev, role: value as any }))}
+            options={[
+              { value: 'educator', label: 'Educator' },
+              { value: 'admin', label: 'Administrator' },
+              { value: 'tester', label: 'General Tester' }
+            ]}
+          />
+        </div>
+
+        <Button
+          onClick={createTestUser}
+          disabled={!newUser.name || !newUser.email}
+          loading={sendingEmail === newUser.email}
+          icon={Plus}
+          className="w-full"
+        >
+          Create Test User & Send Invitation
+        </Button>
+      </Card>
+
+      {/* Active Test Users */}
+      <Card className="p-6">
         <div className="flex items-center justify-between mb-4">
-          <h4 className="font-semibold text-gray-900">Test User Management</h4>
-          <Button
-            onClick={() => setShowInviteForm(!showInviteForm)}
-            size="sm"
-            icon={Plus}
-          >
-            Add Test User
-          </Button>
-        </div>
-
-        {showInviteForm && (
-          <div className="space-y-4 mb-6 p-4 bg-gray-50 rounded-lg">
-            <div className="grid grid-cols-2 gap-3">
-              <Input
-                label="Full Name"
-                value={newTestUser.fullName}
-                onChange={(value) => setNewTestUser(prev => ({ ...prev, fullName: value }))}
-                placeholder="Enter full name"
-              />
-              <Input
-                label="Email"
-                type="email"
-                value={newTestUser.email}
-                onChange={(value) => setNewTestUser(prev => ({ ...prev, email: value }))}
-                placeholder="Enter email"
-              />
-            </div>
-            
-            <div className="grid grid-cols-2 gap-3">
-              <Select
-                label="Role"
-                value={newTestUser.role}
-                onChange={(value) => setNewTestUser(prev => ({ ...prev, role: value }))}
-                options={[
-                  { value: 'tester', label: 'Tester' },
-                  { value: 'reviewer', label: 'Reviewer' },
-                  { value: 'stakeholder', label: 'Stakeholder' }
-                ]}
-              />
-              <Select
-                label="Access Level"
-                value={newTestUser.accessLevel}
-                onChange={(value) => setNewTestUser(prev => ({ ...prev, accessLevel: value }))}
-                options={[
-                  { value: 'full', label: 'Full Access' },
-                  { value: 'limited', label: 'Limited Access' },
-                  { value: 'view_only', label: 'View Only' }
-                ]}
-              />
-            </div>
-            
-            <Input
-              label="Expires At (Optional)"
-              type="date"
-              value={newTestUser.expiresAt}
-              onChange={(value) => setNewTestUser(prev => ({ ...prev, expiresAt: value }))}
-            />
-            
-            <div className="flex space-x-2">
-              <Button onClick={handleCreateTestUser} size="sm">
-                Create Test User
-              </Button>
-              <Button
-                onClick={() => setShowInviteForm(false)}
-                variant="ghost"
-                size="sm"
-              >
-                Cancel
-              </Button>
-            </div>
-          </div>
-        )}
-
-        {/* Active Test Users */}
-        <div className="space-y-2">
-          {testUsers.map((user) => (
-            <div key={user.id} className="flex items-center justify-between p-3 bg-white rounded-lg border">
-              <div>
-                <p className="font-medium text-sm">{user.fullName}</p>
-                <p className="text-xs text-gray-600">{user.email}</p>
-                <div className="flex items-center space-x-2">
-                  <p className="text-xs text-purple-600">Code: {user.accessCode}</p>
-                  <Button
-                    onClick={() => handleCopyAccessCode(user.accessCode)}
-                    size="sm"
-                    variant="ghost"
-                    icon={copiedCode === user.accessCode ? CheckCircle : Copy}
-                    className={`p-1 ${copiedCode === user.accessCode ? 'text-green-600' : 'text-purple-600'}`}
-                  >
-                    {copiedCode === user.accessCode ? 'Copied!' : ''}
-                  </Button>
-                </div>
-                {user.expiresAt && (
-                  <p className="text-xs text-orange-600">
-                    Expires: {new Date(user.expiresAt).toLocaleDateString()}
-                  </p>
-                )}
-              </div>
-              <div className="flex space-x-1">
-                <Button
-                  onClick={() => {
-                    // Quick login as this user
-                    // Map test user to actual user data
-                    const staticUsers = testDataManager.getUsers();
-                    let userData = staticUsers.find(u => u.email === user.email);
-                    
-                    // If no matching static user, create one based on test user
-                    if (!userData) {
-                      userData = {
-                        id: user.id,
-                        fullName: user.fullName,
-                        email: user.email,
-                        role: user.role === 'admin' ? 'admin' : 'educator',
-                        preferredLanguage: 'english',
-                        learningStyle: 'I learn best with visuals',
-                        teachingStyle: 'We learn together',
-                        onboardingStatus: 'complete',
-                        createdAt: new Date()
-                      };
-                    }
-                    
-                    setCurrentUser(userData);
-                    
-                    // Route based on role and onboarding status
-                    if (userData.role === 'admin') {
-                      setCurrentView('admin-dashboard');
-                    } else if (userData.onboardingStatus === 'incomplete') {
-                      setCurrentView('onboarding-start');
-                    } else {
-                      setCurrentView('dashboard');
-                    }
-                    
-                    toast.success('Quick Login', `Logged in as ${userData.fullName}`);
-                    setIsOpen(false); // Close developer portal after login
-                  }}
-                  size="sm"
-                  variant="outline"
-                  className="text-blue-600"
-                >
-                  Login
-                </Button>
-                <Button
-                  onClick={() => handleRemoveTestUser(user.id)}
-                  size="sm"
-                  variant="ghost"
-                  className="text-red-600"
-                >
-                  Remove
-                </Button>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {testUsers.length > 0 && (
-          <div className="flex space-x-2 mt-4">
+          <h3 className="text-lg font-semibold text-[#1A1A1A]">
+            Active Test Users ({testUsers.length})
+          </h3>
+          <div className="flex space-x-2">
             <Button
-              onClick={handleExportInvitations}
+              onClick={exportTestUsers}
               size="sm"
               variant="outline"
               icon={Download}
             >
-              Export Invitations
-            </Button>
-            <Button
-              onClick={handleCopyAllCodes}
-              size="sm"
-              variant="outline"
-              icon={copiedCode === 'all' ? CheckCircle : Copy}
-              className={copiedCode === 'all' ? 'text-green-600' : ''}
-            >
-              {copiedCode === 'all' ? 'Copied!' : 'Copy All Codes'}
+              Export
             </Button>
             <Button
               onClick={() => {
-                EmailService.exportPendingEmails();
-                toast.info('Pending Emails Exported', 'Check downloads for email delivery list');
+                setTestUsers([]);
+                safeLocalStorageSet('lumi_test_users', []);
+                toast.success('All Users Removed', 'Test user list cleared');
               }}
               size="sm"
               variant="outline"
-              icon={Mail}
+              icon={Trash2}
+              className="text-red-600"
             >
-              Export Emails
+              Clear All
             </Button>
           </div>
-        )}
-      </Card>
-    </div>
-  );
+        </div>
 
-  const renderFeedbackReviews = () => (
-    <div className="space-y-6">
-      <Card className="p-4">
-        <h4 className="font-semibold text-gray-900 mb-4">
-          Test User Feedback ({feedback.length})
-        </h4>
-        
-        {feedback.length === 0 ? (
-          <div className="text-center py-6">
-            <MessageCircle className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-            <p className="text-sm text-gray-600">No feedback submitted yet</p>
-            <p className="text-xs text-gray-500 mt-1">
-              Test users can submit feedback using the feedback widget
-            </p>
+        {testUsers.length === 0 ? (
+          <div className="text-center py-8">
+            <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+            <p className="text-gray-600">No test users created yet</p>
           </div>
         ) : (
           <div className="space-y-3">
-            {feedback.slice(0, 5).map((item, index) => (
-              <div key={index} className="p-3 bg-white rounded-lg border">
+            {testUsers.map((user) => (
+              <div key={user.id} className="p-4 bg-[#F8F6F4] rounded-xl">
                 <div className="flex items-center justify-between mb-2">
+                  <div>
+                    <div className="flex items-center space-x-2">
+                      <p className="font-medium text-[#1A1A1A]">{user.name}</p>
+                      <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-full">
+                        {user.role}
+                      </span>
+                      <span className={`px-2 py-1 text-xs rounded-full ${
+                        user.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                      }`}>
+                        {user.status}
+                      </span>
+                    </div>
+                    <p className="text-sm text-gray-600">{user.email}</p>
+                  </div>
                   <div className="flex items-center space-x-2">
-                    <span className="font-medium text-sm">{item.testerName}</span>
-                    <div className="flex space-x-1">
-                      {Array.from({length: 5}).map((_, i) => (
-                        <Star key={i} className={`w-3 h-3 ${
-                          i < item.rating ? 'text-yellow-400 fill-current' : 'text-gray-300'
-                        }`} />
-                      ))}
+                    <div className="text-right text-xs text-gray-500">
+                      <p>Code: <span className="font-mono font-bold">{user.accessCode}</span></p>
+                      {user.feedbackSubmitted && (
+                        <p>{user.feedbackSubmitted} feedback submitted</p>
+                      )}
                     </div>
                   </div>
-                  <span className="text-xs text-gray-500">
-                    {new Date(item.submittedAt).toLocaleDateString()}
-                  </span>
                 </div>
-                <p className="text-sm text-gray-700 mb-1">{item.feedback}</p>
-                {item.suggestions && (
-                  <p className="text-xs text-blue-600 mb-1">
-                    <strong>Suggestions:</strong> {item.suggestions}
-                  </p>
-                )}
+                
                 <div className="flex space-x-2">
-                  <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">
-                    {item.category}
-                  </span>
-                  <span className={`px-2 py-1 text-xs rounded-full ${
-                    item.priority === 'critical' ? 'bg-red-100 text-red-700' :
-                    item.priority === 'high' ? 'bg-orange-100 text-orange-700' :
-                    item.priority === 'medium' ? 'bg-yellow-100 text-yellow-700' :
-                    'bg-blue-100 text-blue-700'
-                  }`}>
-                    {item.priority}
-                  </span>
+                  <Button
+                    onClick={() => handleQuickLogin(user)}
+                    size="sm"
+                    icon={Users}
+                  >
+                    Login as User
+                  </Button>
+                  <Button
+                    onClick={() => handleCopyAccessCode(user.accessCode)}
+                    size="sm"
+                    variant="outline"
+                    icon={copiedCode === user.accessCode ? Check : Copy}
+                    className={copiedCode === user.accessCode ? 'text-green-600' : ''}
+                  >
+                    {copiedCode === user.accessCode ? 'Copied!' : 'Copy Code'}
+                  </Button>
+                  <Button
+                    onClick={() => handleResendInvitation(user)}
+                    size="sm"
+                    variant="outline"
+                    loading={sendingEmail === user.email}
+                    icon={Mail}
+                  >
+                    Resend Email
+                  </Button>
+                  <Button
+                    onClick={() => removeTestUser(user.id)}
+                    size="sm"
+                    variant="ghost"
+                    icon={Trash2}
+                    className="text-red-600"
+                  >
+                    Remove
+                  </Button>
                 </div>
               </div>
             ))}
-            
-            {feedback.length > 5 && (
-              <div className="text-center">
-                <Button
-                  onClick={() => {
-                    // Show all feedback in a modal or separate view
-                    toast.info('All Feedback', `${feedback.length} total feedback items`);
-                  }}
-                  size="sm"
-                  variant="ghost"
-                >
-                  View All {feedback.length} Items
-                </Button>
-              </div>
-            )}
-          </div>
-        )}
-        
-        {feedback.length > 0 && (
-          <div className="mt-4 pt-4 border-t border-gray-200">
-            <Button
-              onClick={() => {
-                const report = {
-                  timestamp: new Date().toISOString(),
-                  totalFeedback: feedback.length,
-                  averageRating: feedback.reduce((sum, f) => sum + f.rating, 0) / feedback.length,
-                  feedbackByCategory: feedback.reduce((acc, f) => {
-                    acc[f.category] = (acc[f.category] || 0) + 1;
-                    return acc;
-                  }, {}),
-                  feedbackByPriority: feedback.reduce((acc, f) => {
-                    acc[f.priority] = (acc[f.priority] || 0) + 1;
-                    return acc;
-                  }, {}),
-                  detailedFeedback: feedback
-                };
-                
-                const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
-                const url = URL.createObjectURL(blob);
-                const link = document.createElement('a');
-                link.href = url;
-                link.download = `lumi-test-feedback-${new Date().toISOString().split('T')[0]}.json`;
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                URL.revokeObjectURL(url);
-                
-                toast.success('Feedback Report Exported', 'Test feedback analysis downloaded');
-              }}
-              size="sm"
-              variant="outline"
-              icon={Download}
-            >
-              Export Feedback Report
-            </Button>
           </div>
         )}
       </Card>
     </div>
   );
 
-  const renderTestingEnvironment = () => (
+  const renderTestScenarios = () => (
     <div className="space-y-6">
-      {/* Environment Info */}
-      <div className="bg-blue-100 rounded-lg p-3">
-        <p className="text-sm font-medium text-blue-900">
-          Environment: {currentEnv.name}
-        </p>
-        <p className="text-xs text-blue-700">
-          Mock Data: {currentEnv.features.mockData ? 'Enabled' : 'Disabled'}
-        </p>
-      </div>
-
-      {/* Quick Login */}
-      <div>
-        <label className="block text-sm font-medium text-gray-900 mb-2">
-          Quick Login
-        </label>
-        <div className="space-y-2">
-          <Select
-            value={selectedTestUser}
-            onChange={setSelectedTestUser}
-            options={STATIC_TEST_USERS}
-            placeholder="Select test user"
-          />
-          <Button
-            onClick={handleQuickLogin}
-            disabled={!selectedTestUser}
-            size="sm"
-            className="w-full"
-            icon={Play}
-          >
-            Login as User
-          </Button>
+      <Card className="p-6">
+        <h3 className="text-lg font-semibold text-[#1A1A1A] mb-4">
+          Quick Test Scenarios
+        </h3>
+        
+        <div className="grid md:grid-cols-2 gap-4">
+          {[
+            {
+              id: 'fresh-educator',
+              name: 'Fresh Educator',
+              description: 'New user with no data - test onboarding flow',
+              icon: Users,
+              color: 'text-blue-600'
+            },
+            {
+              id: 'experienced-educator',
+              name: 'Experienced Educator',
+              description: 'Educator with children and behavior logs',
+              icon: BarChart3,
+              color: 'text-green-600'
+            },
+            {
+              id: 'admin-setup',
+              name: 'Admin Setup',
+              description: 'Organization management testing',
+              icon: Settings,
+              color: 'text-purple-600'
+            },
+            {
+              id: 'invited-user',
+              name: 'Invited User',
+              description: 'Test invitation acceptance flow',
+              icon: Mail,
+              color: 'text-orange-600'
+            }
+          ].map((scenario) => {
+            const IconComponent = scenario.icon;
+            return (
+              <Card
+                key={scenario.id}
+                hoverable
+                onClick={() => runTestScenario(scenario.id)}
+                className="p-4 cursor-pointer"
+              >
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center">
+                    <IconComponent className={`w-5 h-5 ${scenario.color}`} />
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-[#1A1A1A]">{scenario.name}</h4>
+                    <p className="text-sm text-gray-600">{scenario.description}</p>
+                  </div>
+                </div>
+              </Card>
+            );
+          })}
         </div>
-      </div>
+      </Card>
+    </div>
+  );
 
-      {/* Test Scenarios */}
-      <div>
-        <label className="block text-sm font-medium text-gray-900 mb-3">
-          Test Scenarios
-        </label>
-        <div className="space-y-2">
-          {testScenarios.map((scenario) => (
-            <Button
-              key={scenario.id}
-              onClick={scenario.action}
-              variant="outline"
-              size="sm"
-              className="w-full justify-start text-left"
-            >
-              <div>
-                <p className="font-medium">{scenario.name}</p>
-                <p className="text-xs text-gray-600">{scenario.description}</p>
+  const renderDataManagement = () => (
+    <div className="space-y-6">
+      <Card className="p-6">
+        <h3 className="text-lg font-semibold text-[#1A1A1A] mb-4">
+          Test Data Management
+        </h3>
+        
+        <div className="grid md:grid-cols-2 gap-6">
+          <div>
+            <h4 className="font-medium text-[#1A1A1A] mb-3">Current Data</h4>
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span className="text-gray-600">Users:</span>
+                <span className="font-medium">{testDataManager.getUsers().length}</span>
               </div>
-            </Button>
-          ))}
+              <div className="flex justify-between">
+                <span className="text-gray-600">Children:</span>
+                <span className="font-medium">{testDataManager.getChildren().length}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Behavior Logs:</span>
+                <span className="font-medium">{testDataManager.getBehaviorLogs().length}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Classroom Logs:</span>
+                <span className="font-medium">{testDataManager.getClassroomLogs().length}</span>
+              </div>
+            </div>
+          </div>
+          
+          <div>
+            <h4 className="font-medium text-[#1A1A1A] mb-3">Data Actions</h4>
+            <div className="space-y-2">
+              <Button
+                onClick={() => {
+                  testDataManager.resetData();
+                  toast.success('Data Reset!', 'All test data cleared');
+                }}
+                variant="outline"
+                className="w-full"
+                icon={RefreshCw}
+              >
+                Reset All Data
+              </Button>
+              <Button
+                onClick={() => {
+                  testDataManager.addSampleData();
+                  testDataManager.generateTestBehaviorLogs(20);
+                  toast.success('Sample Data Generated!', 'Test data created');
+                }}
+                variant="outline"
+                className="w-full"
+                icon={Database}
+              >
+                Generate Sample Data
+              </Button>
+            </div>
+          </div>
         </div>
-      </div>
+      </Card>
+    </div>
+  );
 
-      {/* Data Management */}
-      <div>
-        <label className="block text-sm font-medium text-gray-900 mb-3">
-          Data Management
-        </label>
-        <div className="grid grid-cols-2 gap-2">
+  const renderFeedbackManagement = () => (
+    <div className="space-y-6">
+      <Card className="p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold text-[#1A1A1A]">
+            Test User Feedback ({testFeedback.length})
+          </h3>
           <Button
-            onClick={handleResetData}
-            variant="outline"
+            onClick={() => {
+              const feedback = safeLocalStorageGet('lumi_test_feedback', []);
+              setTestFeedback(feedback);
+              toast.info('Feedback Refreshed', `Loaded ${feedback.length} feedback entries`);
+            }}
             size="sm"
+            variant="outline"
             icon={RefreshCw}
-            className="text-orange-600 border-orange-200"
           >
-            Reset Data
-          </Button>
-          <Button
-            onClick={handleGenerateData}
-            variant="outline"
-            size="sm"
-            icon={Database}
-            className="text-green-600 border-green-200"
-          >
-            Add Sample
-          </Button>
-          <Button
-            onClick={exportTestData}
-            variant="outline"
-            size="sm"
-            icon={Download}
-            className="text-blue-600 border-blue-200"
-          >
-            Export
-          </Button>
-          <Button
-            onClick={() => toast.info('Import', 'Import functionality ready')}
-            variant="outline"
-            size="sm"
-            icon={Upload}
-            className="text-purple-600 border-purple-200"
-          >
-            Import
+            Refresh
           </Button>
         </div>
-      </div>
-    </div>
-  );
 
-  const renderClientData = () => (
-    <div className="space-y-6">
-      {/* App-Level Client Overview */}
-      <Card className="p-4 bg-gradient-to-r from-blue-50 to-green-50 border-blue-200">
-        <h4 className="font-semibold text-blue-900 mb-4">Platform Client Overview</h4>
-        <div className="grid grid-cols-2 gap-4 text-sm">
-          <div>
-            <p className="text-blue-700 mb-1">Individual Users:</p>
-            <p className="text-xl font-bold text-blue-900">{analytics.appLevel.totalIndividualUsers}</p>
+        {testFeedback.length === 0 ? (
+          <div className="text-center py-8">
+            <Star className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+            <p className="text-gray-600">No feedback submitted yet</p>
+            <p className="text-sm text-gray-500 mt-1">
+              Test users can submit feedback using the green feedback button
+            </p>
           </div>
-          <div>
-            <p className="text-green-700 mb-1">Organization Clients:</p>
-            <p className="text-xl font-bold text-green-900">{analytics.appLevel.totalOrganizationClients}</p>
-          </div>
-          <div>
-            <p className="text-purple-700 mb-1">Total Org Users:</p>
-            <p className="text-xl font-bold text-purple-900">{analytics.appLevel.totalOrgUsers}</p>
-          </div>
-          <div>
-            <p className="text-orange-700 mb-1">Active Users:</p>
-            <p className="text-xl font-bold text-orange-900">{analytics.appLevel.activeUsers}</p>
-          </div>
-        </div>
-      </Card>
-
-      {/* User Activity Breakdown */}
-      <div className="grid grid-cols-3 gap-4">
-        <Card className="p-4 text-center">
-          <div className="text-2xl font-bold text-green-600 mb-1">
-            {analytics.appLevel.dailyActiveUsers}
-          </div>
-          <p className="text-sm text-gray-600">Daily Active</p>
-        </Card>
-        <Card className="p-4 text-center">
-          <div className="text-2xl font-bold text-blue-600 mb-1">
-            {analytics.appLevel.weeklyActiveUsers}
-          </div>
-          <p className="text-sm text-gray-600">Weekly Active</p>
-        </Card>
-        <Card className="p-4 text-center">
-          <div className="text-2xl font-bold text-purple-600 mb-1">
-            {analytics.appLevel.monthlyActiveUsers}
-          </div>
-          <p className="text-sm text-gray-600">Monthly Active</p>
-        </Card>
-      </div>
-
-      {/* Individual User Analysis */}
-      <div>
-        <label className="block text-sm font-medium text-gray-900 mb-2">
-          Individual User Analysis
-        </label>
-        <Select
-          value={selectedUserId}
-          onChange={setSelectedUserId}
-          options={analytics.users.map(u => ({ value: u.id, label: `${u.fullName} (${u.role})` }))}
-          placeholder="Select user to analyze"
-        />
-        
-        {selectedUserId && (() => {
-          const userAnalytics = DeveloperAnalyticsEngine.generateUserAnalytics(
-            selectedUserId,
-            analytics.users,
-            testDataManager.getBehaviorLogs(),
-            testDataManager.getClassroomLogs(),
-            testDataManager.getChildren(),
-            testDataManager.getClassrooms()
-          );
-          
-          if (!userAnalytics) return null;
-          
-          return (
-            <Card className="p-4 mt-4">
-              <h5 className="font-medium text-gray-900 mb-3">{userAnalytics.user.fullName}</h5>
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <p className="text-gray-600">Total Logs:</p>
-                  <p className="font-bold">{userAnalytics.totalLogs}</p>
-                </div>
-                <div>
-                  <p className="text-gray-600">Avg Confidence:</p>
-                  <p className="font-bold">{userAnalytics.avgConfidence}/10</p>
-                </div>
-                <div>
-                  <p className="text-gray-600">Children Tracked:</p>
-                  <p className="font-bold">{userAnalytics.childrenCount}</p>
-                </div>
-                <div>
-                  <p className="text-gray-600">Engagement Score:</p>
-                  <p className="font-bold">{userAnalytics.engagementScore}%</p>
-                </div>
-              </div>
-              
-              <div className="mt-4">
-                <p className="text-sm font-medium text-gray-900 mb-2">Top Contexts:</p>
-                <div className="space-y-1">
-                  {Object.entries(userAnalytics.contextUsage)
-                    .sort(([,a], [,b]) => b - a)
-                    .slice(0, 3)
-                    .map(([context, count]) => (
-                    <div key={context} className="flex justify-between text-xs">
-                      <span>{context.replace(/_/g, ' ')}</span>
-                      <span className="font-medium">{count}</span>
+        ) : (
+          <div className="space-y-4">
+            {testFeedback.slice(0, 10).map((feedback) => (
+              <div key={feedback.id} className="p-4 border border-[#E6E2DD] rounded-xl">
+                <div className="flex items-start justify-between mb-2">
+                  <div>
+                    <div className="flex items-center space-x-2 mb-1">
+                      <div className="flex items-center">
+                        {Array.from({length: 5}).map((_, i) => (
+                          <Star 
+                            key={i}
+                            className={`w-4 h-4 ${
+                              i < feedback.rating ? 'text-yellow-400 fill-current' : 'text-gray-300'
+                            }`} 
+                          />
+                        ))}
+                      </div>
+                      <span className="text-sm font-medium text-[#1A1A1A]">
+                        {feedback.rating}/5
+                      </span>
+                      <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">
+                        {feedback.category}
+                      </span>
+                      <span className={`px-2 py-1 text-xs rounded-full ${
+                        feedback.priority === 'critical' ? 'bg-red-100 text-red-700' :
+                        feedback.priority === 'high' ? 'bg-orange-100 text-orange-700' :
+                        feedback.priority === 'medium' ? 'bg-yellow-100 text-yellow-700' :
+                        'bg-blue-100 text-blue-700'
+                      }`}>
+                        {feedback.priority}
+                      </span>
                     </div>
-                  ))}
+                    <p className="text-sm text-gray-600">
+                      Module: {feedback.module} • {new Date(feedback.submittedAt).toLocaleDateString()}
+                    </p>
+                  </div>
                 </div>
+                
+                <p className="text-sm text-gray-700 mb-2">
+                  {feedback.feedback}
+                </p>
+                
+                {feedback.suggestions && (
+                  <div className="bg-blue-50 border border-blue-200 p-3 rounded-lg">
+                    <p className="text-sm text-blue-800">
+                      <strong>Suggestions:</strong> {feedback.suggestions}
+                    </p>
+                  </div>
+                )}
               </div>
-            </Card>
-          );
-        })()}
-      </div>
-    </div>
-  );
-
-  const renderAnalyticsReports = () => (
-    <div className="space-y-6">
-      {/* Platform Overview */}
-      <Card className="p-4">
-        <h4 className="font-semibold text-gray-900 mb-4">Platform Analytics Overview</h4>
-        <div className="grid grid-cols-2 gap-4 text-sm">
-          <div>
-            <p className="text-gray-600 mb-1">Total Platform Users:</p>
-            <p className="text-xl font-bold text-blue-600">{analytics.appLevel.totalUsers}</p>
+            ))}
           </div>
-          <div>
-            <p className="text-gray-600 mb-1">User Retention Rate:</p>
-            <p className="text-xl font-bold text-green-600">{analytics.appLevel.userRetentionRate}%</p>
-          </div>
-          <div>
-            <p className="text-gray-600 mb-1">Avg Logs Per User:</p>
-            <p className="text-xl font-bold text-purple-600">{analytics.appLevel.avgBehaviorLogsPerUser}</p>
-          </div>
-          <div>
-            <p className="text-gray-600 mb-1">Platform Confidence:</p>
-            <p className="text-xl font-bold text-orange-600">{analytics.appLevel.avgConfidence}/10</p>
-          </div>
-        </div>
-      </Card>
-
-      {/* Outliers Detection */}
-      <Card className="p-4">
-        <h4 className="font-semibold text-gray-900 mb-4">Outliers & Patterns</h4>
-        <div className="space-y-3">
-          {analytics.insights.outliers.map((outlier, index) => (
-            <div key={index} className={`
-              p-3 rounded-lg border
-              ${outlier.type === 'high_usage_users' ? 'bg-green-50 border-green-200' :
-                outlier.type === 'low_engagement_users' ? 'bg-red-50 border-red-200' :
-                outlier.type === 'high_severity_organization' ? 'bg-orange-50 border-orange-200' :
-                'bg-blue-50 border-blue-200'}
-            `}>
-              <div className="flex items-start justify-between mb-2">
-                <h5 className="font-medium text-gray-900 text-sm">{outlier.type.replace(/_/g, ' ').toUpperCase()}</h5>
-                <AlertTriangle className="w-4 h-4 text-orange-500" />
-              </div>
-              <p className="text-xs text-gray-700 mb-2">{outlier.description}</p>
-              <p className="text-xs text-gray-600 mb-1"><strong>Impact:</strong> {outlier.impact}</p>
-              <p className="text-xs text-blue-600"><strong>Recommendation:</strong> {outlier.recommendation}</p>
-            </div>
-          ))}
-        </div>
-      </Card>
-
-      {/* Trends Analysis */}
-      <Card className="p-4">
-        <h4 className="font-semibold text-gray-900 mb-4">Growth Trends</h4>
-        <div className="grid grid-cols-2 gap-4 text-sm">
-          <div>
-            <p className="text-gray-600">User Growth:</p>
-            <p className="font-bold text-green-600">{analytics.insights.trends.userGrowth}</p>
-          </div>
-          <div>
-            <p className="text-gray-600">Engagement Growth:</p>
-            <p className="font-bold text-blue-600">{analytics.insights.trends.engagementGrowth}</p>
-          </div>
-          <div>
-            <p className="text-gray-600">Confidence Improvement:</p>
-            <p className="font-bold text-purple-600">{analytics.insights.trends.confidenceImprovement}</p>
-          </div>
-          <div>
-            <p className="text-gray-600">Peak Usage:</p>
-            <p className="font-bold text-orange-600">{analytics.insights.patterns.peakUsageHours.join(', ')}</p>
-          </div>
-        </div>
-      </Card>
-
-      {/* Export Options */}
-      <div className="grid grid-cols-2 gap-2">
-        <Button
-          onClick={() => {
-            const blob = new Blob([JSON.stringify(analytics, null, 2)], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = `lumi-analytics-${new Date().toISOString().split('T')[0]}.json`;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            URL.revokeObjectURL(url);
-          }}
-          variant="outline"
-          size="sm"
-          icon={Download}
-          className="text-blue-600 border-blue-200"
-        >
-          Export Analytics
-        </Button>
-        <Button
-          onClick={() => setCurrentView('developer-app-manager')}
-          variant="outline"
-          size="sm"
-          icon={Code}
-          className="text-purple-600 border-purple-200"
-        >
-          Full Dev Manager
-        </Button>
-        <Button
-          onClick={() => setCurrentView('production-readiness')}
-          variant="outline"
-          size="sm"
-          icon={Shield}
-          className="text-green-600 border-green-200"
-        >
-          Production Check
-        </Button>
-        <Button
-          onClick={() => setCurrentView('production-checklist')}
-          variant="outline"
-          size="sm"
-          icon={CheckCircle}
-          className="text-blue-600 border-blue-200"
-        >
-          Launch Checklist
-        </Button>
-        <Button
-          onClick={() => setCurrentView('stress-testing')}
-          variant="outline"
-          size="sm"
-          icon={Zap}
-          className="text-purple-600 border-purple-200"
-        >
-          Stress Tests
-        </Button>
-      </div>
-    </div>
-  );
-
-  const renderRevenueData = () => (
-    <div className="space-y-6">
-      {/* Revenue Overview */}
-      <Card className="p-4 bg-gradient-to-r from-green-50 to-blue-50 border-green-200">
-        <h4 className="font-semibold text-green-900 mb-4">Revenue Analytics</h4>
-        <div className="grid grid-cols-2 gap-4 text-sm">
-          <div>
-            <p className="text-green-700 mb-1">Individual Subscriptions:</p>
-            <p className="text-xl font-bold text-green-900">{analytics.appLevel.totalIndividualUsers}</p>
-            <p className="text-xs text-green-600">$297/year each</p>
-          </div>
-          <div>
-            <p className="text-blue-700 mb-1">Organization Clients:</p>
-            <p className="text-xl font-bold text-blue-900">{analytics.appLevel.totalOrganizationClients}</p>
-            <p className="text-xs text-blue-600">$29/seat/month</p>
-          </div>
-        </div>
-      </Card>
-
-      {/* Subscription Health */}
-      <Card className="p-4">
-        <h4 className="font-semibold text-gray-900 mb-4">Subscription Health</h4>
-        <div className="space-y-3">
-          <div className="flex justify-between">
-            <span className="text-gray-600">Active Subscriptions:</span>
-            <span className="font-bold text-green-600">{analytics.appLevel.activeUsers}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-gray-600">Inactive/Churned:</span>
-            <span className="font-bold text-red-600">{analytics.appLevel.inactiveUsers}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-gray-600">Retention Rate:</span>
-            <span className="font-bold text-blue-600">{analytics.appLevel.userRetentionRate}%</span>
-          </div>
-        </div>
-      </Card>
-
-      {/* Revenue Projections */}
-      <Card className="p-4">
-        <h4 className="font-semibold text-gray-900 mb-4">Revenue Projections</h4>
-        <div className="space-y-2 text-sm">
-          <div className="flex justify-between">
-            <span className="text-gray-600">Individual ARR:</span>
-            <span className="font-bold">${(analytics.appLevel.totalIndividualUsers * 297).toLocaleString()}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-gray-600">Organization ARR:</span>
-            <span className="font-bold">${(analytics.appLevel.totalOrgUsers * 29 * 12).toLocaleString()}</span>
-          </div>
-          <div className="flex justify-between border-t pt-2">
-            <span className="text-gray-900 font-medium">Total ARR:</span>
-            <span className="font-bold text-green-600">
-              ${((analytics.appLevel.totalIndividualUsers * 297) + (analytics.appLevel.totalOrgUsers * 29 * 12)).toLocaleString()}
-            </span>
-          </div>
-        </div>
-      </Card>
-
-      {/* Churn Risk Analysis */}
-      <Card className="p-4">
-        <h4 className="font-semibold text-gray-900 mb-4">Churn Risk Indicators</h4>
-        <div className="space-y-2">
-          {analytics.insights.outliers
-            .filter(o => o.type === 'low_engagement_users')
-            .map((outlier, index) => (
-            <div key={index} className="bg-red-50 border border-red-200 p-3 rounded-lg">
-              <p className="text-sm font-medium text-red-900">{outlier.description}</p>
-              <p className="text-xs text-red-700 mt-1">{outlier.recommendation}</p>
-            </div>
-          ))}
-        </div>
+        )}
       </Card>
     </div>
   );
 
-  const renderTechStack = () => (
-    <div className="space-y-6">
-      {!systemHealth ? (
-        <div className="text-center py-8">
-          <div className="animate-spin w-6 h-6 border-2 border-purple-600 border-t-transparent rounded-full mx-auto mb-2"></div>
-          <p className="text-sm text-gray-600">Loading system health...</p>
-        </div>
-      ) : (
-      <>
-      {/* System Health */}
-      <Card className="p-4">
-        <h4 className="font-semibold text-gray-900 mb-4">System Health Status</h4>
-        <div className="space-y-3">
-          {systemHealth.components.map((item, index) => (
-            <div key={index} className="flex justify-between items-center">
-              <span className="text-gray-700 text-sm">{item.name}</span>
-              <span className="font-medium text-sm text-green-600">✓ {item.status}</span>
-            </div>
-          ))}
-        </div>
-      </Card>
-
-      {/* Error Monitoring */}
-      <Card className="p-4">
-        <h4 className="font-semibold text-gray-900 mb-4">Error Monitoring</h4>
-        <div className="space-y-2">
-          <div className="bg-green-50 border border-green-200 p-3 rounded-lg">
-            <p className="text-sm font-medium text-green-900">✓ No Critical Errors</p>
-            <p className="text-xs text-green-700">Load time: {systemHealth.performance.loadTime}</p>
-          </div>
-          <div className="bg-blue-50 border border-blue-200 p-3 rounded-lg">
-            <p className="text-sm font-medium text-blue-900">Error Logging Active</p>
-            <p className="text-xs text-blue-700">Comprehensive error tracking and reporting enabled</p>
-          </div>
-        </div>
-      </Card>
-
-      {/* Performance Metrics */}
-      <Card className="p-4">
-        <h4 className="font-semibold text-gray-900 mb-4">Performance Metrics</h4>
-        <div className="grid grid-cols-2 gap-4 text-sm">
-          <div>
-            <p className="text-gray-600">Load Time:</p>
-            <p className="font-bold text-green-600">{systemHealth.performance.loadTime}</p>
-          </div>
-          <div>
-            <p className="text-gray-600">API Response:</p>
-            <p className="font-bold text-green-600">{"< 500ms"}</p>
-          </div>
-          <div>
-            <p className="text-gray-600">Memory Usage:</p>
-            <p className="font-bold text-blue-600">{systemHealth.performance.memoryUsage}</p>
-          </div>
-          <div>
-            <p className="text-gray-600">Bundle Size:</p>
-            <p className="font-bold text-blue-600">{systemHealth.performance.bundleSize}</p>
-          </div>
-        </div>
-      </Card>
-
-      {/* Tech Stack Info */}
-      <Card className="p-4">
-        <h4 className="font-semibold text-gray-900 mb-4">Technology Stack</h4>
-        <div className="space-y-2 text-xs">
-          <div><strong>Frontend:</strong> React 18, TypeScript, Tailwind CSS</div>
-          <div><strong>Backend:</strong> Node.js, Express, JWT Authentication</div>
-          <div><strong>AI Engine:</strong> Custom knowledge library with framework integration</div>
-          <div><strong>Analytics:</strong> Custom analytics engine with pattern recognition</div>
-          <div><strong>Security:</strong> bcrypt, JWT, role-based access control</div>
-          <div><strong>Testing:</strong> Comprehensive test data management system</div>
-        </div>
-      </Card>
-      
-      {/* Quick Actions */}
-      <div className="grid grid-cols-2 gap-2">
-        <Button
-          onClick={() => setCurrentView('production-readiness')}
-          size="sm"
-          variant="outline"
-          icon={Shield}
-          className="text-green-600 border-green-200"
-        >
-          Production Check
-        </Button>
-        <Button
-          onClick={() => setCurrentView('security-expert-report')}
-          size="sm"
-          variant="outline"
-          icon={AlertTriangle}
-          className="text-red-600 border-red-200"
-        >
-          Security Report
-        </Button>
-      </div>
-      </>
-      )}
-    </div>
-  );
+  const tabs = [
+    { id: 'users', label: 'User Management', icon: Users },
+    { id: 'scenarios', label: 'Test Scenarios', icon: Play },
+    { id: 'data', label: 'Data Management', icon: Database },
+    { id: 'email', label: 'Email Delivery', icon: Mail },
+    { id: 'feedback', label: 'Feedback & Reviews', icon: Star }
+  ];
 
   if (!isOpen) {
     return (
@@ -1239,75 +672,73 @@ export const DeveloperPortal: React.FC = () => {
   }
 
   return (
-    <div className="fixed bottom-4 right-4 z-50 w-[500px] max-h-[80vh] overflow-y-auto">
-      <Card className="p-6 bg-purple-50 border-purple-200 shadow-xl">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center space-x-2">
-            <div className="w-6 h-6 bg-purple-600 rounded-full flex items-center justify-center">
-              <Code className="w-4 h-4 text-white" />
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-6 z-50">
+      <Card className="w-full max-w-6xl max-h-[90vh] overflow-hidden">
+        <div className="p-6">
+          {/* Header */}
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h2 className="text-2xl font-bold text-[#1A1A1A] mb-2">
+                Developer Portal
+              </h2>
+              <p className="text-gray-600">
+                Test environment management and user testing tools
+              </p>
             </div>
-            <h3 className="font-semibold text-purple-900">
-              Developer Portal
-            </h3>
+            <Button
+              variant="ghost"
+              onClick={() => setIsOpen(false)}
+              icon={X}
+            />
           </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setIsOpen(false)}
-            className="text-purple-600"
-          >
-            ×
-          </Button>
-        </div>
 
-        {/* Module Tabs */}
-        <div className="border-b border-purple-200 mb-6">
-          <nav className="flex space-x-1 -mb-px">
-            {modules.map((module) => {
-              const IconComponent = module.icon;
-              return (
-                <button
-                  key={module.id}
-                  onClick={() => setActiveModule(module.id as any)}
-                  className={`
-                    flex items-center space-x-1 py-2 px-3 border-b-2 text-xs font-medium transition-colors
-                    ${activeModule === module.id
-                      ? 'border-purple-600 text-purple-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                    }
-                  `}
-                >
-                  <IconComponent className="w-3 h-3" />
-                  <span>{module.label}</span>
-                </button>
-              );
-            })}
-          </nav>
-        </div>
-
-        {/* Module Content */}
-        <div>
-          {activeModule === 'testing' && renderTestingEnvironment()}
-          {activeModule === 'user-management' && renderUserManagement()}
-          {activeModule === 'email-delivery' && <EmailDeliveryPanel />}
-          {activeModule === 'feedback' && renderFeedbackReviews()}
-          {activeModule === 'security' && <SecurityCompliancePanel />}
-          {activeModule === 'client-data' && renderClientData()}
-          {activeModule === 'analytics' && renderAnalyticsReports()}
-          {activeModule === 'revenue' && renderRevenueData()}
-          {activeModule === 'tech-stack' && renderTechStack()}
-        </div>
-
-        {/* Current Status */}
-        <div className="mt-6 pt-4 border-t border-purple-200">
-          <div className="bg-white rounded-lg p-3 border border-purple-200">
-            <p className="text-xs font-medium text-purple-900 mb-2">Current Status:</p>
-            <div className="grid grid-cols-2 gap-2 text-xs text-purple-700">
-              <div>Environment: {currentEnv.name}</div>
-              <div>View: {currentView}</div>
-              <div>User: {currentUser?.fullName?.split(' ')[0] || 'None'}</div>
-              <div>Test Users: {testUsers.length} active</div>
+          {/* Environment Info */}
+          <div className="bg-purple-50 border border-purple-200 rounded-xl p-4 mb-6">
+            <div className="flex items-center space-x-3">
+              <div className="w-3 h-3 bg-purple-500 rounded-full" />
+              <div>
+                <p className="font-medium text-purple-900">
+                  Environment: {currentEnv.name}
+                </p>
+                <p className="text-sm text-purple-700">
+                  Mock data enabled • Test panel active • Email delivery configured
+                </p>
+              </div>
             </div>
+          </div>
+
+          {/* Tabs */}
+          <div className="border-b border-[#E6E2DD] mb-6">
+            <nav className="flex space-x-8">
+              {tabs.map((tab) => {
+                const IconComponent = tab.icon;
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id as any)}
+                    className={`
+                      flex items-center space-x-2 py-3 px-1 border-b-2 font-medium text-sm transition-colors
+                      ${activeTab === tab.id
+                        ? 'border-purple-600 text-purple-600'
+                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                      }
+                    `}
+                  >
+                    <IconComponent className="w-4 h-4" />
+                    <span>{tab.label}</span>
+                  </button>
+                );
+              })}
+            </nav>
+          </div>
+
+          {/* Tab Content */}
+          <div className="max-h-[60vh] overflow-y-auto">
+            {activeTab === 'users' && renderUserManagement()}
+            {activeTab === 'scenarios' && renderTestScenarios()}
+            {activeTab === 'data' && renderDataManagement()}
+            {activeTab === 'email' && <EmailDeliveryPanel />}
+            {activeTab === 'feedback' && renderFeedbackManagement()}
           </div>
         </div>
       </Card>
