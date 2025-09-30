@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Settings, RefreshCw, Database, Users, BarChart3, Download, Upload, Trash2, Play, Code, DollarSign, AlertTriangle, Wrench, BookOpen, CreditCard as Edit, Save, X, Plus, MessageCircle, Shield, CheckCircle, Zap } from 'lucide-react';
+import { Settings, RefreshCw, Database, Users, BarChart3, Download, Upload, Trash2, Play, Code, DollarSign, AlertTriangle, Wrench, BookOpen, CreditCard as Edit, Save, X, Plus, MessageCircle, Shield, CheckCircle, Zap, Mail } from 'lucide-react';
 import { Button } from '../UI/Button';
 import { Card } from '../UI/Card';
 import { Select } from '../UI/Select';
