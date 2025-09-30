@@ -4,10 +4,16 @@ export interface User {
   firstName?: string;
   lastName?: string;
   email: string;
+  password?: string;
   role: 'educator' | 'admin';
   preferredLanguage: 'english' | 'spanish';
   learningStyle: string;
   teachingStyle?: string;
+  authProvider?: 'email' | 'google' | 'microsoft' | 'apple';
+  googleId?: string;
+  microsoftId?: string;
+  appleId?: string;
+  profilePhotoUrl?: string;
   createdAt: Date;
   onboardingStatus: 'incomplete' | 'complete';
 }

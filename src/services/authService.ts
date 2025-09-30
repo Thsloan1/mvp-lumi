@@ -181,6 +181,60 @@ export class AuthService {
     window.location.href = '/';
   }
 
+  // Microsoft OAuth authentication
+  static async microsoftSignin(accessToken: string, userInfo: any): Promise<AuthResponse> {
+    const response = await fetch('/api/auth/microsoft', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ accessToken, userInfo })
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Microsoft authentication failed');
+    }
+
+    const result = await response.json();
+    this.setToken(result.token);
+    return result;
+  }
+
+  // Google OAuth authentication
+  static async googleSignin(accessToken: string, userInfo: any): Promise<AuthResponse> {
+    const response = await fetch('/api/auth/google', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ accessToken, userInfo })
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Google authentication failed');
+    }
+
+    const result = await response.json();
+    this.setToken(result.token);
+    return result;
+  }
+
+  // Apple OAuth authentication
+  static async appleSignin(identityToken: string, userInfo: any): Promise<AuthResponse> {
+    const response = await fetch('/api/auth/apple', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ identityToken, userInfo })
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Apple authentication failed');
+    }
+
+    const result = await response.json();
+    this.setToken(result.token);
+    return result;
+  }
+
   static isAuthenticated(): boolean {
     return !!this.getToken();
   }

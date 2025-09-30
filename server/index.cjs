@@ -1228,6 +1228,205 @@ app.post('/api/subscriptions/add-seats', authenticateToken, (req, res) => {
   }
 });
 
+// Microsoft OAuth routes
+app.post('/api/auth/microsoft', async (req, res) => {
+  try {
+    const { accessToken, userInfo } = req.body;
+    
+    if (!accessToken || !userInfo) {
+      return res.status(400).json({ error: 'Microsoft access token and user info required' });
+    }
+    
+    // Validate Microsoft token (in production, verify with Microsoft Graph API)
+    const { email, name, given_name, family_name } = userInfo;
+    
+    if (!email || !name) {
+      return res.status(400).json({ error: 'Invalid Microsoft user data' });
+    }
+    
+    // Check if user exists
+    let user = users.find(u => u.email === email);
+    
+    if (!user) {
+      // Create new user from Microsoft account
+      user = {
+        id: Date.now().toString(),
+        fullName: name,
+        firstName: given_name || name.split(' ')[0],
+        lastName: family_name || name.split(' ').slice(1).join(' '),
+        email,
+        password: '', // OAuth users don't have passwords
+        role: 'educator',
+        preferredLanguage: 'english',
+        onboardingStatus: 'incomplete',
+        authProvider: 'microsoft',
+        microsoftId: userInfo.id,
+        profilePhotoUrl: userInfo.picture || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(name)}&backgroundColor=C44E38&color=ffffff`,
+        createdAt: new Date().toISOString()
+      };
+      
+      users.push(user);
+      console.log('Microsoft user created:', user.fullName);
+    } else {
+      // Update existing user with Microsoft info if needed
+      if (!user.microsoftId) {
+        user.microsoftId = userInfo.id;
+        user.authProvider = 'microsoft';
+        user.updatedAt = new Date().toISOString();
+      }
+    }
+    
+    // Generate JWT token
+    const token = jwt.sign(
+      { id: user.id, email: user.email, role: user.role },
+      JWT_SECRET,
+      { expiresIn: '7d' }
+    );
+    
+    res.json({
+      user: { ...user, password: undefined },
+      token,
+      isNewUser: !users.find(u => u.email === email && u.onboardingStatus === 'complete')
+    });
+  } catch (error) {
+    console.error('Microsoft OAuth error:', error);
+    res.status(500).json({ error: 'Microsoft authentication failed' });
+  }
+});
+
+// Google OAuth routes
+app.post('/api/auth/google', async (req, res) => {
+  try {
+    const { accessToken, userInfo } = req.body;
+    
+    if (!accessToken || !userInfo) {
+      return res.status(400).json({ error: 'Google access token and user info required' });
+    }
+    
+    // Validate Google token (in production, verify with Google API)
+    const { email, name, given_name, family_name, picture } = userInfo;
+    
+    if (!email || !name) {
+      return res.status(400).json({ error: 'Invalid Google user data' });
+    }
+    
+    // Check if user exists
+    let user = users.find(u => u.email === email);
+    
+    if (!user) {
+      // Create new user from Google account
+      user = {
+        id: Date.now().toString(),
+        fullName: name,
+        firstName: given_name || name.split(' ')[0],
+        lastName: family_name || name.split(' ').slice(1).join(' '),
+        email,
+        password: '', // OAuth users don't have passwords
+        role: 'educator',
+        preferredLanguage: 'english',
+        onboardingStatus: 'incomplete',
+        authProvider: 'google',
+        googleId: userInfo.id,
+        profilePhotoUrl: picture || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(name)}&backgroundColor=C44E38&color=ffffff`,
+        createdAt: new Date().toISOString()
+      };
+      
+      users.push(user);
+      console.log('Google user created:', user.fullName);
+    } else {
+      // Update existing user with Google info if needed
+      if (!user.googleId) {
+        user.googleId = userInfo.id;
+        user.authProvider = 'google';
+        user.updatedAt = new Date().toISOString();
+      }
+    }
+    
+    // Generate JWT token
+    const token = jwt.sign(
+      { id: user.id, email: user.email, role: user.role },
+      JWT_SECRET,
+      { expiresIn: '7d' }
+    );
+    
+    res.json({
+      user: { ...user, password: undefined },
+      token,
+      isNewUser: !users.find(u => u.email === email && u.onboardingStatus === 'complete')
+    });
+  } catch (error) {
+    console.error('Google OAuth error:', error);
+    res.status(500).json({ error: 'Google authentication failed' });
+  }
+});
+
+// Apple OAuth routes
+app.post('/api/auth/apple', async (req, res) => {
+  try {
+    const { identityToken, userInfo } = req.body;
+    
+    if (!identityToken || !userInfo) {
+      return res.status(400).json({ error: 'Apple identity token and user info required' });
+    }
+    
+    // Validate Apple token (in production, verify with Apple's public keys)
+    const { email, name } = userInfo;
+    
+    if (!email) {
+      return res.status(400).json({ error: 'Invalid Apple user data' });
+    }
+    
+    // Check if user exists
+    let user = users.find(u => u.email === email);
+    
+    if (!user) {
+      // Create new user from Apple account
+      const fullName = name ? `${name.firstName} ${name.lastName}` : email.split('@')[0];
+      user = {
+        id: Date.now().toString(),
+        fullName,
+        firstName: name?.firstName || email.split('@')[0],
+        lastName: name?.lastName || '',
+        email,
+        password: '', // OAuth users don't have passwords
+        role: 'educator',
+        preferredLanguage: 'english',
+        onboardingStatus: 'incomplete',
+        authProvider: 'apple',
+        appleId: userInfo.sub,
+        profilePhotoUrl: `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(fullName)}&backgroundColor=C44E38&color=ffffff`,
+        createdAt: new Date().toISOString()
+      };
+      
+      users.push(user);
+      console.log('Apple user created:', user.fullName);
+    } else {
+      // Update existing user with Apple info if needed
+      if (!user.appleId) {
+        user.appleId = userInfo.sub;
+        user.authProvider = 'apple';
+        user.updatedAt = new Date().toISOString();
+      }
+    }
+    
+    // Generate JWT token
+    const token = jwt.sign(
+      { id: user.id, email: user.email, role: user.role },
+      JWT_SECRET,
+      { expiresIn: '7d' }
+    );
+    
+    res.json({
+      user: { ...user, password: undefined },
+      token,
+      isNewUser: !users.find(u => u.email === email && u.onboardingStatus === 'complete')
+    });
+  } catch (error) {
+    console.error('Apple OAuth error:', error);
+    res.status(500).json({ error: 'Apple authentication failed' });
+  }
+});
+
 // Health check
 app.get('/api/health', (req, res) => {
   res.json({ 
