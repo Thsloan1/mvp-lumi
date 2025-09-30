@@ -148,44 +148,6 @@ export const TestUserFeedbackWidget: React.FC<TestUserFeedbackWidgetProps> = ({
     }, 4000);
   };
 
-  const showFeedbackNotification = (feedback: any) => {
-    const notification = document.createElement('div');
-    notification.innerHTML = `
-      <div style="
-        position: fixed; 
-        top: 20px; 
-        left: 20px; 
-        background: #10B981; 
-        color: white; 
-        padding: 15px 20px; 
-        border-radius: 8px; 
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        z-index: 10000;
-        max-width: 350px;
-        font-family: Inter, sans-serif;
-      ">
-        <div style="font-weight: bold; margin-bottom: 5px;">📝 Feedback Received!</div>
-        <div style="font-size: 14px; opacity: 0.9;">
-          Rating: ${feedback.rating}/5 stars<br>
-          Category: ${feedback.category}<br>
-          Priority: ${feedback.priority}
-        </div>
-        <div style="font-size: 12px; margin-top: 8px; opacity: 0.8;">
-          Check Developer Portal → Feedback tab for details
-        </div>
-      </div>
-    `;
-    
-    document.body.appendChild(notification);
-    
-    // Auto-remove after 4 seconds
-    setTimeout(() => {
-      if (notification.parentNode) {
-        notification.parentNode.removeChild(notification);
-      }
-    }, 4000);
-  };
-
   // Check if user is a test user
   const testUsers = safeLocalStorageGet('lumi_test_users', []);
   const isTestUser = testUsers.length > 0;
