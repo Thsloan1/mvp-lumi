@@ -101,14 +101,17 @@ export class AuthService {
       });
 
       if (!response.ok) {
-        this.removeToken();
+        // Only remove token for 401 Unauthorized errors
+        if (response.status === 401) {
+          this.removeToken();
+        }
         return null;
       }
 
       const result = await response.json();
       return result.user;
     } catch (error) {
-      this.removeToken();
+      // Don't remove token for network errors or other transient issues
       return null;
     }
   }
