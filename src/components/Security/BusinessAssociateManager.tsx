@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Shield, Building, AlertTriangle, CheckCircle, Calendar, FileText, Download, Plus, Edit, Save, X } from 'lucide-react';
+import { Shield, Building, AlertTriangle, CheckCircle, Calendar, FileText, Download, Plus, CreditCard as Edit, Save, X } from 'lucide-react';
 import { Button } from '../UI/Button';
 import { Card } from '../UI/Card';
 import { Input } from '../UI/Input';
