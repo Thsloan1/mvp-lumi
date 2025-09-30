@@ -47,6 +47,7 @@ import { ProductionReadinessReport } from './components/Testing/ProductionReadin
 import { ProductionChecklist } from './components/Testing/ProductionChecklist';
 import { StressTestRunner } from './components/Testing/StressTestRunner';
 import { ParentPortal } from './components/Security/ParentPortal';
+import { SecurityComplianceCenter } from './components/Admin/SecurityComplianceCenter';
 import { ArrowLeft } from 'lucide-react';
 import { Button } from './components/UI/Button';
 

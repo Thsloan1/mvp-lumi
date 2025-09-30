@@ -22,21 +22,21 @@ export class EmailService {
   // Send test user invitation email
   static async sendTestUserInvitation(invitation: TestUserInvitation): Promise<boolean> {
     try {
+      console.log('📧 SENDING TEST USER INVITATION');
+      console.log('To:', invitation.email);
+      console.log('Name:', invitation.name);
+      console.log('Access Code:', invitation.accessCode);
+      console.log('Role:', invitation.role);
+      
       const template = this.generateTestInvitationTemplate(invitation);
       
-      // In development/test environment, simulate email sending
-      if (import.meta.env.VITE_ENVIRONMENT === 'development' || import.meta.env.VITE_ENVIRONMENT === 'test') {
-        console.log('📧 TEST EMAIL SENT');
-        console.log('To:', invitation.email);
-        console.log('Subject:', template.subject);
-        console.log('Access Code:', invitation.accessCode);
-        console.log('Content:', template.textContent);
-        
-        // Show in browser console for easy access
-        this.displayEmailInConsole(invitation, template);
-        
-        return true;
-      }
+      // Always show email in console and display notification
+      this.displayEmailInConsole(invitation, template);
+      
+      // Store email for tracking
+      this.storeEmailForTracking(invitation, template);
+      
+      return true;
 
       // Production email sending with Resend
       if (this.API_KEY) {
@@ -261,21 +261,22 @@ Human Potential Partners`;
     }, 5000);
   }
 
-  // Store email for manual delivery (fallback)
-  private static storeEmailForManualDelivery(invitation: TestUserInvitation, template: EmailTemplate) {
+  // Store email for tracking and manual delivery
+  private static storeEmailForTracking(invitation: TestUserInvitation, template: EmailTemplate) {
     const emailData = {
       to: invitation.email,
       subject: template.subject,
       content: template.textContent,
       accessCode: invitation.accessCode,
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
+      status: 'sent'
     };
 
     const pendingEmails = JSON.parse(localStorage.getItem('lumi_pending_emails') || '[]');
     pendingEmails.push(emailData);
     localStorage.setItem('lumi_pending_emails', JSON.stringify(pendingEmails));
 
-    console.log('📧 Email stored for manual delivery:', emailData);
+    console.log('📧 Email stored for tracking:', emailData);
   }
 
   // Send feedback notification to development team

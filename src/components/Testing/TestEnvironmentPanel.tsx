@@ -8,7 +8,6 @@ import { useAppContext } from '../../context/AppContext';
 import { testDataManager } from '../../data/testData';
 import { getCurrentEnvironment, isTestEnvironment } from '../../config/environments';
 import { EmailService } from '../../services/emailService';
-import { EmailDeliveryPanel } from './EmailDeliveryPanel';
 import { safeLocalStorageGet, safeLocalStorageSet } from '../../utils/jsonUtils';
 
 interface TestUser {
@@ -649,6 +648,137 @@ export const TestEnvironmentPanel: React.FC = () => {
     </div>
   );
 
+  const renderEmailDelivery = () => {
+    const pendingEmails = safeLocalStorageGet('lumi_pending_emails', []);
+    
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-lg font-semibold text-[#1A1A1A]">
+              Email Delivery Management
+            </h3>
+            <p className="text-gray-600">
+              Manage test user invitations and email delivery
+            </p>
+          </div>
+          <div className="flex space-x-2">
+            <Button
+              onClick={() => {
+                const emails = safeLocalStorageGet('lumi_pending_emails', []);
+                toast.info('Emails Refreshed', `Found ${emails.length} pending emails`);
+              }}
+              size="sm"
+              variant="outline"
+              icon={RefreshCw}
+            >
+              Refresh
+            </Button>
+            {pendingEmails.length > 0 && (
+              <Button
+                onClick={() => {
+                  localStorage.removeItem('lumi_pending_emails');
+                  toast.success('All Emails Cleared', 'Pending email list cleared');
+                }}
+                size="sm"
+                variant="outline"
+                icon={Trash2}
+                className="text-red-600"
+              >
+                Clear All
+              </Button>
+            )}
+          </div>
+        </div>
+
+        {/* Email Service Status */}
+        <Card className="p-4">
+          <div className="flex items-center space-x-3 mb-4">
+            <div className="w-3 h-3 rounded-full bg-green-500" />
+            <h4 className="font-medium text-[#1A1A1A]">
+              Email Service Status
+            </h4>
+          </div>
+          
+          <div className="space-y-2 text-sm">
+            <div className="flex justify-between">
+              <span className="text-gray-600">Environment:</span>
+              <span className="font-medium">{import.meta.env.VITE_ENVIRONMENT || 'development'}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-600">Delivery Method:</span>
+              <span className="font-medium text-green-600">Console + Visual Notification</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-600">Pending Emails:</span>
+              <span className="font-medium">{pendingEmails.length}</span>
+            </div>
+          </div>
+        </Card>
+
+        {/* Pending Emails */}
+        <Card className="p-4">
+          <h4 className="font-medium text-[#1A1A1A] mb-4">
+            Pending Email Deliveries ({pendingEmails.length})
+          </h4>
+          
+          {pendingEmails.length === 0 ? (
+            <div className="text-center py-6">
+              <Mail className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+              <p className="text-sm text-gray-600">No pending emails</p>
+              <p className="text-xs text-gray-500 mt-1">
+                Create test users to see email invitations here
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {pendingEmails.map((email: any, index: number) => (
+                <div key={index} className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                  <div className="flex items-start justify-between mb-2">
+                    <div>
+                      <p className="font-medium text-sm">{email.to}</p>
+                      <p className="text-xs text-yellow-700">
+                        Access Code: <strong>{email.accessCode}</strong>
+                      </p>
+                    </div>
+                    <span className="text-xs text-gray-500">
+                      {new Date(email.createdAt).toLocaleDateString()}
+                    </span>
+                  </div>
+                  
+                  <div className="flex space-x-2">
+                    <Button
+                      onClick={() => {
+                        navigator.clipboard.writeText(email.content);
+                        toast.success('Email Copied', 'Email content copied to clipboard');
+                      }}
+                      size="sm"
+                      variant="outline"
+                      icon={Copy}
+                    >
+                      Copy Email
+                    </Button>
+                    <Button
+                      onClick={() => {
+                        const updatedEmails = pendingEmails.filter((_: any, i: number) => i !== index);
+                        safeLocalStorageSet('lumi_pending_emails', updatedEmails);
+                        toast.success('Email Marked as Sent', 'Removed from pending list');
+                      }}
+                      size="sm"
+                      icon={Send}
+                    >
+                      Mark as Sent
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </Card>
+      </div>
+    );
+  };
+
   const tabs = [
     { id: 'users', label: 'User Management', icon: Users },
     { id: 'scenarios', label: 'Test Scenarios', icon: Play },
@@ -737,7 +867,7 @@ export const TestEnvironmentPanel: React.FC = () => {
             {activeTab === 'users' && renderUserManagement()}
             {activeTab === 'scenarios' && renderTestScenarios()}
             {activeTab === 'data' && renderDataManagement()}
-            {activeTab === 'email' && <EmailDeliveryPanel />}
+            {activeTab === 'email' && renderEmailDelivery()}
             {activeTab === 'feedback' && renderFeedbackManagement()}
           </div>
         </div>
