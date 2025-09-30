@@ -173,13 +173,6 @@ export const TestUserFeedbackWidget: React.FC<TestUserFeedbackWidgetProps> = ({
                     placeholder="Enter your access code"
                     className="flex-1"
                   />
-                  <Button
-                    onClick={handleCopyAccessCode}
-                    variant="ghost"
-                    size="sm"
-                    icon={copiedCode ? Check : Copy}
-                    className={`${copiedCode ? 'text-green-600' : 'text-gray-500'} px-2`}
-                  />
                 </div>
                 <p className="text-xs text-gray-500 mt-1">
                   Use this code to identify your feedback submissions

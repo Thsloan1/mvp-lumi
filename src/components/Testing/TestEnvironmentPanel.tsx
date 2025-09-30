@@ -30,7 +30,9 @@ export const DeveloperPortal: React.FC = () => {
     modules: [] as string[],
     expiresAt: ''
   });
-  const [feedback, setFeedback] = useState<any[]>([]);
+  const [feedback, setFeedback] = useState<any[]>(() => 
+    safeLocalStorageGet('lumi_test_feedback', [])
+  );
   const [showInviteForm, setShowInviteForm] = useState(false);
   const [systemHealth] = useState({
     components: [
@@ -266,19 +268,12 @@ export const DeveloperPortal: React.FC = () => {
   // Initialize test users and feedback from localStorage
   React.useEffect(() => {
     const savedTestUsers = safeLocalStorageGet('lumi_test_users', []);
-    const savedFeedback = safeLocalStorageGet('lumi_test_feedback', []);
     setTestUsers(savedTestUsers);
-    setFeedback(savedFeedback);
   }, []);
 
   const saveTestUsers = (users: any[]) => {
     setTestUsers(users);
     safeLocalStorageSet('lumi_test_users', users);
-  };
-
-  const saveFeedback = (feedbackData: any[]) => {
-    setFeedback(feedbackData);
-    safeLocalStorageSet('lumi_test_feedback', feedbackData);
   };
 
   const generateAccessCode = () => {
@@ -362,26 +357,7 @@ export const DeveloperPortal: React.FC = () => {
     toast.success('Access Codes Copied', 'All codes copied to clipboard');
   };
 
-  const handleCopyAccessCode = () => {
-    // Implementation for copying access code
-    toast.success('Access Code Copied', 'Code copied to clipboard');
-  };
-
   const [copiedCode, setCopiedCode] = useState(false);
-
-  const handleModuleToggle = (module: string) => {
-    const currentModules = newTestUser.modules || [];
-    const isSelected = currentModules.includes(module);
-    
-    let newModules;
-    if (isSelected) {
-      newModules = currentModules.filter(m => m !== module);
-    } else {
-      newModules = [...currentModules, module];
-    }
-    
-    setNewTestUser(prev => ({ ...prev, modules: newModules }));
-  };
 
   const renderUserManagement = () => (
     <div className="space-y-6">
@@ -415,6 +391,37 @@ export const DeveloperPortal: React.FC = () => {
                 placeholder="Enter email"
               />
             </div>
+            
+            <div className="grid grid-cols-2 gap-3">
+              <Select
+                label="Role"
+                value={newTestUser.role}
+                onChange={(value) => setNewTestUser(prev => ({ ...prev, role: value }))}
+                options={[
+                  { value: 'tester', label: 'Tester' },
+                  { value: 'reviewer', label: 'Reviewer' },
+                  { value: 'stakeholder', label: 'Stakeholder' }
+                ]}
+              />
+              <Select
+                label="Access Level"
+                value={newTestUser.accessLevel}
+                onChange={(value) => setNewTestUser(prev => ({ ...prev, accessLevel: value }))}
+                options={[
+                  { value: 'full', label: 'Full Access' },
+                  { value: 'limited', label: 'Limited Access' },
+                  { value: 'view_only', label: 'View Only' }
+                ]}
+              />
+            </div>
+            
+            <Input
+              label="Expires At (Optional)"
+              type="date"
+              value={newTestUser.expiresAt}
+              onChange={(value) => setNewTestUser(prev => ({ ...prev, expiresAt: value }))}
+            />
+            
             <div className="flex space-x-2">
               <Button onClick={handleCreateTestUser} size="sm">
                 Create Test User
@@ -438,6 +445,11 @@ export const DeveloperPortal: React.FC = () => {
                 <p className="font-medium text-sm">{user.fullName}</p>
                 <p className="text-xs text-gray-600">{user.email}</p>
                 <p className="text-xs text-purple-600">Code: {user.accessCode}</p>
+                {user.expiresAt && (
+                  <p className="text-xs text-orange-600">
+                    Expires: {new Date(user.expiresAt).toLocaleDateString()}
+                  </p>
+                )}
               </div>
               <Button
                 onClick={() => handleRemoveTestUser(user.id)}
@@ -465,8 +477,9 @@ export const DeveloperPortal: React.FC = () => {
               onClick={handleCopyAllCodes}
               size="sm"
               variant="outline"
+              icon={copiedCode ? CheckCircle : Users}
             >
-              Copy All Codes
+              {copiedCode ? 'Copied!' : 'Copy All Codes'}
             </Button>
           </div>
         )}
@@ -485,6 +498,9 @@ export const DeveloperPortal: React.FC = () => {
           <div className="text-center py-6">
             <MessageCircle className="w-8 h-8 text-gray-400 mx-auto mb-2" />
             <p className="text-sm text-gray-600">No feedback submitted yet</p>
+            <p className="text-xs text-gray-500 mt-1">
+              Test users can submit feedback using the feedback widget
+            </p>
           </div>
         ) : (
           <div className="space-y-3">
@@ -495,11 +511,9 @@ export const DeveloperPortal: React.FC = () => {
                     <span className="font-medium text-sm">{item.testerName}</span>
                     <div className="flex space-x-1">
                       {Array.from({length: 5}).map((_, i) => (
-                        <div key={i} className={`w-3 h-3 ${
-                          i < item.rating ? 'text-yellow-400' : 'text-gray-300'
-                        }`}>
-                          ⭐
-                        </div>
+                        <Star key={i} className={`w-3 h-3 ${
+                          i < item.rating ? 'text-yellow-400 fill-current' : 'text-gray-300'
+                        }`} />
                       ))}
                     </div>
                   </div>
@@ -523,6 +537,46 @@ export const DeveloperPortal: React.FC = () => {
                 </div>
               </div>
             ))}
+          </div>
+        )}
+        
+        {feedback.length > 0 && (
+          <div className="mt-4 pt-4 border-t border-gray-200">
+            <Button
+              onClick={() => {
+                const report = {
+                  timestamp: new Date().toISOString(),
+                  totalFeedback: feedback.length,
+                  averageRating: feedback.reduce((sum, f) => sum + f.rating, 0) / feedback.length,
+                  feedbackByCategory: feedback.reduce((acc, f) => {
+                    acc[f.category] = (acc[f.category] || 0) + 1;
+                    return acc;
+                  }, {}),
+                  feedbackByPriority: feedback.reduce((acc, f) => {
+                    acc[f.priority] = (acc[f.priority] || 0) + 1;
+                    return acc;
+                  }, {}),
+                  detailedFeedback: feedback
+                };
+                
+                const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `lumi-test-feedback-${new Date().toISOString().split('T')[0]}.json`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+                
+                toast.success('Feedback Report Exported', 'Test feedback analysis downloaded');
+              }}
+              size="sm"
+              variant="outline"
+              icon={Download}
+            >
+              Export Feedback Report
+            </Button>
           </div>
         )}
       </Card>
