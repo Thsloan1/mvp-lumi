@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import { ErrorLogger } from '../utils/errorLogger';
 
 export interface AppError {
   id: string;
@@ -18,6 +19,13 @@ export const useErrorHandler = () => {
       id: Date.now().toString(),
       timestamp: new Date()
     };
+    
+    // Log to error tracking system
+    ErrorLogger.error(`${error.type}: ${error.message}`, {
+      errorId: newError.id,
+      context: error.context
+    });
+    
     setErrors(prev => [...prev, newError]);
     
     // Auto-remove error after 5 seconds for non-critical errors
@@ -39,10 +47,12 @@ export const useErrorHandler = () => {
   const handleApiError = useCallback((error: any, context?: Record<string, any>) => {
     let errorType: AppError['type'] = 'unknown';
     let message = 'An unexpected error occurred';
+    let details = '';
 
     if (error.response) {
       const status = error.response.status;
       const data = error.response.data;
+      details = `HTTP ${status}: ${data?.error || 'Unknown error'}`;
 
       switch (status) {
         case 400:
@@ -56,6 +66,10 @@ export const useErrorHandler = () => {
         case 403:
           errorType = 'permission';
           message = data.error || 'You don\'t have permission to perform this action';
+          break;
+        case 404:
+          errorType = 'network';
+          message = 'Resource not found. Please try again or contact support';
           break;
         case 429:
           errorType = 'network';
@@ -71,12 +85,16 @@ export const useErrorHandler = () => {
     } else if (error.request) {
       errorType = 'network';
       message = 'Network error. Please check your connection';
+      details = 'No response received from server';
+    } else if (error.message) {
+      message = error.message;
+      details = error.stack || '';
     }
 
     addError({
       type: errorType,
       message,
-      details: error.message,
+      details: details || error.message,
       context
     });
   }, [addError]);

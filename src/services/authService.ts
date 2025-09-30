@@ -192,32 +192,43 @@ export class AuthService {
       throw new Error('Authentication required. Please sign in again.');
     }
     
-    const response = await fetch(endpoint, {
-      ...options,
-      headers: {
-        'Content-Type': 'application/json',
-        ...this.getAuthHeaders(),
-        ...options.headers
-      }
-    });
+    try {
+      const response = await fetch(endpoint, {
+        ...options,
+        headers: {
+          'Content-Type': 'application/json',
+          ...this.getAuthHeaders(),
+          ...options.headers
+        }
+      });
 
-    if (!response.ok) {
-      let errorData;
-      try {
-        errorData = await response.json();
-      } catch (parseError) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      if (!response.ok) {
+        let errorData;
+        try {
+          errorData = await response.json();
+        } catch (parseError) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        // Handle specific error cases
+        if (response.status === 401) {
+          this.removeToken();
+          throw new Error('Session expired. Please sign in again.');
+        }
+        
+        if (response.status === 404) {
+          throw new Error(`Endpoint not found: ${endpoint}`);
+        }
+        
+        throw new Error(errorData.error || errorData.message || `HTTP ${response.status}: ${response.statusText}`);
       }
-      
-      // Handle specific error cases
-      if (response.status === 401) {
-        this.removeToken();
-        throw new Error('Session expired. Please sign in again.');
+
+      return response.json();
+    } catch (networkError: any) {
+      if (networkError.name === 'TypeError' && networkError.message.includes('fetch')) {
+        throw new Error('Network error. Please check your connection and try again.');
       }
-      
-      throw new Error(errorData.error || errorData.message || `HTTP ${response.status}: ${response.statusText}`);
+      throw networkError;
     }
-
-    return response.json();
   }
 }
