@@ -13,6 +13,9 @@ interface AppContextType {
   isLoading: boolean;
   signin: (email: string, password: string) => Promise<void>;
   signup: (fullName: string, email: string, password: string) => Promise<void>;
+  microsoftSignin: () => Promise<void>;
+  googleSignin: () => Promise<void>;
+  appleSignin: () => Promise<void>;
   adminSignup: (data: any) => Promise<void>;
   signout: () => void;
   updateOnboarding: (data: any) => Promise<void>;
@@ -297,6 +300,66 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     } catch (err: any) {
       ErrorLogger.logAuthEvent('signup_error', { email, error: err.message });
       error('Sign up failed', err.message);
+      throw err;
+    }
+  };
+
+  const microsoftSignin = async () => {
+    ErrorLogger.logAuthEvent('microsoft_signin_attempt', {});
+    try {
+      const result = await AuthService.microsoftSignin();
+      setCurrentUser(result.user);
+      ErrorLogger.logAuthEvent('microsoft_signin_success', { userId: result.user.id });
+      success('Welcome!', 'Successfully signed in with Microsoft');
+      
+      if (result.user.onboardingStatus === 'incomplete') {
+        setCurrentView('onboarding-start');
+      } else {
+        setCurrentView('dashboard');
+      }
+    } catch (err: any) {
+      ErrorLogger.logAuthEvent('microsoft_signin_error', { error: err.message });
+      error('Microsoft sign in failed', err.message);
+      throw err;
+    }
+  };
+
+  const googleSignin = async () => {
+    ErrorLogger.logAuthEvent('google_signin_attempt', {});
+    try {
+      const result = await AuthService.googleSignin();
+      setCurrentUser(result.user);
+      ErrorLogger.logAuthEvent('google_signin_success', { userId: result.user.id });
+      success('Welcome!', 'Successfully signed in with Google');
+      
+      if (result.user.onboardingStatus === 'incomplete') {
+        setCurrentView('onboarding-start');
+      } else {
+        setCurrentView('dashboard');
+      }
+    } catch (err: any) {
+      ErrorLogger.logAuthEvent('google_signin_error', { error: err.message });
+      error('Google sign in failed', err.message);
+      throw err;
+    }
+  };
+
+  const appleSignin = async () => {
+    ErrorLogger.logAuthEvent('apple_signin_attempt', {});
+    try {
+      const result = await AuthService.appleSignin();
+      setCurrentUser(result.user);
+      ErrorLogger.logAuthEvent('apple_signin_success', { userId: result.user.id });
+      success('Welcome!', 'Successfully signed in with Apple');
+      
+      if (result.user.onboardingStatus === 'incomplete') {
+        setCurrentView('onboarding-start');
+      } else {
+        setCurrentView('dashboard');
+      }
+    } catch (err: any) {
+      ErrorLogger.logAuthEvent('apple_signin_error', { error: err.message });
+      error('Apple sign in failed', err.message);
       throw err;
     }
   };
