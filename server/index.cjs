@@ -1236,6 +1236,20 @@ app.get('/api/health', (req, res) => {
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error('Server error:', err);
+  
+  // Log structured error for monitoring
+  const errorLog = {
+    timestamp: new Date().toISOString(),
+    error: err.message,
+    stack: err.stack,
+    url: req.url,
+    method: req.method,
+    userAgent: req.headers['user-agent'],
+    ip: req.ip
+  };
+  
+  console.error('Structured error log:', JSON.stringify(errorLog));
+  
   res.status(500).json({ 
     error: 'Internal server error',
     message: process.env.NODE_ENV === 'development' ? err.message : 'Something went wrong'
@@ -1244,6 +1258,7 @@ app.use((err, req, res, next) => {
 
 // 404 handler
 app.use((req, res) => {
+  console.warn(`404 - Endpoint not found: ${req.method} ${req.url}`);
   res.status(404).json({ error: 'Endpoint not found' });
 });
 
