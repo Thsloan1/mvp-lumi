@@ -41,6 +41,7 @@ import { ChildProfileDetail } from './components/ChildProfiles/ChildProfileDetai
 import { LandingPage } from './components/Landing/LandingPage';
 import { DeveloperPortal } from './components/Testing/TestEnvironmentPanel';
 import { TestUserFeedbackWidget } from './components/Testing/TestUserFeedbackWidget';
+import { SecurityExpertReport } from './components/Security/SecurityExpertReport';
 import { ProductionReadinessChecklist } from './components/Testing/ProductionReadinessChecklist';
 import { ArrowLeft } from 'lucide-react';
 import { Button } from './components/UI/Button';
@@ -169,6 +170,22 @@ const AppContent: React.FC = () => {
         return <SecurityComplianceCenter />;
       case 'developer-app-manager':
         return <DeveloperAppManager />;
+      case 'security-expert-report':
+        return (
+          <div className="min-h-screen bg-white">
+            <div className="max-w-7xl mx-auto px-6 py-8">
+              <Button
+                variant="ghost"
+                onClick={() => setCurrentView('admin-dashboard')}
+                icon={ArrowLeft}
+                className="mb-6 -ml-2"
+              >
+                Back to Admin Dashboard
+              </Button>
+              <SecurityExpertReport />
+            </div>
+          </div>
+        );
       case 'production-readiness':
         return (
           <div className="min-h-screen bg-white">

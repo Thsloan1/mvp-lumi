@@ -61,6 +61,14 @@ export const SecurityComplianceCenter: React.FC = () => {
       icon: Eye,
       status: 'partial',
       riskLevel: 'medium'
+    },
+    {
+      title: 'Expert Security Review',
+      description: 'Professional security and compliance evaluation',
+      icon: AlertTriangle,
+      color: 'text-purple-600',
+      bgColor: 'bg-purple-100',
+      action: () => setCurrentView('security-expert-report')
     }
   ];
 
