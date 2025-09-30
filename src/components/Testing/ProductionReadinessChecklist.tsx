@@ -1,403 +1,109 @@
 import React, { useState, useEffect } from 'react';
-import { CheckCircle, AlertTriangle, XCircle, Shield, Zap, Globe, Smartphone, Database, Code, Users, BarChart3, Lock } from 'lucide-react';
+import { CheckCircle, AlertTriangle, XCircle, Shield, Zap, Globe, Smartphone, Database, Code, Users, BarChart3, Lock, Play, Download, RefreshCw } from 'lucide-react';
 import { Card } from '../UI/Card';
 import { Button } from '../UI/Button';
 import { useAppContext } from '../../context/AppContext';
-import { getCurrentEnvironment } from '../../config/environments';
-import { testDataManager } from '../../data/testData';
-
-interface ChecklistItem {
-  id: string;
-  category: string;
-  name: string;
-  status: 'pass' | 'warning' | 'fail' | 'untested';
-  details: string;
-  critical: boolean;
-  testFunction?: () => Promise<boolean>;
-}
+import { productionTester, TestResult, ProductionAssessment } from '../../utils/productionTester';
+import { ErrorLogger } from '../../utils/errorLogger';
 
 export const ProductionReadinessChecklist: React.FC = () => {
-  const { currentUser, behaviorLogs, classroomLogs, children, classrooms } = useAppContext();
-  const [checklist, setChecklist] = useState<ChecklistItem[]>([]);
+  const { setCurrentView, toast } = useAppContext();
+  const [assessment, setAssessment] = useState<ProductionAssessment | null>(null);
   const [testing, setTesting] = useState(false);
-  const [testResults, setTestResults] = useState<Record<string, any>>({});
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [stressTesting, setStressTesting] = useState(false);
 
-  const currentEnv = getCurrentEnvironment();
-
-  const initializeChecklist = (): ChecklistItem[] => [
-    // Frontend Tests
-    {
-      id: 'onboarding-flow',
-      category: 'Frontend',
-      name: 'Onboarding Flow (All User Types)',
-      status: 'untested',
-      details: 'Test educator, admin, and invited user onboarding flows',
-      critical: true,
-      testFunction: async () => {
-        // Test onboarding flow completeness
-        const hasEducatorFlow = true; // Check if EducatorSignup component exists
-        const hasAdminFlow = true; // Check if AdminSignup component exists
-        const hasInvitedFlow = true; // Check if InvitedSignup component exists
-        return hasEducatorFlow && hasAdminFlow && hasInvitedFlow;
-      }
-    },
-    {
-      id: 'form-validation',
-      category: 'Frontend',
-      name: 'Form Validation & Error Handling',
-      status: 'untested',
-      details: 'All forms validate inputs and show proper error messages',
-      critical: true,
-      testFunction: async () => {
-        // Test form validation exists
-        return true; // Forms have validation in place
-      }
-    },
-    {
-      id: 'responsive-design',
-      category: 'Frontend',
-      name: 'Mobile Responsiveness',
-      status: 'untested',
-      details: 'UI works on mobile, tablet, and desktop',
-      critical: true,
-      testFunction: async () => {
-        // Check if Tailwind responsive classes are used
-        return true; // Responsive design implemented
-      }
-    },
-    {
-      id: 'accessibility',
-      category: 'Frontend',
-      name: 'WCAG 2.1 AA Compliance',
-      status: 'untested',
-      details: 'Keyboard navigation, screen readers, color contrast',
-      critical: true,
-      testFunction: async () => {
-        // Check accessibility features
-        const hasSkipLink = document.querySelector('.skip-link') !== null;
-        const hasAriaLabels = document.querySelectorAll('[aria-label]').length > 0;
-        return hasSkipLink || hasAriaLabels;
-      }
-    },
-    {
-      id: 'error-boundaries',
-      category: 'Frontend',
-      name: 'Error Boundaries & Recovery',
-      status: 'untested',
-      details: 'App gracefully handles component crashes',
-      critical: true,
-      testFunction: async () => {
-        // Check if ErrorBoundary is implemented
-        return true; // ErrorBoundary component exists
-      }
-    },
-
-    // API/Middleware Tests
-    {
-      id: 'auth-endpoints',
-      category: 'API',
-      name: 'Authentication Endpoints',
-      status: 'untested',
-      details: 'Signup, signin, password reset, email verification',
-      critical: true,
-      testFunction: async () => {
-        try {
-          // Test health endpoint first
-          const response = await fetch('/api/health');
-          return response.ok;
-        } catch (error) {
-          return false;
-        }
-      }
-    },
-    {
-      id: 'crud-endpoints',
-      category: 'API',
-      name: 'CRUD Operations',
-      status: 'untested',
-      details: 'Children, classrooms, behavior logs, classroom logs',
-      critical: true,
-      testFunction: async () => {
-        // Test if endpoints respond
-        try {
-          const endpoints = ['/api/children', '/api/classrooms', '/api/behavior-logs', '/api/classroom-logs'];
-          const results = await Promise.all(
-            endpoints.map(endpoint => 
-              fetch(endpoint, { headers: { 'Authorization': 'Bearer test' } })
-                .then(r => r.status !== 404)
-                .catch(() => false)
-            )
-          );
-          return results.every(Boolean);
-        } catch (error) {
-          return false;
-        }
-      }
-    },
-    {
-      id: 'ai-strategy-generation',
-      category: 'API',
-      name: 'AI Strategy Generation',
-      status: 'untested',
-      details: 'Child and classroom strategy endpoints work',
-      critical: true,
-      testFunction: async () => {
-        // Test AI endpoints exist
-        try {
-          const childStrategy = await fetch('/api/ai/child-strategy', { 
-            method: 'POST',
-            headers: { 'Authorization': 'Bearer test', 'Content-Type': 'application/json' },
-            body: JSON.stringify({ behaviorDescription: 'test', context: 'test', severity: 'low' })
-          });
-          return childStrategy.status !== 404;
-        } catch (error) {
-          return false;
-        }
-      }
-    },
-    {
-      id: 'organization-management',
-      category: 'API',
-      name: 'Organization Management',
-      status: 'untested',
-      details: 'Admin functions, invitations, seat management',
-      critical: true,
-      testFunction: async () => {
-        // Test organization endpoints
-        try {
-          const orgResponse = await fetch('/api/organizations', {
-            headers: { 'Authorization': 'Bearer test' }
-          });
-          return orgResponse.status !== 404;
-        } catch (error) {
-          return false;
-        }
-      }
-    },
-    {
-      id: 'rate-limiting',
-      category: 'API',
-      name: 'Rate Limiting & Security',
-      status: 'untested',
-      details: 'API rate limits and security headers',
-      critical: true,
-      testFunction: async () => {
-        // Check if security measures are in place
-        return true; // Basic security implemented
-      }
-    },
-
-    // Backend/Database Tests
-    {
-      id: 'data-persistence',
-      category: 'Backend',
-      name: 'Data Persistence',
-      status: 'untested',
-      details: 'Data survives server restarts',
-      critical: true,
-      testFunction: async () => {
-        // Test data persistence
-        const hasTestData = testDataManager.getUsers().length > 0;
-        return hasTestData;
-      }
-    },
-    {
-      id: 'data-relationships',
-      category: 'Backend',
-      name: 'Data Relationships',
-      status: 'untested',
-      details: 'Foreign key constraints and data integrity',
-      critical: true,
-      testFunction: async () => {
-        // Test data relationships
-        const users = testDataManager.getUsers();
-        const classrooms = testDataManager.getClassrooms();
-        const children = testDataManager.getChildren();
-        
-        // Check if relationships exist
-        const hasValidRelationships = classrooms.every(classroom => 
-          users.some(user => user.id === classroom.educatorId)
-        ) && children.every(child =>
-          classrooms.some(classroom => classroom.id === child.classroomId)
-        );
-        
-        return hasValidRelationships;
-      }
-    },
-    {
-      id: 'backup-recovery',
-      category: 'Backend',
-      name: 'Backup & Recovery',
-      status: 'untested',
-      details: 'Data backup and recovery procedures',
-      critical: true,
-      testFunction: async () => {
-        // Test backup functionality
-        try {
-          const data = testDataManager.getAllData();
-          return Object.keys(data).length > 0;
-        } catch (error) {
-          return false;
-        }
-      }
-    },
-
-    // Security Tests
-    {
-      id: 'authentication-security',
-      category: 'Security',
-      name: 'Authentication Security',
-      status: 'untested',
-      details: 'JWT tokens, password hashing, session management',
-      critical: true,
-      testFunction: async () => {
-        // Test authentication security
-        return true; // JWT and bcrypt implemented
-      }
-    },
-    {
-      id: 'data-privacy',
-      category: 'Security',
-      name: 'Data Privacy & FERPA Compliance',
-      status: 'untested',
-      details: 'Child data protection and privacy controls',
-      critical: true,
-      testFunction: async () => {
-        // Test privacy controls
-        return true; // Privacy measures in place
-      }
-    },
-    {
-      id: 'input-sanitization',
-      category: 'Security',
-      name: 'Input Sanitization',
-      status: 'untested',
-      details: 'XSS and injection attack prevention',
-      critical: true,
-      testFunction: async () => {
-        // Test input sanitization
-        return true; // Basic sanitization implemented
-      }
-    },
-
-    // Performance Tests
-    {
-      id: 'load-performance',
-      category: 'Performance',
-      name: 'Page Load Performance',
-      status: 'untested',
-      details: 'Core Web Vitals: LCP < 2.5s, FID < 100ms, CLS < 0.1',
-      critical: false,
-      testFunction: async () => {
-        // Test performance metrics
-        const navigation = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming;
-        const loadTime = navigation.loadEventEnd - navigation.fetchStart;
-        return loadTime < 3000; // 3 second threshold
-      }
-    },
-    {
-      id: 'api-performance',
-      category: 'Performance',
-      name: 'API Response Times',
-      status: 'untested',
-      details: 'P95 response time < 500ms for core endpoints',
-      critical: false,
-      testFunction: async () => {
-        // Test API performance
-        const start = performance.now();
-        try {
-          await fetch('/api/health');
-          const end = performance.now();
-          return (end - start) < 1000; // 1 second threshold
-        } catch (error) {
-          return false;
-        }
-      }
-    },
-    {
-      id: 'large-dataset-handling',
-      category: 'Performance',
-      name: 'Large Dataset Handling',
-      status: 'untested',
-      details: 'App handles 100+ children, 1000+ behavior logs',
-      critical: false,
-      testFunction: async () => {
-        // Test large dataset handling
-        const totalLogs = behaviorLogs.length + classroomLogs.length;
-        const totalChildren = children.length;
-        return totalLogs > 0 && totalChildren > 0; // Basic data exists
-      }
-    }
+  const categories = [
+    { id: 'all', label: 'All Tests', icon: Code },
+    { id: 'frontend', label: 'Frontend', icon: Globe },
+    { id: 'middleware', label: 'Middleware/API', icon: Database },
+    { id: 'backend', label: 'Backend', icon: Shield },
+    { id: 'security', label: 'Security', icon: Lock },
+    { id: 'performance', label: 'Performance', icon: Zap },
+    { id: 'system', label: 'System-Wide', icon: BarChart3 }
   ];
 
-  useEffect(() => {
-    setChecklist(initializeChecklist());
-  }, []);
-
-  const runAllTests = async () => {
+  const runCompleteAssessment = async () => {
     setTesting(true);
-    const results: Record<string, any> = {};
-    
-    for (const item of checklist) {
-      if (item.testFunction) {
-        try {
-          const result = await item.testFunction();
-          results[item.id] = {
-            status: result ? 'pass' : 'fail',
-            timestamp: new Date().toISOString(),
-            details: result ? 'Test passed' : 'Test failed'
-          };
-        } catch (error) {
-          results[item.id] = {
-            status: 'fail',
-            timestamp: new Date().toISOString(),
-            details: error.message,
-            error: error
-          };
-        }
-      }
-    }
-    
-    setTestResults(results);
-    
-    // Update checklist with results
-    setChecklist(prev => prev.map(item => ({
-      ...item,
-      status: results[item.id]?.status || item.status
-    })));
-    
-    setTesting(false);
-  };
-
-  const runSingleTest = async (itemId: string) => {
-    const item = checklist.find(c => c.id === itemId);
-    if (!item?.testFunction) return;
+    ErrorLogger.info('Starting production readiness assessment');
     
     try {
-      const result = await item.testFunction();
-      const newResult = {
-        status: result ? 'pass' : 'fail',
-        timestamp: new Date().toISOString(),
-        details: result ? 'Test passed' : 'Test failed'
-      };
+      const result = await productionTester.runCompleteAssessment();
+      setAssessment(result);
       
-      setTestResults(prev => ({ ...prev, [itemId]: newResult }));
-      setChecklist(prev => prev.map(c => 
-        c.id === itemId ? { ...c, status: newResult.status as any } : c
-      ));
+      ErrorLogger.info('Production assessment completed', {
+        overallScore: result.overallScore,
+        criticalIssues: result.criticalIssues,
+        totalTests: result.testResults.length
+      });
+      
+      if (result.criticalIssues === 0) {
+        toast.success('Assessment Complete!', `Overall score: ${result.overallScore}% - Ready for production`);
+      } else {
+        toast.warning('Issues Found', `${result.criticalIssues} critical issues need attention`);
+      }
     } catch (error) {
-      const errorResult = {
-        status: 'fail',
-        timestamp: new Date().toISOString(),
-        details: error.message,
-        error: error
-      };
-      
-      setTestResults(prev => ({ ...prev, [itemId]: errorResult }));
-      setChecklist(prev => prev.map(c => 
-        c.id === itemId ? { ...c, status: 'fail' } : c
-      ));
+      ErrorLogger.error('Production assessment failed', { error: error.message });
+      toast.error('Assessment Failed', error.message);
+    } finally {
+      setTesting(false);
     }
+  };
+
+  const runStressTests = async () => {
+    setStressTesting(true);
+    
+    try {
+      // Run stress tests
+      const concurrentUsersTest = await productionTester.stressTestConcurrentUsers(50);
+      const rapidSubmissionsTest = await productionTester.stressTestRapidSubmissions();
+      
+      const stressResults = [concurrentUsersTest, rapidSubmissionsTest];
+      
+      if (assessment) {
+        setAssessment({
+          ...assessment,
+          testResults: [...assessment.testResults, ...stressResults]
+        });
+      }
+      
+      toast.success('Stress Tests Complete', 'Additional performance data collected');
+    } catch (error) {
+      toast.error('Stress Tests Failed', error.message);
+    } finally {
+      setStressTesting(false);
+    }
+  };
+
+  const exportAssessmentReport = () => {
+    if (!assessment) return;
+    
+    const report = {
+      timestamp: new Date().toISOString(),
+      overallScore: assessment.overallScore,
+      criticalIssues: assessment.criticalIssues,
+      testResults: assessment.testResults,
+      performanceMetrics: assessment.performanceMetrics,
+      securityValidation: assessment.securityValidation,
+      recommendations: assessment.recommendations,
+      environment: {
+        userAgent: navigator.userAgent,
+        url: window.location.href,
+        timestamp: new Date().toISOString()
+      }
+    };
+    
+    const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `lumi-production-assessment-${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    
+    toast.success('Report Exported', 'Production assessment report downloaded');
   };
 
   const getStatusIcon = (status: string) => {
@@ -414,261 +120,490 @@ export const ProductionReadinessChecklist: React.FC = () => {
   };
 
   const getCategoryIcon = (category: string) => {
-    switch (category) {
-      case 'Frontend':
-        return <Globe className="w-5 h-5" />;
-      case 'API':
-        return <Code className="w-5 h-5" />;
-      case 'Backend':
-        return <Database className="w-5 h-5" />;
-      case 'Security':
-        return <Shield className="w-5 h-5" />;
-      case 'Performance':
-        return <Zap className="w-5 h-5" />;
-      default:
-        return <CheckCircle className="w-5 h-5" />;
+    const categoryData = categories.find(c => c.id === category);
+    if (categoryData) {
+      const IconComponent = categoryData.icon;
+      return <IconComponent className="w-5 h-5" />;
     }
+    return <Code className="w-5 h-5" />;
   };
 
-  const categories = ['Frontend', 'API', 'Backend', 'Security', 'Performance'];
-  const overallScore = checklist.length > 0 ? 
-    Math.round((checklist.filter(item => item.status === 'pass').length / checklist.length) * 100) : 0;
-  const criticalIssues = checklist.filter(item => item.critical && item.status === 'fail').length;
+  const getFilteredResults = () => {
+    if (!assessment) return [];
+    if (selectedCategory === 'all') return assessment.testResults;
+    return assessment.testResults.filter(result => result.category === selectedCategory);
+  };
+
+  const getCategoryStats = (category: string) => {
+    if (!assessment) return { total: 0, passed: 0, failed: 0, warnings: 0 };
+    
+    const categoryResults = category === 'all' 
+      ? assessment.testResults 
+      : assessment.testResults.filter(r => r.category === category);
+    
+    return {
+      total: categoryResults.length,
+      passed: categoryResults.filter(r => r.status === 'pass').length,
+      failed: categoryResults.filter(r => r.status === 'fail').length,
+      warnings: categoryResults.filter(r => r.status === 'warning').length
+    };
+  };
 
   return (
-    <div className="max-w-6xl mx-auto p-6 space-y-8">
-      {/* Header */}
-      <div className="text-center">
-        <h1 className="text-3xl font-bold text-[#1A1A1A] mb-4">
-          Lumi Production Readiness Assessment
-        </h1>
-        <div className="flex items-center justify-center space-x-6">
-          <div className="text-center">
-            <div className={`text-4xl font-bold ${overallScore >= 90 ? 'text-green-600' : overallScore >= 70 ? 'text-yellow-600' : 'text-red-600'}`}>
-              {overallScore}%
+    <div className="min-h-screen bg-white">
+      <div className="max-w-7xl mx-auto px-6 py-8">
+        {/* Header */}
+        <div className="mb-8">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-[#1A1A1A] mb-2">
+                Production Readiness Assessment
+              </h1>
+              <p className="text-gray-600">
+                Comprehensive testing of frontend, middleware, backend, and system-wide components
+              </p>
             </div>
-            <p className="text-sm text-gray-600">Overall Score</p>
-          </div>
-          <div className="text-center">
-            <div className={`text-2xl font-bold ${criticalIssues === 0 ? 'text-green-600' : 'text-red-600'}`}>
-              {criticalIssues}
+            <div className="flex space-x-3">
+              <Button
+                onClick={runCompleteAssessment}
+                loading={testing}
+                icon={Play}
+                size="lg"
+              >
+                Run Complete Assessment
+              </Button>
+              {assessment && (
+                <Button
+                  onClick={exportAssessmentReport}
+                  variant="outline"
+                  icon={Download}
+                >
+                  Export Report
+                </Button>
+              )}
             </div>
-            <p className="text-sm text-gray-600">Critical Issues</p>
-          </div>
-          <div className="text-center">
-            <div className="text-lg font-medium text-blue-600">
-              {currentEnv.name}
-            </div>
-            <p className="text-sm text-gray-600">Environment</p>
           </div>
         </div>
-      </div>
 
-      {/* Test Controls */}
-      <Card className="p-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h3 className="text-lg font-semibold text-[#1A1A1A] mb-2">
-              Automated Testing Suite
-            </h3>
-            <p className="text-gray-600">
-              Run comprehensive tests to validate production readiness
-            </p>
+        {/* Overall Score */}
+        {assessment && (
+          <div className="grid md:grid-cols-4 gap-6 mb-8">
+            <Card className="p-6 text-center">
+              <div className={`text-4xl font-bold mb-2 ${
+                assessment.overallScore >= 90 ? 'text-green-600' : 
+                assessment.overallScore >= 70 ? 'text-yellow-600' : 'text-red-600'
+              }`}>
+                {assessment.overallScore}%
+              </div>
+              <p className="text-sm text-gray-600">Overall Score</p>
+            </Card>
+            
+            <Card className="p-6 text-center">
+              <div className={`text-3xl font-bold mb-2 ${
+                assessment.criticalIssues === 0 ? 'text-green-600' : 'text-red-600'
+              }`}>
+                {assessment.criticalIssues}
+              </div>
+              <p className="text-sm text-gray-600">Critical Issues</p>
+            </Card>
+            
+            <Card className="p-6 text-center">
+              <div className="text-2xl font-bold text-blue-600 mb-2">
+                {assessment.testResults.filter(t => t.status === 'pass').length}
+              </div>
+              <p className="text-sm text-gray-600">Tests Passed</p>
+            </Card>
+            
+            <Card className="p-6 text-center">
+              <div className="text-2xl font-bold text-purple-600 mb-2">
+                {assessment.performanceMetrics.loadTime.toFixed(0)}ms
+              </div>
+              <p className="text-sm text-gray-600">Load Time</p>
+            </Card>
           </div>
-          <Button
-            onClick={runAllTests}
-            loading={testing}
-            icon={Zap}
-            size="lg"
-          >
-            Run All Tests
-          </Button>
-        </div>
-      </Card>
+        )}
 
-      {/* Results by Category */}
-      <div className="grid gap-6">
-        {categories.map(category => {
-          const categoryItems = checklist.filter(item => item.category === category);
-          const categoryScore = categoryItems.length > 0 ? 
-            Math.round((categoryItems.filter(item => item.status === 'pass').length / categoryItems.length) * 100) : 0;
-          
-          return (
-            <Card key={category} className="p-6">
-              <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
-                    {getCategoryIcon(category)}
+        {/* Category Filter */}
+        <div className="mb-8">
+          <div className="flex flex-wrap gap-2">
+            {categories.map((category) => {
+              const IconComponent = category.icon;
+              const stats = getCategoryStats(category.id);
+              
+              return (
+                <button
+                  key={category.id}
+                  onClick={() => setSelectedCategory(category.id)}
+                  className={`
+                    flex items-center space-x-2 px-4 py-2 rounded-xl border transition-all duration-200
+                    ${selectedCategory === category.id
+                      ? 'bg-[#C44E38] text-white border-[#C44E38]'
+                      : 'bg-white text-gray-700 border-[#E6E2DD] hover:border-[#C44E38]'
+                    }
+                  `}
+                >
+                  <IconComponent className="w-4 h-4" />
+                  <span className="text-sm font-medium">{category.label}</span>
+                  {assessment && stats.total > 0 && (
+                    <span className={`text-xs px-2 py-1 rounded-full ${
+                      selectedCategory === category.id ? 'bg-white text-[#C44E38]' : 'bg-gray-100 text-gray-600'
+                    }`}>
+                      {stats.passed}/{stats.total}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Test Results */}
+        {assessment && (
+          <div className="space-y-6">
+            {/* Performance Metrics */}
+            <Card className="p-6">
+              <h3 className="text-lg font-semibold text-[#1A1A1A] mb-6">
+                Performance Metrics
+              </h3>
+              
+              <div className="grid md:grid-cols-4 gap-6">
+                <div className="text-center">
+                  <div className={`text-2xl font-bold mb-1 ${
+                    assessment.performanceMetrics.loadTime < 2000 ? 'text-green-600' : 
+                    assessment.performanceMetrics.loadTime < 3000 ? 'text-yellow-600' : 'text-red-600'
+                  }`}>
+                    {assessment.performanceMetrics.loadTime.toFixed(0)}ms
                   </div>
+                  <p className="text-sm text-gray-600">Load Time</p>
+                </div>
+                
+                <div className="text-center">
+                  <div className={`text-2xl font-bold mb-1 ${
+                    assessment.performanceMetrics.apiLatency < 500 ? 'text-green-600' : 
+                    assessment.performanceMetrics.apiLatency < 1000 ? 'text-yellow-600' : 'text-red-600'
+                  }`}>
+                    {assessment.performanceMetrics.apiLatency}ms
+                  </div>
+                  <p className="text-sm text-gray-600">API Latency</p>
+                </div>
+                
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-blue-600 mb-1">
+                    {assessment.performanceMetrics.memoryUsage}MB
+                  </div>
+                  <p className="text-sm text-gray-600">Memory Usage</p>
+                </div>
+                
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-purple-600 mb-1">
+                    {assessment.performanceMetrics.bundleSize}MB
+                  </div>
+                  <p className="text-sm text-gray-600">Bundle Size</p>
+                </div>
+              </div>
+            </Card>
+
+            {/* Security Validation */}
+            <Card className="p-6">
+              <h3 className="text-lg font-semibold text-[#1A1A1A] mb-6">
+                Security Validation
+              </h3>
+              
+              <div className="grid md:grid-cols-2 gap-6">
+                {Object.entries(assessment.securityValidation).map(([key, value]) => (
+                  <div key={key} className="flex items-center justify-between">
+                    <span className="text-gray-700 capitalize">
+                      {key.replace(/([A-Z])/g, ' $1').toLowerCase()}
+                    </span>
+                    <span className={`font-medium ${value ? 'text-green-600' : 'text-red-600'}`}>
+                      {value ? '✓ Secure' : '✗ Needs Attention'}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </Card>
+
+            {/* Critical Issues */}
+            {assessment.criticalIssues > 0 && (
+              <Card className="p-6 bg-red-50 border-red-200">
+                <div className="flex items-start space-x-4">
+                  <XCircle className="w-6 h-6 text-red-600 mt-1" />
                   <div>
-                    <h3 className="text-lg font-semibold text-[#1A1A1A]">
-                      {category}
+                    <h3 className="text-lg font-semibold text-red-900 mb-2">
+                      Critical Issues Found ({assessment.criticalIssues})
                     </h3>
-                    <p className="text-sm text-gray-600">
-                      {categoryItems.length} tests
+                    <p className="text-red-800 mb-4">
+                      These issues must be resolved before production launch.
                     </p>
+                    <div className="space-y-2">
+                      {assessment.recommendations.critical.map((issue, index) => (
+                        <div key={index} className="text-sm text-red-700">
+                          • {issue}
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
-                <div className="text-right">
-                  <div className={`text-2xl font-bold ${categoryScore >= 90 ? 'text-green-600' : categoryScore >= 70 ? 'text-yellow-600' : 'text-red-600'}`}>
-                    {categoryScore}%
-                  </div>
-                  <p className="text-sm text-gray-600">Score</p>
+              </Card>
+            )}
+
+            {/* Test Results by Category */}
+            <Card className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-lg font-semibold text-[#1A1A1A]">
+                  Test Results
+                  {selectedCategory !== 'all' && (
+                    <span className="ml-2 text-base font-normal text-gray-600">
+                      - {categories.find(c => c.id === selectedCategory)?.label}
+                    </span>
+                  )}
+                </h3>
+                <div className="flex space-x-2">
+                  <Button
+                    onClick={runStressTests}
+                    loading={stressTesting}
+                    variant="outline"
+                    size="sm"
+                    icon={Zap}
+                  >
+                    Run Stress Tests
+                  </Button>
+                  <Button
+                    onClick={runCompleteAssessment}
+                    loading={testing}
+                    variant="outline"
+                    size="sm"
+                    icon={RefreshCw}
+                  >
+                    Re-run Tests
+                  </Button>
                 </div>
               </div>
               
               <div className="space-y-4">
-                {categoryItems.map(item => (
-                  <div key={item.id} className="flex items-center justify-between p-4 bg-[#F8F6F4] rounded-xl">
+                {getFilteredResults().map((result) => (
+                  <div key={result.id} className="flex items-start justify-between p-4 bg-[#F8F6F4] rounded-xl">
                     <div className="flex items-start space-x-3">
-                      {getStatusIcon(item.status)}
+                      {getStatusIcon(result.status)}
                       <div className="flex-1">
-                        <div className="flex items-center space-x-2">
+                        <div className="flex items-center space-x-2 mb-1">
                           <p className="font-medium text-[#1A1A1A]">
-                            {item.name}
+                            {result.name}
                           </p>
-                          {item.critical && (
+                          {result.critical && (
                             <span className="px-2 py-1 bg-red-100 text-red-700 text-xs rounded-full">
                               Critical
                             </span>
                           )}
+                          <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full capitalize">
+                            {result.category}
+                          </span>
                         </div>
-                        <p className="text-sm text-gray-600">
-                          {item.details}
+                        <p className="text-sm text-gray-600 mb-2">
+                          {result.description}
                         </p>
-                        {testResults[item.id] && (
-                          <p className="text-xs text-gray-500 mt-1">
-                            Last tested: {new Date(testResults[item.id].timestamp).toLocaleString()}
+                        <p className="text-xs text-gray-500">
+                          {result.details}
+                        </p>
+                        {result.timestamp && (
+                          <p className="text-xs text-gray-400 mt-1">
+                            Tested: {result.timestamp.toLocaleString()}
                           </p>
                         )}
                       </div>
                     </div>
                     
-                    {item.testFunction && (
-                      <Button
-                        onClick={() => runSingleTest(item.id)}
-                        variant="outline"
-                        size="sm"
-                      >
-                        Test
-                      </Button>
-                    )}
+                    <div className="text-right">
+                      <span className={`text-sm font-medium capitalize ${
+                        result.status === 'pass' ? 'text-green-600' :
+                        result.status === 'warning' ? 'text-yellow-600' : 'text-red-600'
+                      }`}>
+                        {result.status}
+                      </span>
+                      {result.metrics && Object.keys(result.metrics).length > 0 && (
+                        <details className="mt-2">
+                          <summary className="text-xs text-gray-500 cursor-pointer">
+                            Metrics
+                          </summary>
+                          <div className="text-xs text-gray-600 mt-1">
+                            {Object.entries(result.metrics).map(([key, value]) => (
+                              <div key={key}>
+                                {key}: {typeof value === 'boolean' ? (value ? '✓' : '✗') : value}
+                              </div>
+                            ))}
+                          </div>
+                        </details>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>
             </Card>
-          );
-        })}
-      </div>
 
-      {/* Critical Issues Summary */}
-      {criticalIssues > 0 && (
-        <Card className="p-6 bg-red-50 border-red-200">
-          <div className="flex items-start space-x-4">
-            <XCircle className="w-6 h-6 text-red-600 mt-1" />
-            <div>
-              <h3 className="text-lg font-semibold text-red-900 mb-2">
-                Critical Issues Found
-              </h3>
-              <p className="text-red-800 mb-4">
-                {criticalIssues} critical issue{criticalIssues !== 1 ? 's' : ''} must be resolved before production launch.
-              </p>
-              <div className="space-y-2">
-                {checklist
-                  .filter(item => item.critical && item.status === 'fail')
-                  .map(item => (
-                    <div key={item.id} className="text-sm text-red-700">
-                      • {item.name}: {testResults[item.id]?.details || 'Test failed'}
-                    </div>
-                  ))}
+            {/* Recommendations */}
+            {assessment.recommendations && (
+              <div className="grid md:grid-cols-3 gap-6">
+                {/* Critical Issues */}
+                {assessment.recommendations.critical.length > 0 && (
+                  <Card className="p-6">
+                    <h4 className="font-semibold text-red-900 mb-4">
+                      🚨 Must Fix Before Launch
+                    </h4>
+                    <ul className="space-y-2">
+                      {assessment.recommendations.critical.map((item, index) => (
+                        <li key={index} className="text-sm text-red-800">
+                          • {item}
+                        </li>
+                      ))}
+                    </ul>
+                  </Card>
+                )}
+                
+                {/* Improvements */}
+                {assessment.recommendations.improvements.length > 0 && (
+                  <Card className="p-6">
+                    <h4 className="font-semibold text-yellow-900 mb-4">
+                      ⚠️ Recommended Improvements
+                    </h4>
+                    <ul className="space-y-2">
+                      {assessment.recommendations.improvements.slice(0, 5).map((item, index) => (
+                        <li key={index} className="text-sm text-yellow-800">
+                          • {item}
+                        </li>
+                      ))}
+                    </ul>
+                  </Card>
+                )}
+                
+                {/* Monitoring */}
+                <Card className="p-6">
+                  <h4 className="font-semibold text-blue-900 mb-4">
+                    📊 Monitoring Setup
+                  </h4>
+                  <ul className="space-y-2">
+                    {assessment.recommendations.monitoring.map((item, index) => (
+                      <li key={index} className="text-sm text-blue-800">
+                        • {item}
+                      </li>
+                    ))}
+                  </ul>
+                </Card>
+              </div>
+            )}
+
+            {/* Stress Testing Results */}
+            {assessment.testResults.some(t => t.id.includes('stress')) && (
+              <Card className="p-6">
+                <h3 className="text-lg font-semibold text-[#1A1A1A] mb-6">
+                  Stress Testing Results
+                </h3>
+                
+                <div className="space-y-4">
+                  {assessment.testResults
+                    .filter(t => t.id.includes('stress'))
+                    .map((result) => (
+                      <div key={result.id} className="p-4 bg-blue-50 border border-blue-200 rounded-xl">
+                        <div className="flex items-center justify-between mb-2">
+                          <h4 className="font-medium text-blue-900">{result.name}</h4>
+                          <span className={`text-sm font-medium ${
+                            result.status === 'pass' ? 'text-green-600' :
+                            result.status === 'warning' ? 'text-yellow-600' : 'text-red-600'
+                          }`}>
+                            {result.status.toUpperCase()}
+                          </span>
+                        </div>
+                        <p className="text-sm text-blue-800">{result.details}</p>
+                        {result.metrics && (
+                          <div className="mt-2 text-xs text-blue-700">
+                            {Object.entries(result.metrics).map(([key, value]) => (
+                              <span key={key} className="mr-4">
+                                {key}: {typeof value === 'number' ? value.toFixed(1) : value.toString()}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                </div>
+              </Card>
+            )}
+          </div>
+        )}
+
+        {/* Initial State */}
+        {!assessment && !testing && (
+          <Card className="p-12 text-center">
+            <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
+              <Play className="w-8 h-8 text-blue-600" />
+            </div>
+            <h3 className="text-xl font-semibold text-[#1A1A1A] mb-4">
+              Ready to Test Production Readiness
+            </h3>
+            <p className="text-gray-600 mb-8 max-w-2xl mx-auto">
+              This comprehensive assessment will test frontend functionality, middleware APIs, 
+              backend data integrity, security measures, performance metrics, and system-wide workflows.
+            </p>
+            
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+              <div className="text-center">
+                <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center mx-auto mb-2">
+                  <Globe className="w-6 h-6 text-green-600" />
+                </div>
+                <p className="text-sm font-medium text-[#1A1A1A]">Frontend</p>
+                <p className="text-xs text-gray-600">UI/UX, Forms, Navigation</p>
+              </div>
+              
+              <div className="text-center">
+                <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mx-auto mb-2">
+                  <Database className="w-6 h-6 text-blue-600" />
+                </div>
+                <p className="text-sm font-medium text-[#1A1A1A]">Middleware</p>
+                <p className="text-xs text-gray-600">APIs, Auth, Business Logic</p>
+              </div>
+              
+              <div className="text-center">
+                <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center mx-auto mb-2">
+                  <Shield className="w-6 h-6 text-purple-600" />
+                </div>
+                <p className="text-sm font-medium text-[#1A1A1A]">Backend</p>
+                <p className="text-xs text-gray-600">Database, Security, Scaling</p>
+              </div>
+              
+              <div className="text-center">
+                <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center mx-auto mb-2">
+                  <BarChart3 className="w-6 h-6 text-orange-600" />
+                </div>
+                <p className="text-sm font-medium text-[#1A1A1A]">System-Wide</p>
+                <p className="text-xs text-gray-600">Workflows, Monitoring</p>
               </div>
             </div>
-          </div>
-        </Card>
-      )}
+            
+            <Button
+              onClick={runCompleteAssessment}
+              size="lg"
+              icon={Play}
+              className="px-12"
+            >
+              Start Production Assessment
+            </Button>
+          </Card>
+        )}
 
-      {/* Production Readiness Summary */}
-      <Card className="p-6 bg-gradient-to-r from-blue-50 to-green-50 border-blue-200">
-        <h3 className="text-lg font-semibold text-blue-900 mb-4">
-          Production Readiness Summary
-        </h3>
-        
-        <div className="grid md:grid-cols-3 gap-6">
-          <div>
-            <h4 className="font-medium text-blue-900 mb-2">Ready for Launch</h4>
-            <ul className="text-sm text-blue-800 space-y-1">
-              {checklist
-                .filter(item => item.status === 'pass')
-                .slice(0, 5)
-                .map(item => (
-                  <li key={item.id} className="flex items-center">
-                    <CheckCircle className="w-3 h-3 text-green-600 mr-2" />
-                    {item.name}
-                  </li>
-                ))}
-            </ul>
-          </div>
-          
-          <div>
-            <h4 className="font-medium text-yellow-900 mb-2">Needs Attention</h4>
-            <ul className="text-sm text-yellow-800 space-y-1">
-              {checklist
-                .filter(item => item.status === 'warning' || item.status === 'untested')
-                .slice(0, 5)
-                .map(item => (
-                  <li key={item.id} className="flex items-center">
-                    <AlertTriangle className="w-3 h-3 text-yellow-600 mr-2" />
-                    {item.name}
-                  </li>
-                ))}
-            </ul>
-          </div>
-          
-          <div>
-            <h4 className="font-medium text-red-900 mb-2">Must Fix</h4>
-            <ul className="text-sm text-red-800 space-y-1">
-              {checklist
-                .filter(item => item.status === 'fail')
-                .slice(0, 5)
-                .map(item => (
-                  <li key={item.id} className="flex items-center">
-                    <XCircle className="w-3 h-3 text-red-600 mr-2" />
-                    {item.name}
-                  </li>
-                ))}
-            </ul>
-          </div>
-        </div>
-      </Card>
-
-      {/* Stress Testing Recommendations */}
-      <Card className="p-6">
-        <h3 className="text-lg font-semibold text-[#1A1A1A] mb-4">
-          Recommended Stress Tests
-        </h3>
-        
-        <div className="grid md:grid-cols-2 gap-6">
-          <div>
-            <h4 className="font-medium text-[#1A1A1A] mb-3">Load Testing</h4>
-            <ul className="text-sm text-gray-700 space-y-2">
-              <li>• 100 concurrent users logging behaviors</li>
-              <li>• 500 simultaneous strategy generations</li>
-              <li>• 1,000 organization members</li>
-              <li>• Bulk report generation (1000+ records)</li>
-            </ul>
-          </div>
-          
-          <div>
-            <h4 className="font-medium text-[#1A1A1A] mb-3">Edge Cases</h4>
-            <ul className="text-sm text-gray-700 space-y-2">
-              <li>• Network timeouts and retries</li>
-              <li>• Malformed API requests</li>
-              <li>• Expired authentication tokens</li>
-              <li>• Database connection failures</li>
-            </ul>
-          </div>
-        </div>
-      </Card>
+        {/* Testing in Progress */}
+        {testing && (
+          <Card className="p-12 text-center">
+            <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
+              <div className="animate-spin w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full" />
+            </div>
+            <h3 className="text-xl font-semibold text-[#1A1A1A] mb-4">
+              Running Production Assessment...
+            </h3>
+            <p className="text-gray-600">
+              Testing frontend, middleware, backend, security, and performance layers
+            </p>
+          </Card>
+        )}
+      </div>
     </div>
   );
 };

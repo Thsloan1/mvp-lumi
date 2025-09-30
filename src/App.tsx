@@ -43,6 +43,7 @@ import { DeveloperPortal } from './components/Testing/TestEnvironmentPanel';
 import { TestUserFeedbackWidget } from './components/Testing/TestUserFeedbackWidget';
 import { ProductionReadinessChecklist } from './components/Testing/ProductionReadinessChecklist';
 import { ArrowLeft } from 'lucide-react';
+import { Button } from './components/UI/Button';
 
 const AppContent: React.FC = () => {
   const { currentView, setCurrentView, currentUser, isLoading, isAuthenticated } = useAppContext();
@@ -166,6 +167,22 @@ const AppContent: React.FC = () => {
         return <OrganizationAnalytics />;
       case 'developer-app-manager':
         return <DeveloperAppManager />;
+      case 'production-readiness':
+        return (
+          <div className="min-h-screen bg-white">
+            <div className="max-w-7xl mx-auto px-6 py-8">
+              <Button
+                variant="ghost"
+                onClick={() => setCurrentView('dashboard')}
+                icon={ArrowLeft}
+                className="mb-6 -ml-2"
+              >
+                Back to Dashboard
+              </Button>
+              <ProductionReadinessChecklist />
+            </div>
+          </div>
+        );
       default:
         // Handle dynamic child profile detail routes
         if (currentView.startsWith('child-profile-detail-')) {
