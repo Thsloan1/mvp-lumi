@@ -4,6 +4,19 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 require('dotenv').config();
 
+// Global error handlers for debugging
+process.on('uncaughtException', (error) => {
+  console.error('❌ Uncaught Exception:', error);
+  console.error('Stack:', error.stack);
+  process.exit(1);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('❌ Unhandled Rejection at:', promise, 'reason:', reason);
+  console.error('Stack:', reason?.stack);
+  process.exit(1);
+});
+
 const PORT = process.env.PORT || 3001;
 const JWT_SECRET = process.env.JWT_SECRET || 'lumi-secret-key-change-in-production';
 
@@ -1073,12 +1086,21 @@ app.use('*', (req, res) => {
   res.status(404).json({ error: 'Endpoint not found' });
 });
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, '127.0.0.1', () => {
   console.log(`🚀 Lumi Core API server running on port ${PORT}`);
+  console.log(`📡 Server accessible at http://127.0.0.1:${PORT}`);
   console.log(`📊 Mock data initialized:`);
   console.log(`   - Users: ${users.length}`);
   console.log(`   - Children: ${children.length}`);
   console.log(`   - Classrooms: ${classrooms.length}`);
   console.log(`   - Behavior Logs: ${behaviorLogs.length}`);
   console.log(`   - Classroom Logs: ${classroomLogs.length}`);
+});
+
+server.on('error', (error) => {
+  console.error('❌ Server failed to start:', error);
+  if (error.code === 'EADDRINUSE') {
+    console.error(`Port ${PORT} is already in use. Please try a different port.`);
+  }
+  process.exit(1);
 });
