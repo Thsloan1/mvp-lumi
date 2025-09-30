@@ -266,7 +266,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     } finally {
       setIsLoading(false);
     }
-  }, [setCurrentUser, setCurrentView, setIsLoading]);
+  };
 
   const loadUserData = async () => {
     if (!currentUser) return;
