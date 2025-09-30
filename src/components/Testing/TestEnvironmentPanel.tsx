@@ -8,6 +8,7 @@ import { testDataManager } from '../../data/testData';
 import { getCurrentEnvironment, isTestEnvironment } from '../../config/environments';
 import { DeveloperAnalyticsEngine } from '../../utils/developerAnalytics';
 import { safeLocalStorageGet, safeLocalStorageSet } from '../../utils/jsonUtils';
+import { SecurityCompliancePanel } from './SecurityCompliancePanel';
 
 export const DeveloperPortal: React.FC = () => {
   const { currentView, setCurrentView, currentUser, setCurrentUser, toast, behaviorLogs, classroomLogs, children, classrooms, inviteEducators } = useAppContext();
@@ -54,6 +55,7 @@ export const DeveloperPortal: React.FC = () => {
     { id: 'testing', label: 'Testing Environment', icon: Play },
     { id: 'user-management', label: 'Test User Management', icon: Users },
     { id: 'feedback', label: 'Feedback & Reviews', icon: MessageCircle },
+    { id: 'security', label: 'Security & Compliance', icon: Shield },
     { id: 'client-data', label: 'Client Data', icon: Database },
     { id: 'analytics', label: 'Analytics & Reports', icon: BarChart3 },
     { id: 'revenue', label: 'Revenue & Subscriptions', icon: DollarSign },
@@ -924,6 +926,7 @@ export const DeveloperPortal: React.FC = () => {
           {activeModule === 'testing' && renderTestingEnvironment()}
           {activeModule === 'user-management' && renderUserManagement()}
           {activeModule === 'feedback' && renderFeedbackReviews()}
+          {activeModule === 'security' && <SecurityCompliancePanel />}
           {activeModule === 'client-data' && renderClientData()}
           {activeModule === 'analytics' && renderAnalyticsReports()}
           {activeModule === 'revenue' && renderRevenueData()}
