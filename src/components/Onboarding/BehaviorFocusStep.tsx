@@ -12,9 +12,9 @@ interface BehaviorFocusStepProps {
 export const BehaviorFocusStep: React.FC<BehaviorFocusStepProps> = ({ data, updateData }) => {
   const behaviorOptions = [
     'Hitting, biting, kicking, throwing',
-    'Tantrums',
+    'Tantrums, strong protest/refusal',
     'Kids not getting along',
-    'Out of control emotions',
+    'Anger, sadness, fear',
     'Chaotic routines/transitions',
     'Staying away from others',
     'Hard to use words to express',
