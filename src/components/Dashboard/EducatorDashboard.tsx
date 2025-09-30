@@ -360,7 +360,7 @@ export const EducatorDashboard: React.FC = () => {
                   Recent Activity
                 </h3>
                 
-                {mockRecentActivity.length === 0 ? (
+                {recentActivity.length === 0 ? (
                   <EmptyState
                     icon={Heart}
                     title="Ready to get started?"
@@ -370,7 +370,7 @@ export const EducatorDashboard: React.FC = () => {
                   />
                 ) : (
                   <div className="space-y-4">
-                    {mockRecentActivity.map((activity, index) => (
+                    {recentActivity.map((activity, index) => (
                       <div key={index} className="flex items-start space-x-4 p-4 bg-[#F8F6F4] rounded-xl">
                         <div className={`
                           w-2 h-2 rounded-full mt-2

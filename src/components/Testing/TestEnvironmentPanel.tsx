@@ -7,6 +7,7 @@ import { useAppContext } from '../../context/AppContext';
 import { testDataManager } from '../../data/testData';
 import { getCurrentEnvironment, isTestEnvironment } from '../../config/environments';
 import { DeveloperAnalyticsEngine } from '../../utils/developerAnalytics';
+import { knowledgeLibrary } from '../../data/knowledgeLibrary';
 import { safeLocalStorageGet, safeLocalStorageSet } from '../../utils/jsonUtils';
 import { SecurityCompliancePanel } from './SecurityCompliancePanel';
 
@@ -18,6 +19,8 @@ export const DeveloperPortal: React.FC = () => {
   const [selectedUserId, setSelectedUserId] = useState('');
   const [selectedOrgId, setSelectedOrgId] = useState('');
   const [testUsers, setTestUsers] = useState<any[]>([]);
+  const [editingFramework, setEditingFramework] = useState<string | null>(null);
+  const [frameworkUpdates, setFrameworkUpdates] = useState<Record<string, any>>({});
   const [newTestUser, setNewTestUser] = useState({
     email: '',
     fullName: '',
@@ -358,6 +361,13 @@ export const DeveloperPortal: React.FC = () => {
     toast.success('Access Codes Copied', 'All codes copied to clipboard');
   };
 
+  const handleCopyAccessCode = () => {
+    // Implementation for copying access code
+    toast.success('Access Code Copied', 'Code copied to clipboard');
+  };
+
+  const [copiedCode, setCopiedCode] = useState(false);
+
   const handleModuleToggle = (module: string) => {
     const currentModules = newTestUser.modules || [];
     const isSelected = currentModules.includes(module);
@@ -372,6 +382,151 @@ export const DeveloperPortal: React.FC = () => {
     setNewTestUser(prev => ({ ...prev, modules: newModules }));
   };
 
+  const renderUserManagement = () => (
+    <div className="space-y-6">
+      {/* Test User Creation */}
+      <Card className="p-4">
+        <div className="flex items-center justify-between mb-4">
+          <h4 className="font-semibold text-gray-900">Test User Management</h4>
+          <Button
+            onClick={() => setShowInviteForm(!showInviteForm)}
+            size="sm"
+            icon={Plus}
+          >
+            Add Test User
+          </Button>
+        </div>
+
+        {showInviteForm && (
+          <div className="space-y-4 mb-6 p-4 bg-gray-50 rounded-lg">
+            <div className="grid grid-cols-2 gap-3">
+              <Input
+                label="Full Name"
+                value={newTestUser.fullName}
+                onChange={(value) => setNewTestUser(prev => ({ ...prev, fullName: value }))}
+                placeholder="Enter full name"
+              />
+              <Input
+                label="Email"
+                type="email"
+                value={newTestUser.email}
+                onChange={(value) => setNewTestUser(prev => ({ ...prev, email: value }))}
+                placeholder="Enter email"
+              />
+            </div>
+            <div className="flex space-x-2">
+              <Button onClick={handleCreateTestUser} size="sm">
+                Create Test User
+              </Button>
+              <Button
+                onClick={() => setShowInviteForm(false)}
+                variant="ghost"
+                size="sm"
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* Active Test Users */}
+        <div className="space-y-2">
+          {testUsers.map((user) => (
+            <div key={user.id} className="flex items-center justify-between p-3 bg-white rounded-lg border">
+              <div>
+                <p className="font-medium text-sm">{user.fullName}</p>
+                <p className="text-xs text-gray-600">{user.email}</p>
+                <p className="text-xs text-purple-600">Code: {user.accessCode}</p>
+              </div>
+              <Button
+                onClick={() => handleRemoveTestUser(user.id)}
+                size="sm"
+                variant="ghost"
+                className="text-red-600"
+              >
+                Remove
+              </Button>
+            </div>
+          ))}
+        </div>
+
+        {testUsers.length > 0 && (
+          <div className="flex space-x-2 mt-4">
+            <Button
+              onClick={handleExportInvitations}
+              size="sm"
+              variant="outline"
+              icon={Download}
+            >
+              Export Invitations
+            </Button>
+            <Button
+              onClick={handleCopyAllCodes}
+              size="sm"
+              variant="outline"
+            >
+              Copy All Codes
+            </Button>
+          </div>
+        )}
+      </div>
+    </Card>
+  );
+
+  const renderFeedbackReviews = () => (
+    <div className="space-y-6">
+      <Card className="p-4">
+        <h4 className="font-semibold text-gray-900 mb-4">
+          Test User Feedback ({feedback.length})
+        </h4>
+        
+        {feedback.length === 0 ? (
+          <div className="text-center py-6">
+            <MessageCircle className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+            <p className="text-sm text-gray-600">No feedback submitted yet</p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {feedback.slice(0, 5).map((item, index) => (
+              <div key={index} className="p-3 bg-white rounded-lg border">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center space-x-2">
+                    <span className="font-medium text-sm">{item.testerName}</span>
+                    <div className="flex space-x-1">
+                      {Array.from({length: 5}).map((_, i) => (
+                        <div key={i} className={`w-3 h-3 ${
+                          i < item.rating ? 'text-yellow-400' : 'text-gray-300'
+                        }`}>
+                          ⭐
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <span className="text-xs text-gray-500">
+                    {new Date(item.submittedAt).toLocaleDateString()}
+                  </span>
+                </div>
+                <p className="text-sm text-gray-700 mb-1">{item.feedback}</p>
+                <div className="flex space-x-2">
+                  <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">
+                    {item.category}
+                  </span>
+                  <span className={`px-2 py-1 text-xs rounded-full ${
+                    item.priority === 'critical' ? 'bg-red-100 text-red-700' :
+                    item.priority === 'high' ? 'bg-orange-100 text-orange-700' :
+                    item.priority === 'medium' ? 'bg-yellow-100 text-yellow-700' :
+                    'bg-blue-100 text-blue-700'
+                  }`}>
+                    {item.priority}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </Card>
+    </div>
+  );
   const renderTestingEnvironment = () => (
     <div className="space-y-6">
       {/* Environment Info */}

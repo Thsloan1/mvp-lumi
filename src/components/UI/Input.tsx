@@ -16,6 +16,7 @@ interface InputProps {
   max?: number;
   maxLength?: number;
   autoComplete?: string;
+  autoFocus?: boolean;
   'aria-describedby'?: string;
 }
 
@@ -35,6 +36,7 @@ export const Input: React.FC<InputProps> = ({
   max,
   maxLength,
   autoComplete,
+  autoFocus,
   'aria-describedby': ariaDescribedBy
 }) => {
   const inputClasses = `
@@ -68,6 +70,7 @@ export const Input: React.FC<InputProps> = ({
           disabled={disabled}
           rows={rows || 4}
           className={inputClasses}
+          autoFocus={autoFocus}
         />
       ) : (
         <input
@@ -83,6 +86,7 @@ export const Input: React.FC<InputProps> = ({
           autoComplete={autoComplete}
           aria-describedby={ariaDescribedBy}
           className={inputClasses}
+          autoFocus={autoFocus}
         />
       )}
       

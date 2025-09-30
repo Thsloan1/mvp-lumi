@@ -181,6 +181,9 @@ export const TestUserFeedbackWidget: React.FC<TestUserFeedbackWidgetProps> = ({
                     className={`${copiedCode ? 'text-green-600' : 'text-gray-500'} px-2`}
                   />
                 </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  Use this code to identify your feedback submissions
+                </p>
               </div>
             </div>
           </div>
