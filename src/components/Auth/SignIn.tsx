@@ -80,8 +80,7 @@ export const SignIn: React.FC = () => {
           {/* Social Sign In Options */}
           <div className="space-y-3 mb-6">
             <Button
-              variant="outline"
-              className="w-full justify-center bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
+              className="w-full justify-center border border-black bg-white text-black hover:bg-black hover:text-white hover:border-black transition-all duration-200"
               size="lg"
               onClick={() => {
                 // Handle Google signin
@@ -98,8 +97,7 @@ export const SignIn: React.FC = () => {
             </Button>
             
             <Button
-              variant="outline"
-              className="w-full justify-center bg-black text-white hover:bg-gray-800 border-black"
+              className="w-full justify-center border border-black bg-white text-black hover:bg-black hover:text-white hover:border-black transition-all duration-200"
               size="lg"
               onClick={() => {
                 // Handle Apple signin
@@ -113,8 +111,7 @@ export const SignIn: React.FC = () => {
             </Button>
 
             <Button
-              variant="outline"
-              className="w-full justify-center bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
+              className="w-full justify-center border border-black bg-white text-black hover:bg-black hover:text-white hover:border-black transition-all duration-200"
               size="lg"
               onClick={() => {
                 // Handle Microsoft signin
@@ -187,7 +184,7 @@ export const SignIn: React.FC = () => {
             <Button
               type="submit"
               loading={loading}
-              className="w-full bg-[#C44E38] hover:bg-[#A63D2A] text-white"
+              className="w-full bg-black border border-black text-white hover:bg-[#C44E38] hover:border-[#C44E38] transition-all duration-200"
               size="lg"
               disabled={loading}
             >

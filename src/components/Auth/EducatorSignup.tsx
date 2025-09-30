@@ -106,8 +106,7 @@ export const EducatorSignup: React.FC = () => {
           {/* Social Sign Up Options */}
           <div className="space-y-4 mb-6">
             <Button
-              variant="outline"
-              className="w-full justify-center"
+              className="w-full justify-center border border-black bg-white text-black hover:bg-black hover:text-white hover:border-black transition-all duration-200"
               size="lg"
               onClick={() => {
                 // Handle Google signup
@@ -124,8 +123,7 @@ export const EducatorSignup: React.FC = () => {
             </Button>
             
             <Button
-              variant="outline"
-              className="w-full justify-center"
+              className="w-full justify-center border border-black bg-white text-black hover:bg-black hover:text-white hover:border-black transition-all duration-200"
               size="lg"
               onClick={() => {
                 // Handle Apple signup
@@ -199,7 +197,7 @@ export const EducatorSignup: React.FC = () => {
             <Button
               type="submit"
               loading={loading}
-              className="w-full"
+              className="w-full bg-black border border-black text-white hover:bg-[#C44E38] hover:border-[#C44E38] transition-all duration-200"
               size="lg"
               disabled={loading}
             >
