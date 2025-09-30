@@ -29,6 +29,12 @@ export const TestEnvironmentPanel: React.FC = () => {
   const { currentUser, setCurrentUser, setCurrentView, toast } = useAppContext();
   const [isOpen, setIsOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'users' | 'scenarios' | 'data' | 'analytics' | 'email' | 'feedback'>('users');
+  const [position, setPosition] = useState({ x: 100, y: 100 });
+  const [size, setSize] = useState({ width: 900, height: 600 });
+  const [isDragging, setIsDragging] = useState(false);
+  const [isResizing, setIsResizing] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const [resizeStart, setResizeStart] = useState({ x: 0, y: 0, width: 0, height: 0 });
   const [testUsers, setTestUsers] = useState<TestUser[]>(() => 
     safeLocalStorageGet('lumi_test_users', [])
   );
@@ -48,6 +54,55 @@ export const TestEnvironmentPanel: React.FC = () => {
     return null;
   }
 
+  // Mouse event handlers for dragging
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (isDragging) {
+        setPosition({
+          x: e.clientX - dragStart.x,
+          y: e.clientY - dragStart.y
+        });
+      }
+      if (isResizing) {
+        const newWidth = Math.max(400, resizeStart.width + (e.clientX - resizeStart.x));
+        const newHeight = Math.max(300, resizeStart.height + (e.clientY - resizeStart.y));
+        setSize({ width: newWidth, height: newHeight });
+      }
+    };
+
+    const handleMouseUp = () => {
+      setIsDragging(false);
+      setIsResizing(false);
+    };
+
+    if (isDragging || isResizing) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+      return () => {
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+      };
+    }
+  }, [isDragging, isResizing, dragStart, resizeStart]);
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    setIsDragging(true);
+    setDragStart({
+      x: e.clientX - position.x,
+      y: e.clientY - position.y
+    });
+  };
+
+  const handleResizeMouseDown = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsResizing(true);
+    setResizeStart({
+      x: e.clientX,
+      y: e.clientY,
+      width: size.width,
+      height: size.height
+    });
+  };
   const generateAccessCode = (): string => {
     return Math.random().toString(36).substring(2, 8).toUpperCase();
   };
@@ -678,8 +733,107 @@ export const TestEnvironmentPanel: React.FC = () => {
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-6 z-50">
-      <Card className="w-full max-w-6xl max-h-[90vh] overflow-hidden">
+    <div className="fixed inset-0 bg-black bg-opacity-30 z-50 pointer-events-none">
+      <div 
+        className="absolute bg-white rounded-xl shadow-2xl border border-gray-200 pointer-events-auto"
+        style={{
+          left: `${position.x}px`,
+          top: `${position.y}px`,
+          width: `${size.width}px`,
+          height: `${size.height}px`,
+          minWidth: '400px',
+          minHeight: '300px',
+          maxWidth: '95vw',
+          maxHeight: '95vh'
+        }}
+      >
+        {/* Draggable Header */}
+        <div 
+          className="flex items-center justify-between p-4 bg-purple-600 text-white rounded-t-xl cursor-move select-none"
+          onMouseDown={handleMouseDown}
+        >
+          <div>
+            <h2 className="text-lg font-bold">
+              Developer Portal
+            </h2>
+            <p className="text-sm text-purple-100">
+              Test environment management and user testing tools
+            </p>
+          </div>
+          <Button
+            variant="ghost"
+            onClick={() => setIsOpen(false)}
+            icon={X}
+            className="text-white hover:bg-purple-700 p-2"
+          />
+        </div>
+
+        {/* Environment Info */}
+        <div className="bg-purple-50 border-b border-purple-200 px-4 py-3">
+          <div className="flex items-center space-x-3">
+            <div className="w-3 h-3 bg-purple-500 rounded-full" />
+            <div>
+              <p className="font-medium text-purple-900 text-sm">
+                Environment: {currentEnv.name}
+              </p>
+              <p className="text-xs text-purple-700">
+                Mock data enabled • Test panel active • Email delivery configured
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Tabs */}
+        <div className="border-b border-gray-200 px-4">
+          <nav className="flex space-x-6 overflow-x-auto">
+            {tabs.map((tab) => {
+              const IconComponent = tab.icon;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id as any)}
+                  className={`
+                    flex items-center space-x-2 py-3 px-1 border-b-2 font-medium text-sm transition-colors whitespace-nowrap
+                    ${activeTab === tab.id
+                      ? 'border-purple-600 text-purple-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    }
+                  `}
+                >
+                  <IconComponent className="w-4 h-4" />
+                  <span>{tab.label}</span>
+                </button>
+              );
+            })}
+          </nav>
+        </div>
+
+        {/* Scrollable Content Area */}
+        <div 
+          className="flex-1 overflow-y-auto p-4"
+          style={{ 
+            height: `${size.height - 140}px`, // Account for header and tabs
+            maxHeight: `${size.height - 140}px`
+          }}
+        >
+          {activeTab === 'users' && renderUserManagement()}
+          {activeTab === 'scenarios' && renderTestScenarios()}
+          {activeTab === 'data' && renderDataManagement()}
+          {activeTab === 'analytics' && renderAnalytics()}
+          {activeTab === 'email' && renderEmailDelivery()}
+          {activeTab === 'feedback' && renderFeedbackManagement()}
+        </div>
+
+        {/* Resize Handle */}
+        <div 
+          className="absolute bottom-0 right-0 w-4 h-4 bg-purple-600 cursor-se-resize opacity-50 hover:opacity-100 transition-opacity"
+          onMouseDown={handleResizeMouseDown}
+          style={{
+            clipPath: 'polygon(100% 0%, 0% 100%, 100% 100%)'
+          }}
+        />
+      </div>
+    </div>
         <div className="p-6">
           {/* Header */}
           <div className="flex items-center justify-between mb-6">
