@@ -108,43 +108,69 @@ export const OnboardingWizard: React.FC = () => {
         }
       });
 
-      // Prepare complete onboarding data
+      console.log('Starting onboarding completion with data:', onboardingData);
+      
+      // Validate required fields before submission
+      if (!onboardingData.firstName || !onboardingData.lastName) {
+        throw new Error('Name is required to complete onboarding');
+      }
+      
+      if (!onboardingData.preferredLanguage) {
+        throw new Error('Preferred language is required');
+      }
+      
+      if (!onboardingData.classroomName || !onboardingData.gradeBand) {
+        throw new Error('Classroom information is required');
+      }
+      
+      // Prepare complete onboarding data with proper validation
       const completeData = {
-        fullName: `${onboardingData.firstName} ${onboardingData.lastName}`,
+        // User profile data
+        fullName: `${onboardingData.firstName.trim()} ${onboardingData.lastName.trim()}`,
         preferredLanguage: onboardingData.preferredLanguage,
-        learningStyle: onboardingData.learningStyle,
-        teachingStyle: onboardingData.teachingStyle,
-        profilePhotoUrl: onboardingData.profilePhotoUrl,
-        yearsOfExperience: onboardingData.yearsOfExperience,
-        highestEducation: onboardingData.highestEducation,
-        role: onboardingData.role,
-        schoolName: onboardingData.schoolName,
-        roomNumber: onboardingData.roomNumber,
-        schoolDistrict: onboardingData.schoolDistrict,
-        county: onboardingData.county,
-        behaviorFocus: onboardingData.behaviorFocus,
-        behaviorConfidence: onboardingData.behaviorConfidence,
-        specificBehavior: onboardingData.specificBehavior,
-        classroomData: {
-          name: onboardingData.classroomName,
+        learningStyle: onboardingData.learningStyle || '',
+        teachingStyle: onboardingData.teachingStyle || '',
+        profilePhotoUrl: onboardingData.profilePhotoUrl || '',
+        
+        // Background information
+        yearsOfExperience: onboardingData.yearsOfExperience || '',
+        highestEducation: onboardingData.highestEducation || '',
+        role: onboardingData.role || '',
+        
+        // School information
+        schoolName: onboardingData.schoolName || '',
+        roomNumber: onboardingData.roomNumber || '',
+        schoolDistrict: onboardingData.schoolDistrict || '',
+        county: onboardingData.county || '',
+        
+        // Behavior focus
+        behaviorFocus: Array.isArray(onboardingData.behaviorFocus) ? onboardingData.behaviorFocus : [],
+        behaviorConfidence: onboardingData.behaviorConfidence || '',
+        specificBehavior: onboardingData.specificBehavior || '',
+        
+        // Classroom data for creation
+        classroomData: onboardingData.classroomName ? {
+          name: onboardingData.classroomName.trim(),
           gradeBand: onboardingData.gradeBand,
           studentCount: parseInt(onboardingData.studentCount) || 15,
           teacherStudentRatio: onboardingData.classroomInRatioTeachers ? 
-            `1:${Math.floor(parseInt(onboardingData.studentCount) / parseInt(onboardingData.classroomInRatioTeachers))}` : 
+            `1:${Math.floor((parseInt(onboardingData.studentCount) || 15) / (parseInt(onboardingData.classroomInRatioTeachers) || 1))}` : 
             '1:8',
-          stressors: onboardingData.stressors || [],
-          iepCount: onboardingData.iepCount || 0,
-          ifspCount: onboardingData.ifspCount || 0
-        }
+          stressors: Array.isArray(onboardingData.stressors) ? onboardingData.stressors : [],
+          iepCount: parseInt(onboardingData.iepCount) || 0,
+          ifspCount: parseInt(onboardingData.ifspCount) || 0
+        } : null
       };
 
-      console.log('Submitting onboarding data:', completeData);
+      console.log('Prepared onboarding data for submission:', completeData);
 
+      // Submit to backend
       await updateOnboarding(completeData);
       
       // Clear saved progress after successful completion
       try {
         localStorage.removeItem(STORAGE_KEY);
+        console.log('Onboarding progress cleared from localStorage');
       } catch (error) {
         console.warn('Failed to clear onboarding progress:', error);
       }

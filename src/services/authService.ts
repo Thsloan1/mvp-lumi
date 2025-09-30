@@ -98,7 +98,9 @@ export class AuthService {
 
   static async updateOnboarding(data: any): Promise<User> {
     try {
-      console.log('AuthService: Sending onboarding data:', data);
+      console.log('=== AUTH SERVICE ONBOARDING START ===');
+      console.log('Data being sent to API:', JSON.stringify(data, null, 2));
+      console.log('Request headers:', this.getAuthHeaders());
       
       const response = await fetch('/api/user/onboarding', {
         method: 'PUT',
@@ -109,51 +111,62 @@ export class AuthService {
         body: JSON.stringify(data)
       });
 
-      console.log('AuthService: Response status:', response.status);
-      console.log('AuthService: Response headers:', Object.fromEntries(response.headers.entries()));
+      console.log('=== API RESPONSE DETAILS ===');
+      console.log('Status:', response.status, response.statusText);
+      console.log('Headers:', Object.fromEntries(response.headers.entries()));
+      console.log('Content-Type:', response.headers.get('content-type'));
       
       if (!response.ok) {
-        let errorData = {};
+        console.log('=== ERROR RESPONSE HANDLING ===');
+        let errorData: any = {};
         try {
           const responseText = await response.text();
-          console.log('AuthService: Error response text:', responseText);
+          console.log('Error response text:', responseText);
           
-          if (responseText.trim()) {
+          if (responseText && responseText.trim()) {
             errorData = JSON.parse(responseText);
           } else {
-            throw new Error('Empty response from server');
+            throw new Error(`Empty error response from server (${response.status})`);
           }
         } catch (parseError) {
-          console.error('AuthService: Failed to parse error response:', parseError);
+          console.error('Failed to parse error response:', parseError);
           throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
-        throw new Error(errorData.error || 'Update failed');
+        throw new Error(errorData.error || errorData.details || 'Onboarding update failed');
       }
 
-      let result = {};
+      console.log('=== SUCCESS RESPONSE HANDLING ===');
+      let result: any = {};
       try {
         const responseText = await response.text();
-        console.log('AuthService: Success response text:', responseText);
+        console.log('Success response text length:', responseText.length);
+        console.log('Success response text:', responseText);
         
-        if (responseText.trim()) {
+        if (responseText && responseText.trim()) {
           result = JSON.parse(responseText);
+          console.log('Parsed result:', JSON.stringify(result, null, 2));
         } else {
           throw new Error('Empty success response from server');
         }
       } catch (parseError) {
-        console.error('Failed to parse onboarding response:', parseError);
-        throw new Error('Invalid response from server');
+        console.error('Failed to parse success response:', parseError);
+        console.error('Parse error details:', parseError.message);
+        throw new Error(`Invalid JSON response from server: ${parseError.message}`);
       }
       
       if (!result || !result.user) {
-        console.error('AuthService: Invalid result structure:', result);
-        throw new Error('Invalid response format');
+        console.error('Invalid result structure:', result);
+        throw new Error('Server response missing user data');
       }
       
-      console.log('AuthService: Onboarding completed successfully:', result.user);
+      console.log('=== ONBOARDING SUCCESS ===');
+      console.log('User data received:', result.user.fullName, result.user.onboardingStatus);
       return result.user;
     } catch (error) {
-      console.error('Onboarding API error:', error);
+      console.error('=== AUTH SERVICE ERROR ===');
+      console.error('Error in updateOnboarding:', error);
+      console.error('Error type:', error.constructor.name);
+      console.error('Error message:', error.message);
       throw error;
     }
   }

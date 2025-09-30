@@ -185,11 +185,11 @@ app.get('/api/auth/me', authenticateToken, (req, res) => {
 // User Routes
 app.put('/api/user/onboarding', authenticateToken, (req, res) => {
   try {
-    console.log('Onboarding request received:', {
-      userId: req.user.id,
-      hasClassroomData: !!req.body.classroomData,
-      dataKeys: Object.keys(req.body)
-    });
+    console.log('=== ONBOARDING REQUEST START ===');
+    console.log('User ID:', req.user.id);
+    console.log('Request body keys:', Object.keys(req.body));
+    console.log('Has classroom data:', !!req.body.classroomData);
+    console.log('Full request body:', JSON.stringify(req.body, null, 2));
     
     const userIndex = users.findIndex(u => u.id === req.user.id);
     if (userIndex === -1) {
@@ -198,17 +198,31 @@ app.put('/api/user/onboarding', authenticateToken, (req, res) => {
     }
 
     const { classroomData, ...userData } = req.body;
+    
+    console.log('Separated userData:', JSON.stringify(userData, null, 2));
+    console.log('Separated classroomData:', JSON.stringify(classroomData, null, 2));
 
     // Update user data
+    const updatedUser = {
+      ...users[userIndex],
+      ...userData,
+      onboardingStatus: 'complete',
+      updatedAt: new Date().toISOString()
+    };
+    
     users[userIndex] = {
       ...users[userIndex],
       ...userData,
       onboardingStatus: 'complete',
       updatedAt: new Date().toISOString()
     };
+    
+    console.log('User updated successfully:', users[userIndex].fullName);
 
     // Create classroom if provided
     if (classroomData && classroomData.name) {
+      console.log('Creating classroom with data:', classroomData);
+      
       const classroom = {
         id: Date.now().toString(),
         ...classroomData,
@@ -216,19 +230,34 @@ app.put('/api/user/onboarding', authenticateToken, (req, res) => {
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       };
+      
       classrooms.push(classroom);
       console.log('Classroom created during onboarding:', classroom.name);
+    } else {
+      console.log('No classroom data provided or invalid classroom name');
     }
 
-    console.log('User onboarding completed:', users[userIndex].fullName);
+    // Prepare response
+    const responseData = { 
+      user: { ...users[userIndex], password: undefined },
+      message: 'Onboarding completed successfully'
+    };
     
-    // Ensure we return valid JSON
-    const responseData = { user: { ...users[userIndex], password: undefined } };
-    console.log('Sending onboarding response:', responseData);
-    res.json({ user: { ...users[userIndex], password: undefined } });
+    console.log('Sending response:', JSON.stringify(responseData, null, 2));
+    console.log('=== ONBOARDING REQUEST END ===');
+    
+    res.json(responseData);
   } catch (error) {
-    console.error('Onboarding error:', error);
-    res.status(500).json({ error: 'Server error', details: error.message });
+    console.error('=== ONBOARDING ERROR ===');
+    console.error('Error details:', error);
+    console.error('Error stack:', error.stack);
+    console.error('Request body that caused error:', req.body);
+    
+    res.status(500).json({ 
+      error: 'Server error during onboarding', 
+      details: error.message,
+      timestamp: new Date().toISOString()
+    });
   }
 });
 

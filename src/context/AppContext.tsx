@@ -394,26 +394,32 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   const updateOnboarding = async (data: any) => {
     ErrorLogger.logOnboardingEvent('completion_attempt', undefined, { userId: currentUser?.id });
     try {
-      console.log('Starting onboarding update with data:', data);
+      console.log('=== FRONTEND ONBOARDING START ===');
+      console.log('Current user:', currentUser?.id, currentUser?.fullName);
+      console.log('Onboarding data being sent:', JSON.stringify(data, null, 2));
       
       const response = await AuthService.apiRequest('/api/user/onboarding', {
         method: 'PUT',
         body: JSON.stringify(data)
       });
       
-      console.log('Onboarding API response:', response);
+      console.log('=== ONBOARDING API RESPONSE ===');
+      console.log('Response received:', JSON.stringify(response, null, 2));
       
       if (!response || !response.user) {
+        console.error('Invalid response structure:', response);
         throw new Error('Invalid response from server');
       }
       
       const updatedUser = response.user;
+      console.log('Setting updated user:', updatedUser.fullName, updatedUser.onboardingStatus);
       setCurrentUser(updatedUser);
       
       // Create classroom if provided in onboarding data
       if (data.classroomData) {
         ErrorLogger.info('Creating classroom during onboarding', { classroomName: data.classroomData.name });
         try {
+          console.log('Creating classroom from onboarding data:', data.classroomData);
           await createClassroom(data.classroomData);
         } catch (classroomError) {
           console.warn('Failed to create classroom during onboarding:', classroomError);
@@ -426,16 +432,22 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
       
       // Route based on user role
       if (updatedUser.role === 'admin') {
+        console.log('Redirecting admin user to admin dashboard');
         setCurrentView('admin-dashboard');
       } else {
+        console.log('Redirecting educator to completion screen');
         setCurrentView('onboarding-complete-new');
       }
+      
+      console.log('=== FRONTEND ONBOARDING COMPLETE ===');
     } catch (err: any) {
-      console.error('Onboarding error details:', {
+      console.error('=== ONBOARDING ERROR DETAILS ===');
+      console.error('Error object:', {
         error: err,
         message: err.message,
         stack: err.stack,
-        data: data
+        sentData: data,
+        currentUser: currentUser?.id
       });
       ErrorLogger.logOnboardingEvent('completion_error', undefined, { userId: currentUser?.id, error: err.message });
       error('Onboarding failed', err.message || 'Please try again');
