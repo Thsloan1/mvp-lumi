@@ -1,18 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, ArrowRight, CheckCircle } from 'lucide-react';
+import { safeJsonParse, safeJsonStringify } from '../../utils/jsonUtils';
+import { useAppContext } from '../../context/AppContext';
+import { ArrowLeft, CheckCircle, ArrowRight } from 'lucide-react';
 import { Button } from '../UI/Button';
 import { ProgressDots } from '../UI/ProgressDots';
-import { useAppContext } from '../../context/AppContext';
 import { ErrorLogger } from '../../utils/errorLogger';
-import { safeJsonParse, safeJsonStringify } from '../../utils/jsonUtils';
 import { AboutYouStep } from './steps/AboutYouStep';
 import { SchoolInfoStep } from './steps/SchoolInfoStep';
 import { EducatorBackgroundStep } from './steps/EducatorBackgroundStep';
 import { ClassroomStep } from './steps/ClassroomStep';
 import { EnvironmentStep } from './steps/EnvironmentStep';
 import { TeachingStyleStep } from './steps/TeachingStyleStep';
+import { BehaviorFocusStep } from './BehaviorFocusStep';
 import { ReviewStep } from './steps/ReviewStep';
-import { BehaviorFocusStep } from '../BehaviorFocusStep';
 
 const TOTAL_STEPS = 8;
 const STORAGE_KEY = 'lumi_onboarding_progress';
@@ -20,7 +20,7 @@ const STORAGE_KEY = 'lumi_onboarding_progress';
 export const OnboardingWizard: React.FC = () => {
   const { setCurrentView, currentUser, updateOnboarding, toast } = useAppContext();
 
-  // Safe state initialization using function to prevent JSON parsing errors
+  // 1. Initializing state safely using function-based initialization
   const [currentStep, setCurrentStep] = useState(() => {
     const savedProgress = safeJsonParse(localStorage.getItem(STORAGE_KEY), {});
     return savedProgress.step || 0;
@@ -29,7 +29,7 @@ export const OnboardingWizard: React.FC = () => {
   const [onboardingData, setOnboardingData] = useState(() => {
     const savedProgress = safeJsonParse(localStorage.getItem(STORAGE_KEY), {});
     return savedProgress.data || {
-      // Initialize with safe defaults
+      // Safe defaults for all onboarding fields
       firstName: currentUser?.fullName?.split(' ')[0] || '',
       lastName: currentUser?.fullName?.split(' ').slice(1).join(' ') || '',
       profilePhotoUrl: '',
@@ -71,7 +71,7 @@ export const OnboardingWizard: React.FC = () => {
     { component: ReviewStep, title: 'Review & Confirm' }
   ];
 
-  // Safe auto-save effect
+  // 2. Safe auto-save effect
   useEffect(() => {
     try {
       const dataToSave = { step: currentStep, data: onboardingData };
@@ -79,12 +79,14 @@ export const OnboardingWizard: React.FC = () => {
       localStorage.setItem(STORAGE_KEY, jsonString);
     } catch (error) {
       console.warn('Failed to save onboarding progress:', error);
+      ErrorLogger.warning('Auto-save failed', { error: error.message, step: currentStep });
     }
   }, [currentStep, onboardingData]);
 
   const handleNext = () => {
     if (currentStep < steps.length - 1) {
       setCurrentStep(prevStep => prevStep + 1);
+      ErrorLogger.logOnboardingEvent('step_completed', currentStep);
     }
   };
 
@@ -220,7 +222,7 @@ export const OnboardingWizard: React.FC = () => {
 
   if (!CurrentStepComponent) {
     // Fallback if step is corrupted
-    setCurrentStep(0);
+    useEffect(() => setCurrentStep(0), []);
     return null;
   }
 
