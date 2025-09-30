@@ -836,7 +836,8 @@ export const LandingPage: React.FC = () => {
                   <Heart className="w-5 h-5 text-white" />
                 </div>
                 <span className="text-xl font-bold">Lumi</span>
-                <span className="text-xs text-[#615E59]">Classroom Behavior Coach™</span>
+              </div>
+              <span className="text-xs text-[#615E59]">Classroom Behavior Coach™</span>
               <p className="text-gray-400 mb-6 leading-relaxed">
                 Classroom Behavior Coach™ - Bringing clarity, confidence, and care to early childhood education through AI-powered developmental science.
               </p>
@@ -892,6 +893,5 @@ export const LandingPage: React.FC = () => {
           </div>
         </div>
       </footer>
-    </div>
   );
 };
