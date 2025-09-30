@@ -394,7 +394,16 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   const updateOnboarding = async (data: any) => {
     ErrorLogger.logOnboardingEvent('completion_attempt', undefined, { userId: currentUser?.id });
     try {
-      const updatedUser = await AuthService.updateOnboarding(data);
+      const response = await AuthService.apiRequest('/api/user/onboarding', {
+        method: 'PUT',
+        body: JSON.stringify(data)
+      });
+      
+      if (!response || !response.user) {
+        throw new Error('Invalid response from server');
+      }
+      
+      const updatedUser = response.user;
       setCurrentUser(updatedUser);
       
       // Create classroom if provided in onboarding data
@@ -418,8 +427,9 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         setCurrentView('onboarding-complete-new');
       }
     } catch (err: any) {
+      console.error('Onboarding error details:', err);
       ErrorLogger.logOnboardingEvent('completion_error', undefined, { userId: currentUser?.id, error: err.message });
-      error('Update failed', err.message);
+      error('Onboarding failed', err.message || 'Please try again');
       throw err;
     }
   };

@@ -185,8 +185,15 @@ app.get('/api/auth/me', authenticateToken, (req, res) => {
 // User Routes
 app.put('/api/user/onboarding', authenticateToken, (req, res) => {
   try {
+    console.log('Onboarding request received:', {
+      userId: req.user.id,
+      hasClassroomData: !!req.body.classroomData,
+      dataKeys: Object.keys(req.body)
+    });
+    
     const userIndex = users.findIndex(u => u.id === req.user.id);
     if (userIndex === -1) {
+      console.error('User not found for onboarding:', req.user.id);
       return res.status(404).json({ error: 'User not found' });
     }
 
@@ -215,10 +222,13 @@ app.put('/api/user/onboarding', authenticateToken, (req, res) => {
 
     console.log('User onboarding completed:', users[userIndex].fullName);
     
+    // Ensure we return valid JSON
+    const responseData = { user: { ...users[userIndex], password: undefined } };
+    console.log('Sending onboarding response:', responseData);
     res.json({ user: { ...users[userIndex], password: undefined } });
   } catch (error) {
     console.error('Onboarding error:', error);
-    res.status(500).json({ error: 'Server error' });
+    res.status(500).json({ error: 'Server error', details: error.message });
   }
 });
 

@@ -97,22 +97,43 @@ export class AuthService {
   }
 
   static async updateOnboarding(data: any): Promise<User> {
-    const response = await fetch('/api/user/onboarding', {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        ...this.getAuthHeaders()
-      },
-      body: JSON.stringify(data)
-    });
+    try {
+      const response = await fetch('/api/user/onboarding', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          ...this.getAuthHeaders()
+        },
+        body: JSON.stringify(data)
+      });
 
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Update failed');
+      if (!response.ok) {
+        let errorData;
+        try {
+          errorData = await response.json();
+        } catch (parseError) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        throw new Error(errorData.error || 'Update failed');
+      }
+
+      let result;
+      try {
+        result = await response.json();
+      } catch (parseError) {
+        console.error('Failed to parse onboarding response:', parseError);
+        throw new Error('Invalid response from server');
+      }
+      
+      if (!result || !result.user) {
+        throw new Error('Invalid response format');
+      }
+      
+      return result.user;
+    } catch (error) {
+      console.error('Onboarding API error:', error);
+      throw error;
     }
-
-    const result = await response.json();
-    return result.user;
   }
 
   static signout(): void {
