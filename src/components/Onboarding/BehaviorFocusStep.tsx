@@ -1,5 +1,5 @@
 import React from 'react';
-import { Target, Plus } from 'lucide-react';
+import { Target, Plus, CheckCircle } from 'lucide-react';
 import { Button } from '../UI/Button';
 import { Input } from '../UI/Input';
 import { Card } from '../UI/Card';
@@ -152,49 +152,6 @@ export const BehaviorFocusStep: React.FC<BehaviorFocusStepProps> = ({ data, upda
           </div>
         </div>
       </Card>
-    </div>
-  );
-};
-          ))}
-        </div>
-
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-[#1A1A1A] mb-2">
-              Describe a specific behavior you're seeing (optional)
-            </label>
-            <Input
-              type="textarea"
-              value={data.specificBehavior || ''}
-              onChange={handleSpecificBehaviorChange}
-              placeholder="e.g., A child is having daily tantrums when asked to clean up"
-              rows={3}
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-[#1A1A1A] mb-4">
-              How confident do you feel in handling behavior challenges?
-            </label>
-            <div className="grid grid-cols-2 gap-3">
-              {confidenceOptions.map((option) => (
-                <Card
-                  key={option.value}
-                  hoverable
-                  selected={data.behaviorConfidence === option.value}
-                  onClick={() => handleConfidenceChange(option.value)}
-                  className="p-3 text-center cursor-pointer"
-                >
-                  <span className="text-sm font-medium text-[#1A1A1A]">
-                    {option.label}
-                  </span>
-                </Card>
-              ))}
-            </div>
-          </div>
-        </div>
-      </Card>
-
     </div>
   );
 };
