@@ -451,61 +451,6 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
       throw err;
     }
   };
-        method: 'PUT',
-        body: JSON.stringify(data)
-      });
-      
-      console.log('=== ONBOARDING API RESPONSE ===');
-      console.log('Response received:', JSON.stringify(response, null, 2));
-      
-      if (!response || !response.user) {
-        console.error('Invalid response structure:', response);
-        throw new Error('Invalid response from server');
-      }
-      
-      const updatedUser = response.user;
-      console.log('Setting updated user:', updatedUser.fullName, updatedUser.onboardingStatus);
-      setCurrentUser(updatedUser);
-      
-      // Create classroom if provided in onboarding data
-      if (data.classroomData) {
-        ErrorLogger.info('Creating classroom during onboarding', { classroomName: data.classroomData.name });
-        try {
-          console.log('Creating classroom from onboarding data:', data.classroomData);
-          await createClassroom(data.classroomData);
-        } catch (classroomError) {
-          console.warn('Failed to create classroom during onboarding:', classroomError);
-          // Continue with onboarding even if classroom creation fails
-        }
-      }
-      
-      ErrorLogger.logOnboardingEvent('completed', undefined, { userId: updatedUser.id });
-      success('Profile updated!', 'Your preferences have been saved');
-      
-      // Route based on user role
-      if (updatedUser.role === 'admin') {
-        console.log('Redirecting admin user to admin dashboard');
-        setCurrentView('admin-dashboard');
-      } else {
-        console.log('Redirecting educator to completion screen');
-        setCurrentView('onboarding-complete-new');
-      }
-      
-      console.log('=== FRONTEND ONBOARDING COMPLETE ===');
-    } catch (err: any) {
-      console.error('=== ONBOARDING ERROR DETAILS ===');
-      console.error('Error object:', {
-        error: err,
-        message: err.message,
-        stack: err.stack,
-        sentData: data,
-        currentUser: currentUser?.id
-      });
-      ErrorLogger.logOnboardingEvent('completion_error', undefined, { userId: currentUser?.id, error: err.message });
-      error('Onboarding failed', err.message || 'Please try again');
-      throw err;
-    }
-  };
 
   const updateProfile = async (data: any) => {
     try {
@@ -638,8 +583,6 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     adminSignup,
     signout,
     updateOnboarding,
-    updateProfile,
-    changePassword,
     updateCurrentUser: async (updates: any) => {
       try {
         if (updates.onboardingStatus === 'complete') {
