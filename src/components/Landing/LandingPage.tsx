@@ -129,7 +129,7 @@ export const LandingPage: React.FC = () => {
                 <Heart className="w-5 h-5 text-white" />
               </div>
               <span className="text-xl font-bold text-[#1A1A1A]">Lumi</span>
-              <span className="text-sm text-[#615E59]">Classroom Behavior Coach™</span>
+              <span className="text-xs text-[#615E59]">Classroom Behavior Coach™</span>
             </div>
 
             {/* Desktop Navigation */}
