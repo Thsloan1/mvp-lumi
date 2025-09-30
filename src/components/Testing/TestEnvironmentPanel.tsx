@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Settings, RefreshCw, Database, Users, BarChart3, Download, Upload, Trash2, Play, Code, DollarSign, AlertTriangle, Wrench, BookOpen, CreditCard as Edit, Save, X, Plus, MessageCircle, Shield, CheckCircle, Zap, Mail } from 'lucide-react';
+import { Settings, RefreshCw, Database, Users, BarChart3, Download, Upload, Trash2, Play, Code, DollarSign, AlertTriangle, Wrench, BookOpen, Edit, Save, X, Plus, MessageCircle, Shield, CheckCircle, Zap, Mail, Copy, Star, Clock } from 'lucide-react';
 import { Button } from '../UI/Button';
 import { Card } from '../UI/Card';
 import { Select } from '../UI/Select';
@@ -35,6 +35,7 @@ export const DeveloperPortal: React.FC = () => {
   const [feedback, setFeedback] = useState<any[]>(() => 
     safeLocalStorageGet('lumi_test_feedback', [])
   );
+  const [copiedCode, setCopiedCode] = useState<string | null>(null);
   const [showInviteForm, setShowInviteForm] = useState(false);
   const [systemHealth] = useState({
     components: [
@@ -372,10 +373,17 @@ export const DeveloperPortal: React.FC = () => {
   const handleCopyAllCodes = () => {
     const codes = testUsers.map(user => `${user.fullName}: ${user.accessCode}`).join('\n');
     navigator.clipboard.writeText(codes);
+    setCopiedCode('all');
+    setTimeout(() => setCopiedCode(null), 2000);
     toast.success('Access Codes Copied', 'All codes copied to clipboard');
   };
 
-  const [copiedCode, setCopiedCode] = useState(false);
+  const handleCopyAccessCode = (accessCode: string) => {
+    navigator.clipboard.writeText(accessCode);
+    setCopiedCode(accessCode);
+    setTimeout(() => setCopiedCode(null), 2000);
+    toast.success('Access Code Copied', 'Code copied to clipboard');
+  };
 
   const renderUserManagement = () => (
     <div className="space-y-6">
@@ -462,21 +470,50 @@ export const DeveloperPortal: React.FC = () => {
               <div>
                 <p className="font-medium text-sm">{user.fullName}</p>
                 <p className="text-xs text-gray-600">{user.email}</p>
-                <p className="text-xs text-purple-600">Code: {user.accessCode}</p>
+                <div className="flex items-center space-x-2">
+                  <p className="text-xs text-purple-600">Code: {user.accessCode}</p>
+                  <Button
+                    onClick={() => handleCopyAccessCode(user.accessCode)}
+                    size="sm"
+                    variant="ghost"
+                    icon={copiedCode === user.accessCode ? CheckCircle : Copy}
+                    className={`p-1 ${copiedCode === user.accessCode ? 'text-green-600' : 'text-purple-600'}`}
+                  >
+                    {copiedCode === user.accessCode ? 'Copied!' : ''}
+                  </Button>
+                </div>
                 {user.expiresAt && (
                   <p className="text-xs text-orange-600">
                     Expires: {new Date(user.expiresAt).toLocaleDateString()}
                   </p>
                 )}
               </div>
-              <Button
-                onClick={() => handleRemoveTestUser(user.id)}
-                size="sm"
-                variant="ghost"
-                className="text-red-600"
-              >
-                Remove
-              </Button>
+              <div className="flex space-x-1">
+                <Button
+                  onClick={() => {
+                    // Quick login as this user
+                    const userData = testDataManager.getUsers().find(u => u.email === user.email);
+                    if (userData) {
+                      setCurrentUser(userData);
+                      setCurrentView(userData.role === 'admin' ? 'admin-dashboard' : 'dashboard');
+                      toast.success('Quick Login', `Logged in as ${userData.fullName}`);
+                    }
+                  }}
+                  size="sm"
+                  variant="outline"
+                  className="text-blue-600"
+                >
+                  Login
+                </Button>
+                <Button
+                  onClick={() => handleRemoveTestUser(user.id)}
+                  size="sm"
+                  variant="ghost"
+                  className="text-red-600"
+                >
+                  Remove
+                </Button>
+              </div>
             </div>
           ))}
         </div>
@@ -495,9 +532,10 @@ export const DeveloperPortal: React.FC = () => {
               onClick={handleCopyAllCodes}
               size="sm"
               variant="outline"
-              icon={copiedCode ? CheckCircle : Users}
+              icon={copiedCode === 'all' ? CheckCircle : Copy}
+              className={copiedCode === 'all' ? 'text-green-600' : ''}
             >
-              {copiedCode ? 'Copied!' : 'Copy All Codes'}
+              {copiedCode === 'all' ? 'Copied!' : 'Copy All Codes'}
             </Button>
             <Button
               onClick={() => {
@@ -551,6 +589,11 @@ export const DeveloperPortal: React.FC = () => {
                   </span>
                 </div>
                 <p className="text-sm text-gray-700 mb-1">{item.feedback}</p>
+                {item.suggestions && (
+                  <p className="text-xs text-blue-600 mb-1">
+                    <strong>Suggestions:</strong> {item.suggestions}
+                  </p>
+                )}
                 <div className="flex space-x-2">
                   <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">
                     {item.category}
@@ -566,6 +609,21 @@ export const DeveloperPortal: React.FC = () => {
                 </div>
               </div>
             ))}
+            
+            {feedback.length > 5 && (
+              <div className="text-center">
+                <Button
+                  onClick={() => {
+                    // Show all feedback in a modal or separate view
+                    toast.info('All Feedback', `${feedback.length} total feedback items`);
+                  }}
+                  size="sm"
+                  variant="ghost"
+                >
+                  View All {feedback.length} Items
+                </Button>
+              </div>
+            )}
           </div>
         )}
         
@@ -1069,7 +1127,7 @@ export const DeveloperPortal: React.FC = () => {
         <div className="space-y-2">
           <div className="bg-green-50 border border-green-200 p-3 rounded-lg">
             <p className="text-sm font-medium text-green-900">✓ No Critical Errors</p>
-            <p className="font-bold text-green-600">{systemHealth.performance.loadTime}</p>
+            <p className="text-xs text-green-700">Load time: {systemHealth.performance.loadTime}</p>
           </div>
           <div className="bg-blue-50 border border-blue-200 p-3 rounded-lg">
             <p className="text-sm font-medium text-blue-900">Error Logging Active</p>
@@ -1084,7 +1142,7 @@ export const DeveloperPortal: React.FC = () => {
         <div className="grid grid-cols-2 gap-4 text-sm">
           <div>
             <p className="text-gray-600">Load Time:</p>
-            <p className="font-bold text-green-600">{"< 2s"}</p>
+            <p className="font-bold text-green-600">{systemHealth.performance.loadTime}</p>
           </div>
           <div>
             <p className="text-gray-600">API Response:</p>
@@ -1100,8 +1158,6 @@ export const DeveloperPortal: React.FC = () => {
           </div>
         </div>
       </Card>
-      </>
-      )}
 
       {/* Tech Stack Info */}
       <Card className="p-4">
@@ -1115,6 +1171,28 @@ export const DeveloperPortal: React.FC = () => {
           <div><strong>Testing:</strong> Comprehensive test data management system</div>
         </div>
       </Card>
+      
+      {/* Quick Actions */}
+      <div className="grid grid-cols-2 gap-2">
+        <Button
+          onClick={() => setCurrentView('production-readiness')}
+          size="sm"
+          variant="outline"
+          icon={Shield}
+          className="text-green-600 border-green-200"
+        >
+          Production Check
+        </Button>
+        <Button
+          onClick={() => setCurrentView('security-expert-report')}
+          size="sm"
+          variant="outline"
+          icon={AlertTriangle}
+          className="text-red-600 border-red-200"
+        >
+          Security Report
+        </Button>
+      </div>
     </div>
   );
 

@@ -116,7 +116,7 @@ export class DeveloperAnalyticsEngine {
     const totalUsers = users.length;
     const totalIndividualUsers = users.filter(u => u.role === 'educator' && !u.organizationId).length;
     const totalOrganizationClients = organizations.length;
-    const totalOrgUsers = users.filter(u => u.role === 'educator').length; // Fixed organizationId reference
+    const totalOrgUsers = users.filter(u => u.role === 'educator' && u.id).length; // Count valid educator users
 
     // Activity-based user classification
     const now = Date.now();
@@ -280,7 +280,7 @@ export class DeveloperAnalyticsEngine {
     const organization = organizations.find(o => o.id === orgId);
     if (!organization) return null;
 
-    const orgUsers = users.filter(u => u.role === 'educator'); // Fixed organizationId reference
+    const orgUsers = users.filter(u => u.role === 'educator' && u.id); // Filter valid educator users
     const orgBehaviorLogs = behaviorLogs.filter(log => 
       orgUsers.some(u => u.id === log.educatorId)
     );
@@ -611,7 +611,7 @@ export class DeveloperAnalyticsEngine {
       internalBenchmarks: {
         topPerformingOrgs: organizations
           .filter(org => {
-            const orgUsers = users.filter(u => u.role === 'educator'); // Fixed organizationId reference
+            const orgUsers = users.filter(u => u.role === 'educator' && u.id); // Filter valid users
             return orgUsers.length > 0;
           })
           .slice(0, 3)

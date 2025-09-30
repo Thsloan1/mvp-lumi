@@ -201,6 +201,8 @@ Human Potential Partners`;
     console.log('📋 Role:', invitation.role);
     console.log('📅 Expires:', invitation.expiresAt || 'No expiration');
     console.log('📝 Subject:', template.subject);
+    console.log('📄 Full Email Content:');
+    console.log(template.textContent);
     console.groupEnd();
     
     // Create a visual notification
@@ -223,6 +225,7 @@ Human Potential Partners`;
         z-index: 10000;
         max-width: 350px;
         font-family: Inter, sans-serif;
+        cursor: pointer;
       ">
         <div style="font-weight: bold; margin-bottom: 5px;">📧 Test Invitation Sent!</div>
         <div style="font-size: 14px; opacity: 0.9;">
@@ -230,10 +233,23 @@ Human Potential Partners`;
           Access Code: <strong>${invitation.accessCode}</strong>
         </div>
         <div style="font-size: 12px; margin-top: 8px; opacity: 0.8;">
-          Check browser console for full email content
+          Click to copy access code • Check console for full email
         </div>
       </div>
     `;
+    
+    // Add click to copy functionality
+    notification.addEventListener('click', () => {
+      navigator.clipboard.writeText(invitation.accessCode);
+      notification.style.background = '#2196F3';
+      notification.querySelector('div')!.innerHTML = `
+        <div style="font-weight: bold; margin-bottom: 5px;">📋 Access Code Copied!</div>
+        <div style="font-size: 14px; opacity: 0.9;">
+          Code: <strong>${invitation.accessCode}</strong><br>
+          Ready to share with tester
+        </div>
+      `;
+    });
     
     document.body.appendChild(notification);
     

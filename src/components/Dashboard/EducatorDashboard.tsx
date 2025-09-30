@@ -370,7 +370,7 @@ export const EducatorDashboard: React.FC = () => {
                   />
                 ) : (
                   <div className="space-y-4">
-                    {recentActivity.map((activity, index) => (
+                    {mockRecentActivity.map((activity, index) => (
                       <div key={index} className="flex items-start space-x-4 p-4 bg-[#F8F6F4] rounded-xl">
                         <div className={`
                           w-2 h-2 rounded-full mt-2
