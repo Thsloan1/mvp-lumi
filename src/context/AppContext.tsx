@@ -394,6 +394,16 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
 
   const updateOnboarding = async (data: any) => {
     ErrorLogger.logOnboardingEvent('completion_attempt', undefined, { userId: currentUser?.id });
+    
+    // Check if user is authenticated before proceeding
+    if (!currentUser) {
+      const authError = new Error('User not authenticated. Please sign in again.');
+      ErrorLogger.logOnboardingEvent('completion_error', undefined, { error: 'user_not_authenticated' });
+      error('Authentication required', 'Please sign in again to complete onboarding');
+      setCurrentView('signin');
+      throw authError;
+    }
+    
     try {
       console.log('=== FRONTEND ONBOARDING START ===');
       console.log('Current user:', currentUser?.id, currentUser?.fullName);

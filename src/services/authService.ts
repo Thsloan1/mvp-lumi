@@ -182,6 +182,11 @@ export class AuthService {
 
   // API helper for authenticated requests
   static async apiRequest(endpoint: string, options: RequestInit = {}): Promise<any> {
+    const token = this.getToken();
+    if (!token) {
+      throw new Error('Authentication required. Please sign in again.');
+    }
+    
     const response = await fetch(endpoint, {
       ...options,
       headers: {
@@ -192,8 +197,20 @@ export class AuthService {
     });
 
     if (!response.ok) {
-      const error = await response.json().catch(() => ({ error: 'Request failed' }));
-      throw new Error(error.error || `HTTP ${response.status}`);
+      let errorData;
+      try {
+        errorData = await response.json();
+      } catch (parseError) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
+      // Handle specific error cases
+      if (response.status === 401) {
+        this.removeToken();
+        throw new Error('Session expired. Please sign in again.');
+      }
+      
+      throw new Error(errorData.error || errorData.message || `HTTP ${response.status}: ${response.statusText}`);
     }
 
     return response.json();
