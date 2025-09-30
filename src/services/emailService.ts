@@ -148,10 +148,11 @@ Human Potential Partners`;
 
     <div class="steps">
       <h3>How to Get Started:</h3>
-      <div class="step">1. Go to <a href="https://lumi.app" style="color: #C44E38;">https://lumi.app</a></div>
-      <div class="step">2. Click the purple "Developer Portal" button (bottom-right corner)</div>
-      <div class="step">3. Enter your access code: <strong>${invitation.accessCode}</strong></div>
-      <div class="step">4. Start exploring and testing!</div>
+      <div class="step">1. <strong>DIRECT ACCESS:</strong> <a href="https://lumi.app?testCode=${invitation.accessCode}" style="color: #C44E38; font-weight: bold;">Click here to access Lumi directly</a></div>
+      <div class="step">2. <strong>OR Manual Access:</strong> Go to <a href="https://lumi.app" style="color: #C44E38;">https://lumi.app</a></div>
+      <div class="step">3. Click the purple "Developer Portal" button (bottom-right corner)</div>
+      <div class="step">4. Enter your access code: <strong>${invitation.accessCode}</strong></div>
+      <div class="step">5. Start exploring and testing!</div>
     </div>
 
     <h3>Your Testing Details:</h3>

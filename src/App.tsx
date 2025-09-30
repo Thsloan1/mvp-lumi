@@ -53,7 +53,51 @@ import { ArrowLeft } from 'lucide-react';
 import { Button } from './components/UI/Button';
 
 const AppContent: React.FC = () => {
-  const { currentView, setCurrentView, currentUser, isLoading, isAuthenticated } = useAppContext();
+  const { currentView, setCurrentView, currentUser, isLoading, isAuthenticated, setCurrentUser, setIsLoading, initializeUser } = useAppContext();
+  
+  // Initialize user on app load
+  useEffect(() => {
+    // Check for test user access code in URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const testCode = urlParams.get('testCode');
+    
+    if (testCode) {
+      // Handle test user auto-login
+      const testUsers = JSON.parse(localStorage.getItem('lumi_test_users') || '[]');
+      const testUser = testUsers.find((u: any) => u.accessCode === testCode);
+      
+      if (testUser) {
+        // Create user session for test user
+        const userData = {
+          id: testUser.id,
+          fullName: testUser.name,
+          email: testUser.email,
+          role: testUser.role,
+          preferredLanguage: 'english',
+          learningStyle: 'I learn best with visuals',
+          teachingStyle: 'We learn together',
+          createdAt: new Date(),
+          onboardingStatus: testUser.role === 'admin' ? 'complete' : 'incomplete'
+        };
+        
+        setCurrentUser(userData);
+        
+        // Route based on role
+        if (testUser.role === 'admin') {
+          setCurrentView('admin-dashboard');
+        } else if (userData.onboardingStatus === 'incomplete') {
+          setCurrentView('onboarding-start');
+        } else {
+          setCurrentView('dashboard');
+        }
+        
+        setIsLoading(false);
+        return;
+      }
+    }
+    
+    initializeUser();
+  }, []);
   
   // Show loading while checking authentication
   if (isLoading) {
