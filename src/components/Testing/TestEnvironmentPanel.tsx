@@ -692,6 +692,15 @@ export const DeveloperPortal: React.FC = () => {
         >
           Full Dev Manager
         </Button>
+        <Button
+          onClick={() => setCurrentView('production-readiness')}
+          variant="outline"
+          size="sm"
+          icon={Shield}
+          className="text-green-600 border-green-200"
+        >
+          Production Check
+        </Button>
       </div>
     </div>
   );

@@ -41,6 +41,7 @@ export const DeveloperAppManager: React.FC = () => {
   ];
 
   const handleExportKnowledgeBase = () => {
+    try {
     const data = knowledgeLibrary.exportKnowledgeBase();
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
@@ -51,6 +52,10 @@ export const DeveloperAppManager: React.FC = () => {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Export failed:', error);
+      alert('Export failed. Please try again.');
+    }
   };
 
   const handleImportKnowledgeBase = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -63,6 +68,7 @@ export const DeveloperAppManager: React.FC = () => {
           knowledgeLibrary.importKnowledgeBase(data);
           alert('Knowledge base imported successfully!');
         } catch (error) {
+          console.error('Import failed:', error);
           alert('Error importing knowledge base. Please check the file format.');
         }
       };

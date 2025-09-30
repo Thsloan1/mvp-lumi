@@ -186,7 +186,7 @@ export class ErrorLogger {
   }
   
   // Setup global error handlers
-  private static setupGlobalErrorHandlers() {
+  static setupGlobalErrorHandlers() {
     // Catch unhandled JavaScript errors
     window.addEventListener('error', (event) => {
       this.error('Unhandled JavaScript Error', {
@@ -212,4 +212,9 @@ export class ErrorLogger {
       });
     });
   }
+}
+
+// Initialize global error handlers
+if (typeof window !== 'undefined') {
+  ErrorLogger.setupGlobalErrorHandlers();
 }

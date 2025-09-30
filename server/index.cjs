@@ -1230,26 +1230,33 @@ app.post('/api/subscriptions/add-seats', authenticateToken, (req, res) => {
 
 // Health check
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'OK', timestamp: new Date().toISOString() });
+  res.json({ 
+    status: 'OK', 
+    timestamp: new Date().toISOString(),
+    version: '1.0.0',
+    environment: process.env.NODE_ENV || 'development',
+    uptime: process.uptime(),
+    memory: process.memoryUsage()
+  });
+});
+
+// System status endpoint
+app.get('/api/status', (req, res) => {
+  res.json({
+    database: 'connected',
+    auth: 'operational',
+    ai: 'operational',
+    users: users.length,
+    behaviorLogs: behaviorLogs.length,
+    classroomLogs: classroomLogs.length,
+    children: children.length,
+    classrooms: classrooms.length
+  });
 });
 
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error('Server error:', err);
-  
-  // Log structured error for monitoring
-  const errorLog = {
-    timestamp: new Date().toISOString(),
-    error: err.message,
-    stack: err.stack,
-    url: req.url,
-    method: req.method,
-    userAgent: req.headers['user-agent'],
-    ip: req.ip
-  };
-  
-  console.error('Structured error log:', JSON.stringify(errorLog));
-  
   res.status(500).json({ 
     error: 'Internal server error',
     message: process.env.NODE_ENV === 'development' ? err.message : 'Something went wrong'
@@ -1258,7 +1265,6 @@ app.use((err, req, res, next) => {
 
 // 404 handler
 app.use((req, res) => {
-  console.warn(`404 - Endpoint not found: ${req.method} ${req.url}`);
   res.status(404).json({ error: 'Endpoint not found' });
 });
 

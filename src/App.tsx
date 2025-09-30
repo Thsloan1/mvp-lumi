@@ -41,6 +41,8 @@ import { ChildProfileDetail } from './components/ChildProfiles/ChildProfileDetai
 import { LandingPage } from './components/Landing/LandingPage';
 import { DeveloperPortal } from './components/Testing/TestEnvironmentPanel';
 import { TestUserFeedbackWidget } from './components/Testing/TestUserFeedbackWidget';
+import { ProductionReadinessChecklist } from './components/Testing/ProductionReadinessChecklist';
+import { ArrowLeft } from 'lucide-react';
 
 const AppContent: React.FC = () => {
   const { currentView, setCurrentView, currentUser, isLoading, isAuthenticated } = useAppContext();
