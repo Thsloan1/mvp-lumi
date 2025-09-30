@@ -200,6 +200,19 @@ app.put('/api/user/onboarding', authenticateToken, (req, res) => {
       updatedAt: new Date().toISOString()
     };
 
+    // Create classroom if provided
+    if (classroomData && classroomData.name) {
+      const classroom = {
+        id: Date.now().toString(),
+        ...classroomData,
+        educatorId: req.user.id,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+      classrooms.push(classroom);
+      console.log('Classroom created during onboarding:', classroom.name);
+    }
+
     console.log('User onboarding completed:', users[userIndex].fullName);
     
     res.json({ user: { ...users[userIndex], password: undefined } });

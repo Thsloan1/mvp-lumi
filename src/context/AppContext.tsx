@@ -400,7 +400,12 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
       // Create classroom if provided in onboarding data
       if (data.classroomData) {
         ErrorLogger.info('Creating classroom during onboarding', { classroomName: data.classroomData.name });
-        await createClassroom(data.classroomData);
+        try {
+          await createClassroom(data.classroomData);
+        } catch (classroomError) {
+          console.warn('Failed to create classroom during onboarding:', classroomError);
+          // Continue with onboarding even if classroom creation fails
+        }
       }
       
       ErrorLogger.logOnboardingEvent('completed', undefined, { userId: updatedUser.id });
