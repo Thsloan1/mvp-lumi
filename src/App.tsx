@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { AppProvider, useAppContext } from './context/AppContext';
 import { ErrorBoundary } from './components/UI/ErrorBoundary';
 import { ToastContainer } from './components/UI/ToastContainer';
