@@ -43,6 +43,9 @@ import { DeveloperPortal } from './components/Testing/TestEnvironmentPanel';
 import { TestUserFeedbackWidget } from './components/Testing/TestUserFeedbackWidget';
 import { SecurityExpertReport } from './components/Security/SecurityExpertReport';
 import { ProductionReadinessChecklist } from './components/Testing/ProductionReadinessChecklist';
+import { ProductionReadinessReport } from './components/Testing/ProductionReadinessReport';
+import { ProductionChecklist } from './components/Testing/ProductionChecklist';
+import { StressTestRunner } from './components/Testing/StressTestRunner';
 import { ParentPortal } from './components/Security/ParentPortal';
 import { ArrowLeft } from 'lucide-react';
 import { Button } from './components/UI/Button';
@@ -215,7 +218,39 @@ const AppContent: React.FC = () => {
               >
                 Back to Dashboard
               </Button>
-              <ProductionReadinessChecklist />
+              <ProductionReadinessReport />
+            </div>
+          </div>
+        );
+      case 'production-checklist':
+        return (
+          <div className="min-h-screen bg-white">
+            <div className="max-w-7xl mx-auto px-6 py-8">
+              <Button
+                variant="ghost"
+                onClick={() => setCurrentView('production-readiness')}
+                icon={ArrowLeft}
+                className="mb-6 -ml-2"
+              >
+                Back to Assessment
+              </Button>
+              <ProductionChecklist />
+            </div>
+          </div>
+        );
+      case 'stress-testing':
+        return (
+          <div className="min-h-screen bg-white">
+            <div className="max-w-7xl mx-auto px-6 py-8">
+              <Button
+                variant="ghost"
+                onClick={() => setCurrentView('production-readiness')}
+                icon={ArrowLeft}
+                className="mb-6 -ml-2"
+              >
+                Back to Assessment
+              </Button>
+              <StressTestRunner />
             </div>
           </div>
         );
