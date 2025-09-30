@@ -8,10 +8,11 @@ import { PHIAccessControls } from '../Security/PHIAccessControls';
 import { DataRetentionManager } from '../Security/DataRetentionManager';
 import { SecurityVulnerabilityScanner } from '../Security/SecurityVulnerabilityScanner';
 import { EnhancedAuditLogger } from '../Security/EnhancedAuditLogger';
+import { ParentPortal } from '../Security/ParentPortal';
 
 export const SecurityComplianceCenter: React.FC = () => {
   const { setCurrentView } = useAppContext();
-  const [activeModule, setActiveModule] = useState<'overview' | 'parental_rights' | 'phi_controls' | 'data_retention' | 'vulnerabilities' | 'audit_logging'>('overview');
+  const [activeModule, setActiveModule] = useState<'overview' | 'parental_rights' | 'parent_portal' | 'phi_controls' | 'data_retention' | 'vulnerabilities' | 'audit_logging'>('overview');
 
   const securityModules = [
     {
@@ -29,6 +30,14 @@ export const SecurityComplianceCenter: React.FC = () => {
       icon: Users,
       status: 'critical_gap',
       riskLevel: 'critical'
+    },
+    {
+      id: 'parent_portal',
+      title: 'FERPA Parent Portal',
+      description: 'Functional parent portal for educational record access',
+      icon: Users,
+      status: 'active',
+      riskLevel: 'low'
     },
     {
       id: 'phi_controls',
@@ -389,6 +398,7 @@ export const SecurityComplianceCenter: React.FC = () => {
         <div>
           {activeModule === 'overview' && renderOverview()}
           {activeModule === 'parental_rights' && <ParentalRightsManager />}
+          {activeModule === 'parent_portal' && <ParentPortal />}
           {activeModule === 'phi_controls' && <PHIAccessControls />}
           {activeModule === 'data_retention' && <DataRetentionManager />}
           {activeModule === 'vulnerabilities' && <SecurityVulnerabilityScanner />}

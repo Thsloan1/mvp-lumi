@@ -1,3 +1,4 @@
+import { EncryptionService } from '../services/encryptionService';
 interface User {
   id: string;
   fullName: string;
@@ -58,6 +59,9 @@ export class AuthService {
     email: string;
     password: string;
   }): Promise<AuthResponse> {
+    // Log authentication attempt
+    await AuditService.logAuthEvent('login', false, { email: data.email });
+    
     const response = await fetch('/api/auth/signin', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -66,11 +70,23 @@ export class AuthService {
 
     if (!response.ok) {
       const error = await response.json();
+      // Log failed authentication
+      await AuditService.logAuthEvent('failed_login', false, { 
+        email: data.email, 
+        error: error.error 
+      });
       throw new Error(error.error || 'Signin failed');
     }
 
     const result = await response.json();
     this.setToken(result.token);
+    
+    // Log successful authentication
+    await AuditService.logAuthEvent('login', true, { 
+      userId: result.user.id,
+      email: result.user.email 
+    });
+    
     return result;
   }
 
@@ -177,6 +193,12 @@ export class AuthService {
   }
 
   static signout(): void {
+    // Log signout event
+    const currentUser = this.getCurrentUser();
+    if (currentUser) {
+      AuditService.logAuthEvent('logout', true, { userId: currentUser.id });
+    }
+    
     this.removeToken();
     window.location.href = '/';
   }
@@ -246,6 +268,8 @@ export class AuthService {
       throw new Error('Authentication required. Please sign in again.');
     }
     
+    const startTime = performance.now();
+    
     try {
       const response = await fetch(endpoint, {
         ...options,
@@ -256,6 +280,22 @@ export class AuthService {
         }
       });
 
+      const endTime = performance.now();
+      const duration = endTime - startTime;
+      
+      // Log API access
+      await AuditService.logDataAccess(
+        this.getResourceTypeFromEndpoint(endpoint),
+        this.getResourceIdFromEndpoint(endpoint),
+        endpoint,
+        this.getActionFromMethod(options.method as string || 'GET'),
+        {
+          endpoint,
+          method: options.method || 'GET',
+          duration,
+          statusCode: response.status
+        }
+      );
       if (!response.ok) {
         let errorData;
         try {
@@ -285,4 +325,31 @@ export class AuthService {
       throw networkError;
     }
   }
+  
+  private static getResourceTypeFromEndpoint(endpoint: string): string {
+    if (endpoint.includes('/children')) return 'children';
+    if (endpoint.includes('/behavior-logs')) return 'behavior_logs';
+    if (endpoint.includes('/classroom-logs')) return 'classroom_logs';
+    if (endpoint.includes('/classrooms')) return 'classrooms';
+    if (endpoint.includes('/user')) return 'user_profile';
+    if (endpoint.includes('/organizations')) return 'organizations';
+    return 'api_endpoint';
+  }
+  
+  private static getResourceIdFromEndpoint(endpoint: string): string {
+    const matches = endpoint.match(/\/([a-f0-9-]{36}|\d+)(?:\/|$)/);
+    return matches ? matches[1] : '';
+  }
+  
+  private static getActionFromMethod(method: string): 'read' | 'create' | 'update' | 'delete' {
+    switch (method.toUpperCase()) {
+      case 'GET': return 'read';
+      case 'POST': return 'create';
+      case 'PUT':
+      case 'PATCH': return 'update';
+      case 'DELETE': return 'delete';
+      default: return 'read';
+    }
+  }
+import { AuditService } from '../services/auditService';
 }

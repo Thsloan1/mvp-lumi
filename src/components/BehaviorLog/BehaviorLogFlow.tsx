@@ -15,6 +15,8 @@ import { AuthService } from '../../services/authService';
 import { BehaviorStrategyResponse } from './BehaviorStrategyResponse';
 import { ReflectionPrompts } from '../Reflection/ReflectionPrompts';
 import { ErrorLogger } from '../../utils/errorLogger';
+import { AuditService } from '../../services/auditService';
+import { EncryptionService } from '../../services/encryptionService';
 
 export const BehaviorLogFlow: React.FC = () => {
   const { setCurrentView, currentUser, createBehaviorLog, children, createChild, toast } = useAppContext();
@@ -40,6 +42,12 @@ export const BehaviorLogFlow: React.FC = () => {
   const [aiResponse, setAiResponse] = useState<AIStrategyResponse | null>(null);
   const [showReflection, setShowReflection] = useState(false);
   const [savedBehaviorLogId, setSavedBehaviorLogId] = useState<string | null>(null);
+  const [phiFlag, setPHIFlag] = useState({
+    containsPHI: false,
+    phiType: undefined as string | undefined,
+    accessLevel: undefined as string | undefined,
+    justification: ''
+  });
 
   const steps = [
     { title: "Which child?", field: 'childId' },
@@ -265,6 +273,31 @@ export const BehaviorLogFlow: React.FC = () => {
   const handleStrategySelect = (strategy: string, confidence: number) => {
     // Log PHI access if flagged
     if (phiFlag.containsPHI) {
+      AuditService.logPHIAccess(
+        'behavior_log',
+        'temp-behavior-log',
+        phiFlag.phiType || 'unknown',
+        true,
+        'Behavior log creation with PHI content'
+      );
+    }
+
+    // Encrypt sensitive data before saving
+    const encryptBehaviorData = async () => {
+      const dataToSave = { ...behaviorData };
+      
+      // Encrypt behavior description if it contains sensitive information
+      if (phiFlag.containsPHI || EncryptionService.detectPHI(behaviorData.behaviorDescription).containsPHI) {
+        dataToSave.behaviorDescription = await EncryptionService.encryptText(behaviorData.behaviorDescription);
+      }
+      
+      return dataToSave;
+    };
+
+    encryptBehaviorData().then(encryptedData => {
+      return createBehaviorLog({
+    // Log PHI access if flagged
+    if (phiFlag.containsPHI) {
       const auditLogs = safeLocalStorageGet('lumi_audit_logs', []);
       const auditEntry = {
         id: Date.now().toString(),
@@ -290,20 +323,32 @@ export const BehaviorLogFlow: React.FC = () => {
     createBehaviorLog({
       childId: behaviorData.childId,
       behaviorDescription: behaviorData.behaviorDescription,
-      context: behaviorData.context,
-      timeOfDay: behaviorData.timeOfDay,
-      severity: behaviorData.severity,
-      educatorMood: behaviorData.educatorMood,
-      stressors: [],
-      aiResponse: aiResponse,
-      selectedStrategy: strategy,
-      confidenceRating: confidence,
-      phiFlag: phiFlag.containsPHI ? phiFlag : undefined
+        ...encryptedData,
+        childId: behaviorData.childId,
+        context: behaviorData.context,
+        timeOfDay: behaviorData.timeOfDay,
+        severity: behaviorData.severity,
+        educatorMood: behaviorData.educatorMood,
+        stressors: [],
+        aiResponse: aiResponse,
+        selectedStrategy: strategy,
+        confidenceRating: confidence,
+        phiFlag: phiFlag.containsPHI ? phiFlag : undefined
+      });
     }).then((result) => {
         setSavedBehaviorLogId(result.id);
         setShowReflection(true);
-    }).catch(() => {
+      
+      // Log FERPA record creation
+      AuditService.logFERPAAccess(
+        behaviorData.childId,
+        children.find(c => c.id === behaviorData.childId)?.name || 'Unknown Child',
+        'BEHAVIOR_LOG_CREATED',
+        false
+      );
+    }).catch((error) => {
         ErrorLogger.error('Failed to save behavior log');
+      console.error('Behavior log save error:', error);
       });
   };
 
@@ -548,6 +593,74 @@ export const BehaviorLogFlow: React.FC = () => {
 
           {currentStep === 5 && (
             <div>
+              {/* PHI Sensitivity Check */}
+              <div className="mb-8 p-4 bg-red-50 border border-red-200 rounded-xl">
+                <h3 className="font-medium text-red-900 mb-3">
+                  🏥 Health Information Sensitivity Check
+                </h3>
+                <p className="text-sm text-red-800 mb-4">
+                  Does this behavior log contain any health-related information that might be protected under HIPAA?
+                </p>
+                
+                <label className="flex items-start space-x-3 mb-4">
+                  <input
+                    type="checkbox"
+                    checked={phiFlag.containsPHI}
+                    onChange={(e) => setPHIFlag(prev => ({ 
+                      ...prev, 
+                      containsPHI: e.target.checked,
+                      phiType: e.target.checked ? 'mental_health' : undefined,
+                      accessLevel: e.target.checked ? 'case_manager_only' : undefined
+                    }))}
+                    className="mt-1 rounded border-red-300 text-red-600 focus:ring-red-500"
+                  />
+                  <div>
+                    <span className="font-medium text-red-900">
+                      This log contains Protected Health Information (PHI)
+                    </span>
+                    <p className="text-xs text-red-700 mt-1">
+                      Check if this includes: mental health observations, medical conditions, 
+                      therapy notes, medication effects, or developmental disabilities
+                    </p>
+                  </div>
+                </label>
+                
+                {phiFlag.containsPHI && (
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-sm font-medium text-red-900 mb-2">
+                        PHI Type
+                      </label>
+                      <select
+                        value={phiFlag.phiType || ''}
+                        onChange={(e) => setPHIFlag(prev => ({ ...prev, phiType: e.target.value as any }))}
+                        className="w-full px-3 py-2 border border-red-300 rounded-lg focus:ring-red-500 focus:border-red-500"
+                      >
+                        <option value="mental_health">Mental Health Information</option>
+                        <option value="medical">Medical Information</option>
+                        <option value="developmental_disability">Developmental Disability</option>
+                        <option value="therapy_notes">Therapy/Treatment Notes</option>
+                      </select>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-red-900 mb-2">
+                        Access Level
+                      </label>
+                      <select
+                        value={phiFlag.accessLevel || ''}
+                        onChange={(e) => setPHIFlag(prev => ({ ...prev, accessLevel: e.target.value as any }))}
+                        className="w-full px-3 py-2 border border-red-300 rounded-lg focus:ring-red-500 focus:border-red-500"
+                      >
+                        <option value="case_manager_only">Case Manager Only</option>
+                        <option value="special_ed_team">Special Education Team</option>
+                        <option value="admin_only">Administrator Only</option>
+                      </select>
+                    </div>
+                  </div>
+                )}
+              </div>
+
               {/* PHI Sensitivity Check */}
               <div className="mb-8 p-4 bg-red-50 border border-red-200 rounded-xl">
                 <h3 className="font-medium text-red-900 mb-3">

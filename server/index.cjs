@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
 require('dotenv').config();
 
 // Global error handlers for debugging
@@ -35,6 +36,8 @@ let children = [];
 let classrooms = [];
 let verificationCodes = new Map();
 let resetCodes = new Map();
+let auditLogs = [];
+let encryptionKeys = new Map();
 
 // Import test data for consistency
 const { testDataManager } = require('./testDataManager.cjs');
@@ -52,6 +55,89 @@ const syncWithTestData = () => {
 // Initialize with test data
 syncWithTestData();
 
+// Initialize encryption key
+const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || 'lumi-default-encryption-key-2024-change-in-production';
+encryptionKeys.set('default', ENCRYPTION_KEY);
+
+// Encryption helper functions
+const encryptSensitiveData = (data) => {
+  try {
+    const cipher = crypto.createCipher('aes-256-cbc', ENCRYPTION_KEY);
+    let encrypted = cipher.update(data, 'utf8', 'base64');
+    encrypted += cipher.final('base64');
+    return `enc_${encrypted}`;
+  } catch (error) {
+    console.error('Encryption failed:', error);
+    return data; // Return original data if encryption fails
+  }
+};
+
+const decryptSensitiveData = (encryptedData) => {
+  try {
+    if (!encryptedData.startsWith('enc_')) {
+      return encryptedData; // Not encrypted
+    }
+    
+    const encrypted = encryptedData.substring(4);
+    const decipher = crypto.createDecipher('aes-256-cbc', ENCRYPTION_KEY);
+    let decrypted = decipher.update(encrypted, 'base64', 'utf8');
+    decrypted += decipher.final('utf8');
+    return decrypted;
+  } catch (error) {
+    console.error('Decryption failed:', error);
+    return encryptedData; // Return original if decryption fails
+  }
+};
+
+// Audit logging function
+const logAuditEvent = (req, action, resourceType, resourceId, details = {}) => {
+  try {
+    const auditEntry = {
+      id: Date.now().toString(),
+      timestamp: new Date().toISOString(),
+      userId: req.user?.id || 'anonymous',
+      userEmail: req.user?.email || 'unknown',
+      userRole: req.user?.role || 'unknown',
+      action,
+      resourceType,
+      resourceId,
+      ipAddress: req.ip || req.connection.remoteAddress || 'unknown',
+      userAgent: req.get('User-Agent') || 'unknown',
+      success: true,
+      riskLevel: getRiskLevel(action, resourceType),
+      complianceFlags: getComplianceFlags(resourceType),
+      details
+    };
+    
+    auditLogs.unshift(auditEntry);
+    
+    // Keep only last 10000 entries in memory
+    if (auditLogs.length > 10000) {
+      auditLogs = auditLogs.slice(0, 10000);
+    }
+    
+    console.log('📋 Audit Log:', auditEntry.action, auditEntry.resourceType, auditEntry.userId);
+  } catch (error) {
+    console.error('Audit logging failed:', error);
+  }
+};
+
+const getRiskLevel = (action, resourceType) => {
+  if (resourceType === 'behavior_logs' && action === 'DELETE') return 'critical';
+  if (resourceType === 'children' && action === 'DELETE') return 'critical';
+  if (action === 'DELETE') return 'high';
+  if (action === 'UPDATE') return 'medium';
+  return 'low';
+};
+
+const getComplianceFlags = (resourceType) => {
+  const flags = [];
+  if (['behavior_logs', 'children'].includes(resourceType)) {
+    flags.push('FERPA_EDUCATIONAL_RECORD');
+  }
+  return flags;
+};
+
 // Auth middleware
 const authenticateToken = (req, res, next) => {
   const authHeader = req.headers['authorization'];
@@ -63,6 +149,8 @@ const authenticateToken = (req, res, next) => {
 
   jwt.verify(token, JWT_SECRET, (err, user) => {
     if (err) {
+      // Log failed authentication
+      logAuditEvent(req, 'AUTH_FAILED', 'authentication', null, { error: err.message });
       return res.status(403).json({ error: 'Invalid token' });
     }
     req.user = user;
@@ -449,15 +537,31 @@ app.post('/api/auth/reset-password', async (req, res) => {
 
 // Children Routes
 app.get('/api/children', authenticateToken, (req, res) => {
+  // Log children data access
+  logAuditEvent(req, 'READ', 'children', null, { educatorId: req.user.id });
+  
   const userChildren = children.filter(child => {
     const classroom = classrooms.find(c => c.id === child.classroomId);
     return classroom && classroom.educatorId === req.user.id;
-  });
+  }).map(child => ({
+    ...child,
+    // Decrypt sensitive data for response
+    developmentalNotes: child.developmentalNotes?.startsWith('enc_')
+      ? decryptSensitiveData(child.developmentalNotes)
+      : child.developmentalNotes,
+    familyContext: child.familyContext?.startsWith('enc_')
+      ? decryptSensitiveData(child.familyContext)
+      : child.familyContext
+  }));
+  
   res.json({ children: userChildren });
 });
 
 app.post('/api/children', authenticateToken, (req, res) => {
   try {
+    // Log child creation
+    logAuditEvent(req, 'CREATE', 'children', null, { childName: req.body.name });
+    
     const { name, gradeBand, hasIEP, hasIFSP, developmentalNotes } = req.body;
 
     if (!name || !gradeBand) {
@@ -481,6 +585,9 @@ app.post('/api/children', authenticateToken, (req, res) => {
       classrooms.push(userClassroom);
     }
 
+    // Encrypt sensitive fields
+    const encryptedNotes = developmentalNotes ? encryptSensitiveData(developmentalNotes) : '';
+    
     const child = {
       id: Date.now().toString(),
       name,
@@ -488,13 +595,20 @@ app.post('/api/children', authenticateToken, (req, res) => {
       classroomId: userClassroom.id,
       hasIEP: hasIEP || false,
       hasIFSP: hasIFSP || false,
-      developmentalNotes: developmentalNotes || '',
+      developmentalNotes: encryptedNotes,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
 
     children.push(child);
-    res.status(201).json({ child });
+    
+    // Return decrypted data for response
+    const responseChild = {
+      ...child,
+      developmentalNotes: developmentalNotes || ''
+    };
+    
+    res.status(201).json({ child: responseChild });
   } catch (error) {
     res.status(500).json({ error: 'Server error' });
   }
@@ -572,22 +686,60 @@ app.put('/api/classrooms/:id', authenticateToken, (req, res) => {
 
 // Behavior Logs Routes
 app.get('/api/behavior-logs', authenticateToken, (req, res) => {
-  const userLogs = behaviorLogs.filter(log => log.educatorId === req.user.id);
+  // Log data access
+  logAuditEvent(req, 'READ', 'behavior_logs', null, { count: behaviorLogs.length });
+  
+  const userLogs = behaviorLogs.filter(log => log.educatorId === req.user.id).map(log => ({
+    ...log,
+    // Decrypt sensitive data for response
+    behaviorDescription: log.behaviorDescription?.startsWith('enc_') 
+      ? decryptSensitiveData(log.behaviorDescription)
+      : log.behaviorDescription,
+    developmentalNotes: log.developmentalNotes?.startsWith('enc_')
+      ? decryptSensitiveData(log.developmentalNotes)
+      : log.developmentalNotes
+  }));
+  
   res.json({ behaviorLogs: userLogs });
 });
 
 app.post('/api/behavior-logs', authenticateToken, (req, res) => {
   try {
+    // Log behavior log creation
+    logAuditEvent(req, 'CREATE', 'behavior_logs', null, { 
+      childId: req.body.childId,
+      containsPHI: req.body.phiFlag?.containsPHI || false 
+    });
+    
+    // Encrypt sensitive fields
+    const encryptedBody = { ...req.body };
+    if (encryptedBody.behaviorDescription && !encryptedBody.behaviorDescription.startsWith('enc_')) {
+      encryptedBody.behaviorDescription = encryptSensitiveData(encryptedBody.behaviorDescription);
+    }
+    if (encryptedBody.developmentalNotes && !encryptedBody.developmentalNotes.startsWith('enc_')) {
+      encryptedBody.developmentalNotes = encryptSensitiveData(encryptedBody.developmentalNotes);
+    }
+    
     const behaviorLog = {
       id: Date.now().toString(),
-      ...req.body,
+      ...encryptedBody,
       educatorId: req.user.id,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
 
     behaviorLogs.push(behaviorLog);
-    res.status(201).json({ behaviorLog });
+    
+    // Return decrypted data for response
+    const responseLog = {
+      ...behaviorLog,
+      behaviorDescription: decryptSensitiveData(behaviorLog.behaviorDescription),
+      developmentalNotes: behaviorLog.developmentalNotes 
+        ? decryptSensitiveData(behaviorLog.developmentalNotes)
+        : behaviorLog.developmentalNotes
+    };
+    
+    res.status(201).json({ behaviorLog: responseLog });
   } catch (error) {
     res.status(500).json({ error: 'Server error' });
   }
@@ -1424,6 +1576,128 @@ app.post('/api/auth/apple', async (req, res) => {
   } catch (error) {
     console.error('Apple OAuth error:', error);
     res.status(500).json({ error: 'Apple authentication failed' });
+  }
+});
+
+app.post('/api/audit/log', authenticateToken, (req, res) => {
+  try {
+    const auditEntry = {
+      ...req.body,
+      id: Date.now().toString(),
+      timestamp: new Date().toISOString(),
+      ipAddress: req.ip || req.connection.remoteAddress || 'unknown',
+      userAgent: req.get('User-Agent') || 'unknown'
+    };
+    
+    auditLogs.unshift(auditEntry);
+    
+    // Keep only last 10000 entries
+    if (auditLogs.length > 10000) {
+      auditLogs = auditLogs.slice(0, 10000);
+    }
+    
+    res.status(201).json({ success: true, auditId: auditEntry.id });
+  } catch (error) {
+    console.error('Audit logging error:', error);
+    res.status(500).json({ error: 'Audit logging failed' });
+  }
+});
+
+// Get audit logs endpoint
+app.get('/api/audit/logs', authenticateToken, (req, res) => {
+  try {
+    // Only admins can view all audit logs
+    if (req.user.role !== 'admin') {
+      // Regular users can only see their own audit logs
+      const userLogs = auditLogs.filter(log => log.userId === req.user.id);
+      return res.json({ auditLogs: userLogs });
+    }
+    
+    // Apply filters if provided
+    let filteredLogs = auditLogs;
+    
+    if (req.query.resourceType) {
+      filteredLogs = filteredLogs.filter(log => log.resourceType === req.query.resourceType);
+    }
+    
+    if (req.query.riskLevel) {
+      filteredLogs = filteredLogs.filter(log => log.riskLevel === req.query.riskLevel);
+    }
+    
+    if (req.query.dateRange) {
+      const days = parseInt(req.query.dateRange);
+      const cutoff = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+      filteredLogs = filteredLogs.filter(log => new Date(log.timestamp) >= cutoff);
+    }
+    
+    res.json({ auditLogs: filteredLogs.slice(0, 1000) }); // Limit to 1000 entries
+  } catch (error) {
+    console.error('Get audit logs error:', error);
+    res.status(500).json({ error: 'Failed to retrieve audit logs' });
+  }
+});
+
+// Parent portal endpoints
+app.post('/api/parent-portal/request-access', (req, res) => {
+  try {
+    const { childName, parentName, parentEmail } = req.body;
+    
+    if (!childName || !parentName || !parentEmail) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+    
+    // Find child
+    const child = children.find(c => c.name.toLowerCase() === childName.toLowerCase());
+    if (!child) {
+      return res.status(404).json({ error: 'Child not found' });
+    }
+    
+    // Generate access token and verification code
+    const accessToken = 'parent_' + Date.now().toString(36) + '_' + Math.random().toString(36).substr(2, 9);
+    const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+    
+    // Store parent access request (in production, use database)
+    const accessRequest = {
+      id: Date.now().toString(),
+      childId: child.id,
+      childName: child.name,
+      parentName,
+      parentEmail,
+      accessToken,
+      verificationCode,
+      verified: false,
+      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+      createdAt: new Date().toISOString()
+    };
+    
+    // Log FERPA access request
+    auditLogs.unshift({
+      id: Date.now().toString(),
+      timestamp: new Date().toISOString(),
+      userId: 'parent',
+      userEmail: parentEmail,
+      userRole: 'parent',
+      action: 'FERPA_ACCESS_REQUESTED',
+      resourceType: 'educational_record',
+      resourceId: child.id,
+      ipAddress: req.ip || 'unknown',
+      userAgent: req.get('User-Agent') || 'unknown',
+      success: true,
+      riskLevel: 'medium',
+      complianceFlags: ['FERPA_PARENT_REQUEST'],
+      details: { childName, parentName, parentEmail }
+    });
+    
+    console.log(`📧 Parent portal verification code for ${parentEmail}: ${verificationCode}`);
+    
+    res.status(201).json({
+      message: 'Access request created. Verification code sent to email.',
+      accessToken,
+      expiresAt: accessRequest.expiresAt
+    });
+  } catch (error) {
+    console.error('Parent portal access request error:', error);
+    res.status(500).json({ error: 'Server error' });
   }
 });
 

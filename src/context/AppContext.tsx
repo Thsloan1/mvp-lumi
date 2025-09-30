@@ -5,6 +5,8 @@ import { useLocalStorage } from '../hooks/useLocalStorage';
 import { AuthService } from '../services/authService';
 import { OrganizationApi, InvitationApi } from '../services/apiClient';
 import { ErrorLogger } from '../utils/errorLogger';
+import { AuditService } from '../services/auditService';
+import { EncryptionService } from '../services/encryptionService';
 
 interface AppContextType {
   // Auth
@@ -548,13 +550,32 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
 
   const createBehaviorLog = async (data: any) => {
     try {
+      // Encrypt sensitive data before sending to API
+      const encryptedData = await EncryptionService.encryptBehaviorLog(data);
+      
+      // Log data creation
+      await AuditService.logDataAccess(
+        'behavior_logs',
+        'new',
+        `Behavior log for ${children.find(c => c.id === data.childId)?.name || 'Unknown Child'}`,
+        'create',
+        { containsPHI: data.phiFlag?.containsPHI || false }
+      );
+      
       const result = await AuthService.apiRequest('/api/behavior-logs', {
         method: 'POST',
-        body: JSON.stringify(data)
+        body: JSON.stringify(encryptedData)
       });
-      setBehaviorLogs(prev => [result.behaviorLog, ...prev]);
+      
+      // Decrypt for local state
+      const decryptedResult = {
+        ...result.behaviorLog,
+        behaviorDescription: await EncryptionService.decryptText(result.behaviorLog.behaviorDescription)
+      };
+      
+      setBehaviorLogs(prev => [decryptedResult, ...prev]);
       success('Behavior logged!', 'Strategy saved to your dashboard');
-      return result.behaviorLog;
+      return decryptedResult;
     } catch (err: any) {
       error('Failed to save', err.message);
       throw err;
@@ -578,13 +599,33 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
 
   const createChild = async (data: any) => {
     try {
+      // Encrypt sensitive child data
+      const encryptedData = await EncryptionService.encryptChildProfile(data);
+      
+      // Log child profile creation
+      await AuditService.logFERPAAccess(
+        'new',
+        data.name,
+        'CHILD_PROFILE_CREATED',
+        false
+      );
+      
       const result = await AuthService.apiRequest('/api/children', {
         method: 'POST',
-        body: JSON.stringify(data)
+        body: JSON.stringify(encryptedData)
       });
-      setApiChildren(prev => [...prev, result.child]);
+      
+      // Decrypt for local state
+      const decryptedResult = {
+        ...result.child,
+        developmentalNotes: result.child.developmentalNotes 
+          ? await EncryptionService.decryptText(result.child.developmentalNotes)
+          : result.child.developmentalNotes
+      };
+      
+      setApiChildren(prev => [...prev, decryptedResult]);
       success('Child added!', `${data.name} has been added to your classroom`);
-      return result.child;
+      return decryptedResult;
     } catch (err: any) {
       error('Failed to add child', err.message);
       throw err;
