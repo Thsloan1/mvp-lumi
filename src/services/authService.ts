@@ -1,4 +1,5 @@
 import { EncryptionService } from '../services/encryptionService';
+import { AuditService } from '../services/auditService';
 interface User {
   id: string;
   fullName: string;
@@ -351,5 +352,4 @@ export class AuthService {
       default: return 'read';
     }
   }
-import { AuditService } from '../services/auditService';
 }
