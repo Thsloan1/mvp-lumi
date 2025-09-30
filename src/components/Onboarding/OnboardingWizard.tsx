@@ -194,7 +194,7 @@ export const OnboardingWizard: React.FC = () => {
       case 5: // Teaching Style
         return onboardingData.teachingStyle;
       case 6: // Behavior Focus
-        return onboardingData.behaviorFocus.length > 0;
+        return true; // Allow skipping behavior focus
       default:
         return true;
     }

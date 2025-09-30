@@ -118,13 +118,6 @@ export const BehaviorFocusStep: React.FC<BehaviorFocusStepProps> = ({ data, upda
         </div>
       </Card>
 
-      {(!data.behaviorFocus || data.behaviorFocus.length === 0) && (
-        <div className="text-center">
-          <p className="text-sm text-red-500">
-            Please select at least one behavior area to continue
-          </p>
-        </div>
-      )}
     </div>
   );
 };
