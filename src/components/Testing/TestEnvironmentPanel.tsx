@@ -149,7 +149,10 @@ export const TestEnvironmentPanel: React.FC = () => {
         userData = {
           id: testUser.id,
           fullName: testUser.name,
+          firstName: testUser.name.split(' ')[0],
+          lastName: testUser.name.split(' ').slice(1).join(' ') || '',
           email: testUser.email,
+          password: 'hashed-password',
           role: testUser.role,
           preferredLanguage: 'english',
           learningStyle: 'I learn best with visuals',

@@ -42,6 +42,7 @@ import { LandingPage } from './components/Landing/LandingPage';
 import { TestEnvironmentPanel } from './components/Testing/TestEnvironmentPanel';
 import { TestUserFeedbackWidget } from './components/Testing/TestUserFeedbackWidget';
 import { SecurityExpertReport } from './components/Security/SecurityExpertReport';
+import { DeveloperAppManager } from './components/Developer/DeveloperAppManager';
 import { ProductionReadinessChecklist } from './components/Testing/ProductionReadinessChecklist';
 import { ProductionReadinessReport } from './components/Testing/ProductionReadinessReport';
 import { ProductionChecklist } from './components/Testing/ProductionChecklist';
@@ -173,6 +174,8 @@ const AppContent: React.FC = () => {
         return <OrganizationAnalytics />;
       case 'security-compliance-center':
         return <SecurityComplianceCenter />;
+      case 'developer-app-manager':
+        return <DeveloperAppManager />;
       case 'developer-app-manager':
         return <DeveloperAppManager />;
       case 'security-expert-report':

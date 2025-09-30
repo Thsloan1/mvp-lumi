@@ -296,7 +296,7 @@ Human Potential Partners`;
         return true;
       }
 
-      // Production email sending would go here
+      EmailService.showFeedbackNotification(feedback);
       return true;
     } catch (error) {
       console.error('Failed to send feedback notification:', error);
@@ -305,7 +305,7 @@ Human Potential Partners`;
   }
 
   // Show visual notification for feedback
-  private static showFeedbackNotification(feedback: any) {
+  static showFeedbackNotification(feedback: any) {
     const notification = document.createElement('div');
     notification.innerHTML = `
       <div style="
