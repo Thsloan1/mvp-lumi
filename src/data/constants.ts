@@ -1,42 +1,45 @@
 export const STRESSOR_OPTIONS = [
-  // Educator Stressors
+  // Stressors of Teacher/Educator
   'High ratios or large group sizes',
   'Staff turnover or absences',
   'Emotional fatigue or burnout',
   'Limited planning and preparation time',
   'Simultaneous behavior needs',
-  'Stress carried from home',
   'Parental expectations or disconnect',
-  'Limited family engagement',
-  'Home language differences',
-  'Safety concerns',
+  'Limited Family engagement',
+  'Family communication style differences or disconnect',
+  'Family language/cultural differences',
+  'Classroom safety/ concerns',
   
-  // Child Development and Behavior
+  // Development and Behavior Stressors Brought into Classroom by Children
   'Separation challenges',
   'Strong emotional expressions',
   'Limited self-regulation',
   'Short attention spans',
-  'Communication differences',
-  'Variability in developmental progress',
+  'Grief and loss experiences',
+  'Peer conflicts',
+  'Wide range of in developmental abilities',
+  'Talking/expression difficulties',
   'Toileting struggles',
-  'Fatigue or irregular sleep patterns',
-  'Sensory sensitivities',
-  'Peer conflict',
+  'Sleep struggles',
+  'Sensory under or over reactions',
+  'Conflict between kids',
   
-  // Family and Home Factors
-  'Inconsistent routines',
+  // Family and Community Stressors
   'Food insecurity',
   'Employment insecurity/unemployment',
   'Housing insecurity/unhoused',
   'Community violence',
   'Domestic violence',
   'Incarceration',
+  'Inconsistent routines',
   
-  // Environment and System Factors
+  // Environment and System Influences
   'Limited or crowded classroom space',
   'TK transition pressures',
   'Resource limitations',
-  'Administrative and policy demands'
+  'Administrative and policy demands',
+  'Overwhelming Change/Unpredictability'
 ];
 
 export const CONTEXT_OPTIONS = [
