@@ -786,6 +786,7 @@ export const TestEnvironmentPanel: React.FC = () => {
     { id: 'users', label: 'User Management', icon: Users },
     { id: 'scenarios', label: 'Test Scenarios', icon: Play },
     { id: 'data', label: 'Data Management', icon: Database },
+    { id: 'analytics', label: 'Analytics', icon: BarChart3 },
     { id: 'email', label: 'Email Delivery', icon: Mail },
     { id: 'feedback', label: 'Feedback & Reviews', icon: Star }
   ];
@@ -822,6 +823,7 @@ export const TestEnvironmentPanel: React.FC = () => {
               variant="ghost"
               onClick={() => setIsOpen(false)}
               icon={X}
+              className="p-2 hover:bg-gray-100 rounded-lg"
             />
           </div>
 
@@ -866,10 +868,21 @@ export const TestEnvironmentPanel: React.FC = () => {
           </div>
 
           {/* Tab Content */}
-          <div className="max-h-[60vh] overflow-y-auto">
+          <div className="max-h-[60vh] overflow-y-auto px-1">
             {activeTab === 'users' && renderUserManagement()}
             {activeTab === 'scenarios' && renderTestScenarios()}
             {activeTab === 'data' && renderDataManagement()}
+            {activeTab === 'analytics' && (
+              <Card className="p-8 text-center">
+                <BarChart3 className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                <h4 className="text-lg font-medium text-[#1A1A1A] mb-2">
+                  Analytics Dashboard
+                </h4>
+                <p className="text-gray-600">
+                  Analytics and insights for test environment usage.
+                </p>
+              </Card>
+            )}
             {activeTab === 'email' && renderEmailDelivery()}
             {activeTab === 'feedback' && renderFeedbackManagement()}
           </div>
