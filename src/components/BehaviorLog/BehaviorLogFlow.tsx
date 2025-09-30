@@ -296,33 +296,6 @@ export const BehaviorLogFlow: React.FC = () => {
 
     encryptBehaviorData().then(encryptedData => {
       return createBehaviorLog({
-    // Log PHI access if flagged
-    if (phiFlag.containsPHI) {
-      const auditLogs = safeLocalStorageGet('lumi_audit_logs', []);
-      const auditEntry = {
-        id: Date.now().toString(),
-        timestamp: new Date(),
-        userId: currentUser?.id || '',
-        userName: currentUser?.fullName || '',
-        userRole: currentUser?.role || '',
-        action: 'phi_access',
-        resource: 'behavior_log',
-        resourceId: savedBehaviorLogId,
-        details: `Created behavior log with PHI flag: ${phiFlag.phiType}`,
-        ipAddress: '192.168.1.100',
-        userAgent: navigator.userAgent,
-        sessionId: 'sess_' + Math.random().toString(36).substring(2),
-        success: true,
-        riskLevel: 'high' as const,
-        complianceFlags: ['PHI_CREATED', 'HIPAA_AUDIT_REQUIRED']
-      };
-      auditLogs.unshift(auditEntry);
-      safeLocalStorageSet('lumi_audit_logs', auditLogs);
-    }
-
-    createBehaviorLog({
-      childId: behaviorData.childId,
-      behaviorDescription: behaviorData.behaviorDescription,
         ...encryptedData,
         childId: behaviorData.childId,
         context: behaviorData.context,
@@ -593,74 +566,6 @@ export const BehaviorLogFlow: React.FC = () => {
 
           {currentStep === 5 && (
             <div>
-              {/* PHI Sensitivity Check */}
-              <div className="mb-8 p-4 bg-red-50 border border-red-200 rounded-xl">
-                <h3 className="font-medium text-red-900 mb-3">
-                  🏥 Health Information Sensitivity Check
-                </h3>
-                <p className="text-sm text-red-800 mb-4">
-                  Does this behavior log contain any health-related information that might be protected under HIPAA?
-                </p>
-                
-                <label className="flex items-start space-x-3 mb-4">
-                  <input
-                    type="checkbox"
-                    checked={phiFlag.containsPHI}
-                    onChange={(e) => setPHIFlag(prev => ({ 
-                      ...prev, 
-                      containsPHI: e.target.checked,
-                      phiType: e.target.checked ? 'mental_health' : undefined,
-                      accessLevel: e.target.checked ? 'case_manager_only' : undefined
-                    }))}
-                    className="mt-1 rounded border-red-300 text-red-600 focus:ring-red-500"
-                  />
-                  <div>
-                    <span className="font-medium text-red-900">
-                      This log contains Protected Health Information (PHI)
-                    </span>
-                    <p className="text-xs text-red-700 mt-1">
-                      Check if this includes: mental health observations, medical conditions, 
-                      therapy notes, medication effects, or developmental disabilities
-                    </p>
-                  </div>
-                </label>
-                
-                {phiFlag.containsPHI && (
-                  <div className="space-y-3">
-                    <div>
-                      <label className="block text-sm font-medium text-red-900 mb-2">
-                        PHI Type
-                      </label>
-                      <select
-                        value={phiFlag.phiType || ''}
-                        onChange={(e) => setPHIFlag(prev => ({ ...prev, phiType: e.target.value as any }))}
-                        className="w-full px-3 py-2 border border-red-300 rounded-lg focus:ring-red-500 focus:border-red-500"
-                      >
-                        <option value="mental_health">Mental Health Information</option>
-                        <option value="medical">Medical Information</option>
-                        <option value="developmental_disability">Developmental Disability</option>
-                        <option value="therapy_notes">Therapy/Treatment Notes</option>
-                      </select>
-                    </div>
-                    
-                    <div>
-                      <label className="block text-sm font-medium text-red-900 mb-2">
-                        Access Level
-                      </label>
-                      <select
-                        value={phiFlag.accessLevel || ''}
-                        onChange={(e) => setPHIFlag(prev => ({ ...prev, accessLevel: e.target.value as any }))}
-                        className="w-full px-3 py-2 border border-red-300 rounded-lg focus:ring-red-500 focus:border-red-500"
-                      >
-                        <option value="case_manager_only">Case Manager Only</option>
-                        <option value="special_ed_team">Special Education Team</option>
-                        <option value="admin_only">Administrator Only</option>
-                      </select>
-                    </div>
-                  </div>
-                )}
-              </div>
-
               {/* PHI Sensitivity Check */}
               <div className="mb-8 p-4 bg-red-50 border border-red-200 rounded-xl">
                 <h3 className="font-medium text-red-900 mb-3">
