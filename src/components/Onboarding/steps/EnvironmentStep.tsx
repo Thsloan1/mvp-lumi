@@ -36,7 +36,7 @@ export const EnvironmentStep: React.FC<EnvironmentStepProps> = ({ data, updateDa
 
   const stressorCategories = [
     {
-      title: 'Teacher/Educator Stresses',
+      title: 'Teacher/Educator Stressors',
       stressors: STRESSOR_OPTIONS.slice(0, 9)
     },
     {
