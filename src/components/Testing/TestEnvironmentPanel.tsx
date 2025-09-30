@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Settings, RefreshCw, Database, Users, BarChart3, Download, Upload, Trash2, Play, Code, DollarSign, AlertTriangle, Wrench, BookOpen, CreditCard as Edit, Save, X, Plus, MessageCircle, Shield } from 'lucide-react';
+import { Settings, RefreshCw, Database, Users, BarChart3, Download, Upload, Trash2, Play, Code, DollarSign, AlertTriangle, Wrench, BookOpen, CreditCard as Edit, Save, X, Plus, MessageCircle, Shield, CheckCircle, Zap } from 'lucide-react';
 import { Button } from '../UI/Button';
 import { Card } from '../UI/Card';
 import { Select } from '../UI/Select';
@@ -702,6 +702,24 @@ export const DeveloperPortal: React.FC = () => {
           className="text-green-600 border-green-200"
         >
           Production Check
+        </Button>
+        <Button
+          onClick={() => setCurrentView('production-checklist')}
+          variant="outline"
+          size="sm"
+          icon={CheckCircle}
+          className="text-blue-600 border-blue-200"
+        >
+          Launch Checklist
+        </Button>
+        <Button
+          onClick={() => setCurrentView('stress-testing')}
+          variant="outline"
+          size="sm"
+          icon={Zap}
+          className="text-purple-600 border-purple-200"
+        >
+          Stress Tests
         </Button>
       </div>
     </div>
