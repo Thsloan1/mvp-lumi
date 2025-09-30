@@ -155,3 +155,5 @@ export const BehaviorFocusStep: React.FC<BehaviorFocusStepProps> = ({ data, upda
     </div>
   );
 };
+
+export { BehaviorFocusStep }
