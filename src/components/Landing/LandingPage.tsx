@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Menu, X, ChevronDown, Play, ArrowRight, Heart, Users, BarChart3, MessageCircle, Star, CheckCircle, Globe, Lightbulb, Shield, Smartphone } from 'lucide-react';
+import { Menu, X, ChevronDown, Play, ArrowRight, Heart, Users, BarChart3, MessageCircle, Star, CheckCircle, Globe, Lightbulb, Shield, Smartphone, Target, TrendingUp } from 'lucide-react';
 import { Button } from '../UI/Button';
 import { Card } from '../UI/Card';
 import { useAppContext } from '../../context/AppContext';
