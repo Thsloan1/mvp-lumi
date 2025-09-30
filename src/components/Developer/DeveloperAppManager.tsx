@@ -7,7 +7,8 @@ import { Select } from '../UI/Select';
 import { knowledgeLibrary, TheoreticalFramework, StrategyTemplate, LanguageGuideline } from '../../data/knowledgeLibrary';
 import { testDataManager } from '../../data/testData';
 import { getCurrentEnvironment, ENVIRONMENTS } from '../../config/environments';
-import { AnalyticsEngine, DeveloperAnalyticsEngine } from '../../utils/analyticsEngine';
+import { AnalyticsEngine } from '../../utils/analyticsEngine';
+import { DeveloperAnalyticsEngine } from '../../utils/developerAnalytics';
 import { useAppContext } from '../../context/AppContext';
 
 export const DeveloperAppManager: React.FC = () => {
