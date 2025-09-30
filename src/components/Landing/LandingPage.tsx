@@ -206,20 +206,20 @@ export const LandingPage: React.FC = () => {
                   About
                 </button>
                 <button 
-                  onClick={() => scrollToSection('features')}
+                  className="text-xs text-[#615E59] hover:text-[#1A1A1A] transition-colors focus:outline-none focus:ring-2 focus:ring-[#C44E38] rounded-lg px-2 py-1"
                   className="block w-full text-left text-[#615E59] hover:text-[#1A1A1A] transition-colors"
                 >
                   Features
                 </button>
                 <button 
                   onClick={() => scrollToSection('how-it-works')}
-                  className="block w-full text-left text-[#615E59] hover:text-[#1A1A1A] transition-colors"
+                  className="text-xs text-[#615E59] hover:text-[#1A1A1A] transition-colors"
                 >
                   How It Works
                 </button>
                 <button 
                   onClick={() => scrollToSection('team')}
-                  className="block w-full text-left text-[#615E59] hover:text-[#1A1A1A] transition-colors"
+                  className="text-xs text-[#615E59] hover:text-[#1A1A1A] transition-colors"
                 >
                   Team
                 </button>
@@ -227,7 +227,7 @@ export const LandingPage: React.FC = () => {
                   <Button
                     onClick={() => handleCTAClick('signin')}
                     variant="ghost"
-                    className="w-full"
+                    className="text-xs"
                     aria-label="Sign in to your account"
                   >
                     Sign In
@@ -836,7 +836,7 @@ export const LandingPage: React.FC = () => {
                   <Heart className="w-5 h-5 text-white" />
                 </div>
                 <span className="text-xl font-bold">Lumi</span>
-              </div>
+                <span className="text-xs text-[#615E59]">Classroom Behavior Coach™</span>
               <p className="text-gray-400 mb-6 leading-relaxed">
                 Classroom Behavior Coach™ - Bringing clarity, confidence, and care to early childhood education through AI-powered developmental science.
               </p>
@@ -857,7 +857,7 @@ export const LandingPage: React.FC = () => {
             <div>
               <h4 className="font-semibold mb-4">Product</h4>
               <ul className="space-y-2 text-gray-400">
-                <li><a href="#" className="hover:text-white transition-colors">Features</a></li>
+                  className="text-xs text-[#615E59] hover:text-[#1A1A1A] transition-colors focus:outline-none focus:ring-2 focus:ring-[#C44E38] rounded-lg px-2 py-1"
                 <li><a href="#" className="hover:text-white transition-colors">Pricing</a></li>
                 <li><a href="#" className="hover:text-white transition-colors">LumiEd</a></li>
                 <li><a href="#" className="hover:text-white transition-colors">Resources</a></li>
