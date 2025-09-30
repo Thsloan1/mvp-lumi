@@ -63,7 +63,8 @@ export const ProfileSettings: React.FC = () => {
     try {
       // Auto-save profile data
       safeLocalStorageSet('lumi_profile_backup', profileData);
-      await updateProfile(profileData);
+      const fullName = `${profileData.firstName.trim()} ${profileData.lastName.trim()}`;
+      await updateProfile({ ...profileData, fullName });
       // Clear backup after successful save
       localStorage.removeItem('lumi_profile_backup');
     } catch (error) {
@@ -131,10 +132,17 @@ export const ProfileSettings: React.FC = () => {
         
         <div className="grid md:grid-cols-2 gap-6">
           <Input
-            label="Full Name"
-            value={profileData.fullName}
-            onChange={(value) => setProfileData(prev => ({ ...prev, fullName: value }))}
-            placeholder="Enter your full name"
+            label="First Name"
+            value={profileData.firstName}
+            onChange={(value) => setProfileData(prev => ({ ...prev, firstName: value }))}
+            placeholder="Enter your first name"
+          />
+          
+          <Input
+            label="Last Name"
+            value={profileData.lastName}
+            onChange={(value) => setProfileData(prev => ({ ...prev, lastName: value }))}
+            placeholder="Enter your last name"
           />
           
           <Input
@@ -159,9 +167,7 @@ export const ProfileSettings: React.FC = () => {
             options={learningStyleOptions}
             placeholder="How do you learn best?"
           />
-        </div>
-
-        <div className="mt-6">
+          
           <Select
             label="Teaching Style"
             value={profileData.teachingStyle}
@@ -169,9 +175,7 @@ export const ProfileSettings: React.FC = () => {
             options={teachingStyleOptions}
             placeholder="What's your teaching approach?"
           />
-        </div>
-        
-        <div className="mt-8 pt-6 border-t border-[#E6E2DD]">
+          
           <Button
             onClick={handleProfileSave}
             loading={loading}

@@ -68,13 +68,13 @@ export const AboutYouStep: React.FC<AboutYouStepProps> = ({ data, updateData }) 
           <div className="grid grid-cols-2 gap-4">
             <Input
               label="First Name"
-              value={data.firstName}
+              value={data.firstName || ''}
               onChange={(value) => handleInputChange('firstName', value)}
               required
             />
             <Input
               label="Last Name"
-              value={data.lastName}
+              value={data.lastName || ''}
               onChange={(value) => handleInputChange('lastName', value)}
               required
             />

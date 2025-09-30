@@ -1,6 +1,8 @@
 export interface User {
   id: string;
   fullName: string;
+  firstName?: string;
+  lastName?: string;
   email: string;
   role: 'educator' | 'admin';
   preferredLanguage: 'english' | 'spanish';

@@ -10,7 +10,8 @@ export const EducatorSignup: React.FC = () => {
   const { setCurrentView, signup } = useAppContext();
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
-    fullName: '',
+    firstName: '',
+    lastName: '',
     email: '',
     password: ''
   });
@@ -50,8 +51,12 @@ export const EducatorSignup: React.FC = () => {
     
     const newErrors: Record<string, string> = {};
     
-    if (!formData.fullName.trim()) {
-      newErrors.fullName = 'Full name is required';
+    if (!formData.firstName.trim()) {
+      newErrors.firstName = 'First name is required';
+    }
+    
+    if (!formData.lastName.trim()) {
+      newErrors.lastName = 'Last name is required';
     }
     
     const emailError = validateEmail(formData.email);
@@ -72,7 +77,8 @@ export const EducatorSignup: React.FC = () => {
 
     setLoading(true);
     try {
-      await signup(formData.fullName, formData.email, formData.password);
+      const fullName = `${formData.firstName.trim()} ${formData.lastName.trim()}`;
+      await signup(fullName, formData.email, formData.password);
       // User will be redirected to email verification by signup function
     } catch (error) {
       // Error handling is done by signup function
@@ -147,15 +153,28 @@ export const EducatorSignup: React.FC = () => {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            <Input
-              label="Full Name"
-              value={formData.fullName}
-              onChange={(value) => handleInputChange('fullName', value)}
-              placeholder="Enter your full name"
-              required
-              error={errors.fullName}
-              autoComplete="name"
-            />
+            <div className="grid grid-cols-2 gap-4">
+              <Input
+                label="First Name"
+                value={formData.firstName}
+                onChange={(value) => handleInputChange('firstName', value)}
+                placeholder="First name"
+                required
+                error={errors.firstName}
+                autoComplete="given-name"
+                className="border-black focus:border-[#C44E38]"
+              />
+              <Input
+                label="Last Name"
+                value={formData.lastName}
+                onChange={(value) => handleInputChange('lastName', value)}
+                placeholder="Last name"
+                required
+                error={errors.lastName}
+                autoComplete="family-name"
+                className="border-black focus:border-[#C44E38]"
+              />
+            </div>
 
             <Input
               label="Email"
@@ -166,6 +185,7 @@ export const EducatorSignup: React.FC = () => {
               required
               error={errors.email}
               autoComplete="email"
+              className="border-black focus:border-[#C44E38]"
             />
 
             <div className="relative">
@@ -179,6 +199,7 @@ export const EducatorSignup: React.FC = () => {
                 error={errors.password}
                 helperText="Must be at least 8 characters with a capital letter and number"
                 autoComplete="new-password"
+                className="border-black focus:border-[#C44E38]"
               />
               <button
                 type="button"

@@ -30,8 +30,8 @@ export const OnboardingWizard: React.FC = () => {
     const savedProgress = safeJsonParse(localStorage.getItem(STORAGE_KEY), {});
     return savedProgress.data || {
       // Safe defaults for all onboarding fields
-      firstName: currentUser?.fullName?.split(' ')[0] || '',
-      lastName: currentUser?.fullName?.split(' ').slice(1).join(' ') || '',
+      firstName: currentUser?.firstName || currentUser?.fullName?.split(' ')[0] || '',
+      lastName: currentUser?.lastName || currentUser?.fullName?.split(' ').slice(1).join(' ') || '',
       profilePhotoUrl: '',
       preferredLanguage: 'english',
       learningStyle: '',
