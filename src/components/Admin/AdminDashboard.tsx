@@ -100,10 +100,18 @@ export const AdminDashboard: React.FC = () => {
     {
       title: 'Knowledge Library',
       description: 'Manage theoretical frameworks and AI strategy templates',
-      icon: BookOpen,
+      icon: FileText,
       color: 'text-indigo-600',
       bgColor: 'bg-indigo-100',
       action: () => setCurrentView('knowledge-library-manager')
+    },
+    {
+      title: 'Security & Compliance',
+      description: 'FERPA/HIPAA compliance and security management',
+      icon: Shield,
+      color: 'text-red-600',
+      bgColor: 'bg-red-100',
+      action: () => setCurrentView('security-compliance-center')
     }
   ];
 

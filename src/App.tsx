@@ -165,6 +165,8 @@ const AppContent: React.FC = () => {
         return <OrganizationSettings />;
       case 'organization-analytics':
         return <OrganizationAnalytics />;
+      case 'security-compliance-center':
+        return <SecurityComplianceCenter />;
       case 'developer-app-manager':
         return <DeveloperAppManager />;
       case 'production-readiness':

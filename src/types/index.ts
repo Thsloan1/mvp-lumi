@@ -56,6 +56,12 @@ export interface BehaviorLog {
   selectedStrategy?: string;
   confidenceRating?: number;
   reflectionNotes?: string;
+  phiFlag?: {
+    containsPHI: boolean;
+    phiType?: 'mental_health' | 'medical' | 'developmental_disability' | 'therapy_notes';
+    accessLevel?: 'case_manager_only' | 'special_ed_team' | 'admin_only';
+    justification?: string;
+  };
   createdAt: Date;
 }
 
