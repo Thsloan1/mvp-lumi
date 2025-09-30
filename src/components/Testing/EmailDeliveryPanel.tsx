@@ -15,6 +15,106 @@ export const EmailDeliveryPanel: React.FC = () => {
   }, []);
 
   const loadPendingEmails = () => {
+    try {
+      const emails = EmailService.getPendingEmails();
+      console.log('📧 Refreshing pending emails:', emails.length, 'emails found');
+      setPendingEmails(emails);
+      if (emails.length > 0) {
+        toast.info('Emails Refreshed', `Found ${emails.length} pending email${emails.length !== 1 ? 's' : ''}`);
+      }
+    } catch (error) {
+      console.error('Failed to load pending emails:', error);
+      toast.error('Refresh Failed', 'Could not load pending emails');
+    }
+  };
+
+  const forceRefreshEmails = () => {
+    console.log('🔄 Force refreshing email delivery panel...');
+    loadPendingEmails();
+  };
+
+  const clearPendingEmail = (emailIndex: number) => {
+    try {
+      const updatedEmails = pendingEmails.filter((_, index) => index !== emailIndex);
+      localStorage.setItem('lumi_pending_emails', JSON.stringify(updatedEmails));
+      setPendingEmails(updatedEmails);
+      toast.success('Email Removed', 'Email removed from pending list');
+    } catch (error) {
+      console.error('Failed to clear email:', error);
+      toast.error('Clear Failed', 'Could not remove email');
+    }
+  };
+
+  const clearAllPendingEmails = () => {
+    try {
+      EmailService.clearPendingEmails();
+      setPendingEmails([]);
+      toast.success('All Emails Cleared', 'Pending email list cleared');
+    } catch (error) {
+      console.error('Failed to clear all emails:', error);
+      toast.error('Clear Failed', 'Could not clear all emails');
+    }
+  };
+
+  const exportPendingEmails = () => {
+    try {
+      EmailService.exportPendingEmails();
+      toast.success('Emails Exported', 'Pending emails exported to CSV');
+    } catch (error) {
+      console.error('Failed to export emails:', error);
+      toast.error('Export Failed', 'Could not export emails');
+    }
+  };
+
+  const resendEmail = (email: any) => {
+    try {
+      // Simulate resending email
+      EmailService.sendTestUserInvitation({
+        name: email.to.split('@')[0],
+        email: email.to,
+        accessCode: email.accessCode,
+        role: 'tester',
+        modules: ['all'],
+        inviterName: 'Developer'
+      });
+      toast.success('Email Resent', 'Invitation email sent again');
+    } catch (error) {
+      console.error('Failed to resend email:', error);
+      toast.error('Resend Failed', 'Could not resend email');
+    }
+  };
+
+  const markEmailAsSent = (emailIndex: number) => {
+    try {
+      const updatedEmails = pendingEmails.filter((_, index) => index !== emailIndex);
+      localStorage.setItem('lumi_pending_emails', JSON.stringify(updatedEmails));
+      setPendingEmails(updatedEmails);
+      toast.success('Email Marked as Sent', 'Removed from pending list');
+    } catch (error) {
+      console.error('Failed to mark email as sent:', error);
+      toast.error('Update Failed', 'Could not mark email as sent');
+    }
+  };
+
+  const copyEmailContent = (email: any) => {
+    try {
+      const content = `To: ${email.to}
+Subject: ${email.subject}
+Access Code: ${email.accessCode}
+
+${email.content}`;
+      
+      navigator.clipboard.writeText(content);
+      setCopiedEmail(email.to);
+      setTimeout(() => setCopiedEmail(null), 2000);
+      toast.success('Email Copied', 'Email content copied to clipboard');
+    } catch (error) {
+      console.error('Failed to copy email:', error);
+      toast.error('Copy Failed', 'Could not copy email content');
+    }
+  };
+
+  const loadPendingEmails = () => {
     const emails = EmailService.getPendingEmails();
     setPendingEmails(emails);
   };
@@ -63,7 +163,7 @@ ${email.content}`;
         </div>
         <div className="flex space-x-2">
           <Button
-            onClick={loadPendingEmails}
+            onClick={forceRefreshEmails}
             size="sm"
             variant="outline"
             icon={RefreshCw}
@@ -73,7 +173,7 @@ ${email.content}`;
           {pendingEmails.length > 0 && (
             <>
               <Button
-                onClick={exportEmails}
+                onClick={exportPendingEmails}
                 size="sm"
                 variant="outline"
                 icon={Download}
@@ -81,7 +181,7 @@ ${email.content}`;
                 Export
               </Button>
               <Button
-                onClick={clearAllEmails}
+                onClick={clearAllPendingEmails}
                 size="sm"
                 variant="outline"
                 icon={RefreshCw}
@@ -166,6 +266,14 @@ ${email.content}`;
                     className={copiedEmail === email.to ? 'text-green-600' : ''}
                   >
                     {copiedEmail === email.to ? 'Copied!' : 'Copy Email'}
+                  </Button>
+                  <Button
+                    onClick={() => resendEmail(email)}
+                    size="sm"
+                    variant="outline"
+                    icon={Mail}
+                  >
+                    Resend
                   </Button>
                   <Button
                     onClick={() => markEmailAsSent(index)}
