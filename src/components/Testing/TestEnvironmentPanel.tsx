@@ -469,7 +469,9 @@ export const DeveloperPortal: React.FC = () => {
             </Button>
           </div>
         )}
-      </div>
+      </Card>
+    </div>
+  );
     </Card>
   );
 
