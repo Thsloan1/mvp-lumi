@@ -6,6 +6,7 @@ import { Input } from '../UI/Input';
 import { Select } from '../UI/Select';
 import { useAppContext } from '../../context/AppContext';
 import { safeLocalStorageGet, safeLocalStorageSet } from '../../utils/jsonUtils';
+import { EmailService } from '../../services/emailService';
 
 interface TestUserFeedbackWidgetProps {
   module: string;
@@ -74,6 +75,9 @@ export const TestUserFeedbackWidget: React.FC<TestUserFeedbackWidgetProps> = ({
     const existingFeedback = safeLocalStorageGet('lumi_test_feedback', []);
     existingFeedback.push(feedback);
     safeLocalStorageSet('lumi_test_feedback', existingFeedback);
+
+    // Send feedback notification email
+    EmailService.sendFeedbackNotification(feedback);
 
     // Update test user feedback count
     const testUsers = safeLocalStorageGet('lumi_test_users', []);

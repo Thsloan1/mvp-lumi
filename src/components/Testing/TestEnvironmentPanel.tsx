@@ -11,6 +11,8 @@ import { DeveloperAnalyticsEngine } from '../../utils/developerAnalytics';
 import { knowledgeLibrary } from '../../data/knowledgeLibrary';
 import { safeLocalStorageGet, safeLocalStorageSet } from '../../utils/jsonUtils';
 import { SecurityCompliancePanel } from './SecurityCompliancePanel';
+import { EmailService } from '../../services/emailService';
+import { EmailDeliveryPanel } from './EmailDeliveryPanel';
 
 export const DeveloperPortal: React.FC = () => {
   const { currentView, setCurrentView, currentUser, setCurrentUser, toast, behaviorLogs, classroomLogs, children, classrooms, inviteEducators } = useAppContext();
@@ -60,6 +62,7 @@ export const DeveloperPortal: React.FC = () => {
   const modules = [
     { id: 'testing', label: 'Testing Environment', icon: Play },
     { id: 'user-management', label: 'Test User Management', icon: Users },
+    { id: 'email-delivery', label: 'Email Delivery', icon: Mail },
     { id: 'feedback', label: 'Feedback & Reviews', icon: MessageCircle },
     { id: 'security', label: 'Security & Compliance', icon: Shield },
     { id: 'client-data', label: 'Client Data', icon: Database },
@@ -300,6 +303,23 @@ export const DeveloperPortal: React.FC = () => {
     const updatedUsers = [...testUsers, testUser];
     saveTestUsers(updatedUsers);
     
+    // Send invitation email
+    EmailService.sendTestUserInvitation({
+      name: newTestUser.fullName,
+      email: newTestUser.email,
+      accessCode,
+      role: newTestUser.role,
+      modules: newTestUser.modules,
+      expiresAt: newTestUser.expiresAt,
+      inviterName: currentUser?.fullName || 'Lumi Team'
+    }).then(sent => {
+      if (sent) {
+        toast.success('Invitation Sent!', `Email sent to ${newTestUser.email} with access code`);
+      } else {
+        toast.warning('Email Failed', 'Access code created but email delivery failed');
+      }
+    });
+    
     // Reset form
     setNewTestUser({
       email: '',
@@ -310,8 +330,6 @@ export const DeveloperPortal: React.FC = () => {
       expiresAt: ''
     });
     setShowInviteForm(false);
-    
-    toast.success('Test User Created', `Access code: ${accessCode}`);
   };
 
   const handleRemoveTestUser = (userId: string) => {
@@ -480,6 +498,17 @@ export const DeveloperPortal: React.FC = () => {
               icon={copiedCode ? CheckCircle : Users}
             >
               {copiedCode ? 'Copied!' : 'Copy All Codes'}
+            </Button>
+            <Button
+              onClick={() => {
+                EmailService.exportPendingEmails();
+                toast.info('Pending Emails Exported', 'Check downloads for email delivery list');
+              }}
+              size="sm"
+              variant="outline"
+              icon={Mail}
+            >
+              Export Emails
             </Button>
           </div>
         )}
@@ -1154,6 +1183,7 @@ export const DeveloperPortal: React.FC = () => {
         <div>
           {activeModule === 'testing' && renderTestingEnvironment()}
           {activeModule === 'user-management' && renderUserManagement()}
+          {activeModule === 'email-delivery' && <EmailDeliveryPanel />}
           {activeModule === 'feedback' && renderFeedbackReviews()}
           {activeModule === 'security' && <SecurityCompliancePanel />}
           {activeModule === 'client-data' && renderClientData()}
