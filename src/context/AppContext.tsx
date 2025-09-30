@@ -68,6 +68,7 @@ interface AppContextType {
   // UI State
   currentView: string;
   setCurrentView: (view: string) => void;
+  updateCurrentUser: (updates: any) => Promise<void>;
   
   // Toast notifications
   toast: {
@@ -588,6 +589,19 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     updateOnboarding,
     updateProfile,
     changePassword,
+    updateCurrentUser: async (updates: any) => {
+      try {
+        if (updates.onboardingStatus === 'complete') {
+          await updateOnboarding(updates.profileData || {});
+        } else {
+          // Handle other user updates
+          setCurrentUser(prev => prev ? { ...prev, ...updates } : null);
+        }
+      } catch (error) {
+        console.error('Failed to update user:', error);
+        throw error;
+      }
+    },
     verifyEmail,
     resendVerificationEmail,
     requestPasswordReset,

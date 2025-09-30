@@ -28,6 +28,9 @@ export const safeJsonStringify = (data: any, defaultValue: string = '{}'): strin
 // Safe localStorage operations
 export const safeLocalStorageGet = <T>(key: string, defaultValue: T): T => {
   try {
+    if (typeof window === 'undefined' || !window.localStorage) {
+      return defaultValue;
+    }
     const item = localStorage.getItem(key);
     return safeJsonParse(item, defaultValue);
   } catch (error) {
@@ -38,6 +41,9 @@ export const safeLocalStorageGet = <T>(key: string, defaultValue: T): T => {
 
 export const safeLocalStorageSet = (key: string, value: any): boolean => {
   try {
+    if (typeof window === 'undefined' || !window.localStorage) {
+      return false;
+    }
     const jsonString = safeJsonStringify(value);
     localStorage.setItem(key, jsonString);
     return true;
