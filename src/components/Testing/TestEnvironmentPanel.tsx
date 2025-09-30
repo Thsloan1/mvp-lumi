@@ -3,6 +3,7 @@ import { Settings, RefreshCw, Database, Users, BarChart3, Download, Upload, Tras
 import { Button } from '../UI/Button';
 import { Card } from '../UI/Card';
 import { Select } from '../UI/Select';
+import { Input } from '../UI/Input';
 import { useAppContext } from '../../context/AppContext';
 import { testDataManager } from '../../data/testData';
 import { getCurrentEnvironment, isTestEnvironment } from '../../config/environments';
@@ -14,7 +15,7 @@ import { SecurityCompliancePanel } from './SecurityCompliancePanel';
 export const DeveloperPortal: React.FC = () => {
   const { currentView, setCurrentView, currentUser, setCurrentUser, toast, behaviorLogs, classroomLogs, children, classrooms, inviteEducators } = useAppContext();
   const [isOpen, setIsOpen] = useState(false);
-  const [activeModule, setActiveModule] = useState<'testing' | 'user-management' | 'feedback' | 'client-data' | 'analytics' | 'revenue' | 'tech-stack'>('testing');
+  const [activeModule, setActiveModule] = useState<'testing' | 'user-management' | 'feedback' | 'client-data' | 'analytics' | 'revenue' | 'tech-stack' | 'security'>('testing');
   const [selectedTestUser, setSelectedTestUser] = useState('');
   const [selectedUserId, setSelectedUserId] = useState('');
   const [selectedOrgId, setSelectedOrgId] = useState('');
@@ -472,8 +473,6 @@ export const DeveloperPortal: React.FC = () => {
       </Card>
     </div>
   );
-    </Card>
-  );
 
   const renderFeedbackReviews = () => (
     <div className="space-y-6">
@@ -529,6 +528,7 @@ export const DeveloperPortal: React.FC = () => {
       </Card>
     </div>
   );
+
   const renderTestingEnvironment = () => (
     <div className="space-y-6">
       {/* Environment Info */}
