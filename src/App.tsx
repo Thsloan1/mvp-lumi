@@ -53,7 +53,7 @@ import { ArrowLeft } from 'lucide-react';
 import { Button } from './components/UI/Button';
 
 const AppContent: React.FC = () => {
-  const { currentView, setCurrentView, currentUser, isLoading, isAuthenticated, setCurrentUser, setIsLoading, initializeUser } = useAppContext();
+  const { currentView, setCurrentView, currentUser, isLoading, isAuthenticated, setCurrentUser, setIsLoading } = useAppContext();
   
   // Initialize user on app load
   useEffect(() => {
@@ -95,9 +95,7 @@ const AppContent: React.FC = () => {
         return;
       }
     }
-    
-    initializeUser();
-  }, []);
+  }, [setCurrentUser, setCurrentView, setIsLoading]);
   
   // Show loading while checking authentication
   if (isLoading) {

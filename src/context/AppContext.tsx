@@ -216,7 +216,28 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
 
   // Initialize user on app load
   useEffect(() => {
-    initializeUser();
+    const initialize = async () => {
+      ErrorLogger.info('App initialization started');
+      try {
+        const user = await AuthService.getCurrentUser();
+        setCurrentUser(user);
+        
+        if (user && user.onboardingStatus === 'incomplete') {
+          ErrorLogger.logOnboardingEvent('redirect_to_onboarding', undefined, { userId: user.id });
+          setCurrentView('onboarding-start');
+        } else if (user) {
+          ErrorLogger.info('User authenticated, redirecting to dashboard', { userId: user.id });
+          setCurrentView('dashboard');
+        }
+      } catch (error) {
+        ErrorLogger.error('Failed to initialize user', { error: error.message });
+        console.error('Failed to initialize user:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    initialize();
   }, []);
 
   // Load user data when authenticated
@@ -245,7 +266,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [setCurrentUser, setCurrentView, setIsLoading]);
 
   const loadUserData = async () => {
     if (!currentUser) return;
