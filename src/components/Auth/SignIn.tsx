@@ -143,7 +143,7 @@ export const SignIn: React.FC = () => {
               required
               error={errors.email}
               autoComplete="email"
-              className="text-sm border-black focus:border-[#C44E38]"
+              className="text-sm border border-black focus:border-[#C44E38] focus:ring-[#C44E38]"
             />
 
             <div className="relative">
@@ -155,7 +155,7 @@ export const SignIn: React.FC = () => {
                 required
                 error={errors.password}
                 autoComplete="current-password"
-                className="text-sm border-black focus:border-[#C44E38]"
+                className="text-sm border border-black focus:border-[#C44E38] focus:ring-[#C44E38]"
               />
               <button
                 type="button"

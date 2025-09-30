@@ -162,7 +162,7 @@ export const EducatorSignup: React.FC = () => {
                 required
                 error={errors.firstName}
                 autoComplete="given-name"
-                className="border-black focus:border-[#C44E38]"
+                className="border border-black focus:border-[#C44E38] focus:ring-[#C44E38]"
               />
               <Input
                 label="Last Name"
@@ -172,7 +172,7 @@ export const EducatorSignup: React.FC = () => {
                 required
                 error={errors.lastName}
                 autoComplete="family-name"
-                className="border-black focus:border-[#C44E38]"
+                className="border border-black focus:border-[#C44E38] focus:ring-[#C44E38]"
               />
             </div>
 
@@ -185,7 +185,7 @@ export const EducatorSignup: React.FC = () => {
               required
               error={errors.email}
               autoComplete="email"
-              className="border-black focus:border-[#C44E38]"
+              className="border border-black focus:border-[#C44E38] focus:ring-[#C44E38]"
             />
 
             <div className="relative">
@@ -199,7 +199,7 @@ export const EducatorSignup: React.FC = () => {
                 error={errors.password}
                 helperText="Must be at least 8 characters with a capital letter and number"
                 autoComplete="new-password"
-                className="border-black focus:border-[#C44E38]"
+                className="border border-black focus:border-[#C44E38] focus:ring-[#C44E38]"
               />
               <button
                 type="button"
