@@ -185,44 +185,23 @@ app.get('/api/auth/me', authenticateToken, (req, res) => {
 // User Routes
 app.put('/api/user/onboarding', authenticateToken, (req, res) => {
   try {
-    console.log('=== ONBOARDING REQUEST START ===');
-    console.log('User ID:', req.user.id);
-    console.log('Request body keys:', Object.keys(req.body));
-    console.log('Has classroom data:', !!req.body.classroomData);
-    console.log('Full request body:', JSON.stringify(req.body, null, 2));
-    
     const userIndex = users.findIndex(u => u.id === req.user.id);
     if (userIndex === -1) {
-      console.error('User not found for onboarding:', req.user.id);
       return res.status(404).json({ error: 'User not found' });
     }
 
     const { classroomData, ...userData } = req.body;
-    
-    console.log('Separated userData:', JSON.stringify(userData, null, 2));
-    console.log('Separated classroomData:', JSON.stringify(classroomData, null, 2));
 
     // Update user data
-    const updatedUser = {
-      ...users[userIndex],
-      ...userData,
-      onboardingStatus: 'complete',
-      updatedAt: new Date().toISOString()
-    };
-    
     users[userIndex] = {
       ...users[userIndex],
       ...userData,
       onboardingStatus: 'complete',
       updatedAt: new Date().toISOString()
     };
-    
-    console.log('User updated successfully:', users[userIndex].fullName);
 
     // Create classroom if provided
     if (classroomData && classroomData.name) {
-      console.log('Creating classroom with data:', classroomData);
-      
       const classroom = {
         id: Date.now().toString(),
         ...classroomData,
@@ -232,32 +211,26 @@ app.put('/api/user/onboarding', authenticateToken, (req, res) => {
       };
       
       classrooms.push(classroom);
-      console.log('Classroom created during onboarding:', classroom.name);
-    } else {
-      console.log('No classroom data provided or invalid classroom name');
     }
 
-    // Prepare response
-    const responseData = { 
-      user: { ...users[userIndex], password: undefined },
-      message: 'Onboarding completed successfully'
-    };
-    
-    console.log('Sending response:', JSON.stringify(responseData, null, 2));
-    console.log('=== ONBOARDING REQUEST END ===');
-    
-    res.json(responseData);
+    res.json({ user: { ...users[userIndex], password: undefined } });
   } catch (error) {
-    console.error('=== ONBOARDING ERROR ===');
-    console.error('Error details:', error);
-    console.error('Error stack:', error.stack);
-    console.error('Request body that caused error:', req.body);
-    
-    res.status(500).json({ 
-      error: 'Server error during onboarding', 
-      details: error.message,
-      timestamp: new Date().toISOString()
-    });
+    console.error('Onboarding error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Get user data route
+app.get('/api/user', authenticateToken, (req, res) => {
+  try {
+    const user = users.find(u => u.id === req.user.id);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    res.json({ user: { ...user, password: undefined } });
+  } catch (error) {
+    console.error('Get user error:', error);
+    res.status(500).json({ error: 'Server error' });
   }
 });
 
@@ -275,6 +248,7 @@ app.post('/api/user/photo', authenticateToken, (req, res) => {
     
     res.json({ photoUrl });
   } catch (error) {
+    console.error('Photo upload error:', error);
     res.status(500).json({ error: 'Upload failed' });
   }
 });
@@ -918,16 +892,24 @@ app.post('/api/organizations', authenticateToken, (req, res) => {
 // Organization invitations route
 app.post('/api/organizations/invitations', authenticateToken, (req, res) => {
   try {
-    const { educators } = req.body;
+    const { educators, emails } = req.body;
     
-    if (!educators || !Array.isArray(educators)) {
-      return res.status(400).json({ error: 'Educators list required' });
+    // Handle both formats: educators array or emails array
+    let validEducators = [];
+    
+    if (educators && Array.isArray(educators)) {
+      validEducators = educators.filter(educator => 
+        educator.email && educator.firstName && educator.lastName
+      );
+    } else if (emails && Array.isArray(emails)) {
+      validEducators = emails.map(email => ({
+        email,
+        firstName: 'Invited',
+        lastName: 'Educator'
+      }));
+    } else {
+      return res.status(400).json({ error: 'Educators or emails list required' });
     }
-
-    // Validate educator data
-    const validEducators = educators.filter(educator => 
-      educator.email && educator.firstName && educator.lastName
-    );
 
     if (validEducators.length === 0) {
       return res.status(400).json({ error: 'No valid educators to invite' });
@@ -953,6 +935,74 @@ app.post('/api/organizations/invitations', authenticateToken, (req, res) => {
     });
   } catch (error) {
     console.error('Invitation error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Check seat availability route
+app.get('/api/subscriptions/check-seats', authenticateToken, (req, res) => {
+  try {
+    const { requestedSeats = 1 } = req.query;
+    
+    // Mock seat check for MVP
+    const mockData = {
+      activeSeats: 12,
+      maxSeats: 15,
+      availableSeats: 3,
+      canAddSeats: parseInt(requestedSeats) <= 3
+    };
+    
+    res.json(mockData);
+  } catch (error) {
+    console.error('Seat check error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Organization members route
+app.get('/api/organizations/members', authenticateToken, (req, res) => {
+  try {
+    // Mock members for MVP
+    const mockMembers = [
+      {
+        id: 'educator-1',
+        fullName: 'Sarah Johnson',
+        email: 'sarah.johnson@school.edu',
+        role: 'educator',
+        status: 'active',
+        joinedAt: '2024-01-15'
+      },
+      {
+        id: 'educator-2',
+        fullName: 'Mike Chen',
+        email: 'mike.chen@school.edu',
+        role: 'educator',
+        status: 'active',
+        joinedAt: '2024-01-20'
+      }
+    ];
+    
+    res.json({ members: mockMembers });
+  } catch (error) {
+    console.error('Get members error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Remove organization member route
+app.delete('/api/organizations/members', authenticateToken, (req, res) => {
+  try {
+    const { memberId } = req.query;
+    
+    if (!memberId) {
+      return res.status(400).json({ error: 'Member ID required' });
+    }
+    
+    console.log('Removing member:', memberId);
+    
+    res.json({ message: 'Member removed successfully' });
+  } catch (error) {
+    console.error('Remove member error:', error);
     res.status(500).json({ error: 'Server error' });
   }
 });
@@ -1011,6 +1061,42 @@ app.post('/api/invitations/accept', (req, res) => {
   }
 });
 
+// Cancel invitation route
+app.delete('/api/organizations/invitations', authenticateToken, (req, res) => {
+  try {
+    const { invitationId } = req.query;
+    
+    if (!invitationId) {
+      return res.status(400).json({ error: 'Invitation ID required' });
+    }
+    
+    console.log('Cancelling invitation:', invitationId);
+    
+    res.json({ message: 'Invitation cancelled successfully' });
+  } catch (error) {
+    console.error('Cancel invitation error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Resend invitation route
+app.post('/api/organizations/invitations/resend', authenticateToken, (req, res) => {
+  try {
+    const { invitationId } = req.body;
+    
+    if (!invitationId) {
+      return res.status(400).json({ error: 'Invitation ID required' });
+    }
+    
+    console.log('Resending invitation:', invitationId);
+    
+    res.json({ message: 'Invitation resent successfully' });
+  } catch (error) {
+    console.error('Resend invitation error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 // Organization stats route
 app.get('/api/organizations/stats', authenticateToken, (req, res) => {
   try {
@@ -1029,6 +1115,29 @@ app.get('/api/organizations/stats', authenticateToken, (req, res) => {
     
     res.json(stats);
   } catch (error) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Organization route
+app.get('/api/organizations', authenticateToken, (req, res) => {
+  try {
+    // Mock organization data for MVP
+    const mockOrganization = {
+      id: 'org-1',
+      name: 'Sunshine Elementary School',
+      type: 'school',
+      ownerId: req.user.id,
+      maxSeats: 15,
+      activeSeats: 12,
+      plan: 'organization_annual',
+      status: 'active',
+      createdAt: new Date('2024-01-01').toISOString()
+    };
+    
+    res.json({ organization: mockOrganization });
+  } catch (error) {
+    console.error('Get organization error:', error);
     res.status(500).json({ error: 'Server error' });
   }
 });

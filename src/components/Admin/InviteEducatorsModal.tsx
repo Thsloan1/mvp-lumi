@@ -110,24 +110,36 @@ export const InviteEducatorsModal: React.FC<InviteEducatorsModalProps> = ({ onCl
     if (!checkSeatAvailability(validEmails.length)) {
       return;
     }
+    
     setLoading(true);
     setSeatError(null);
     
     try {
-
       // Send invitations
-      const emailData = validEmails.map(email => ({
-        email,
-        firstName: 'Invited',
-        lastName: 'Educator'
-      }));
-      await inviteEducators(emailData);
+      if (inviteMethod === 'individual') {
+        const emailData = emailInvites
+          .filter(invite => invite.email && invite.firstName && invite.lastName)
+          .map(invite => ({
+            email: invite.email,
+            firstName: invite.firstName,
+            lastName: invite.lastName
+          }));
+        await inviteEducators(emailData);
+      } else {
+        // For bulk invites, use emails array
+        await inviteEducators(validEmails.map(email => ({
+          email,
+          firstName: 'Invited',
+          lastName: 'Educator'
+        })));
+      }
       
       setInvitesSent(true);
       // Update seat info
       await fetchSeatInfo();
     } catch (error) {
-      handleApiError(error, { action: 'sendInvites', emails: validEmails });
+      console.error('Failed to send invites:', error);
+      setSeatError(error.message || 'Failed to send invitations');
     } finally {
       setLoading(false);
     }

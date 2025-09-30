@@ -171,9 +171,9 @@ export const BehaviorLogFlow: React.FC = () => {
         setBehaviorData(prev => ({ ...prev, childId: newChild.id }));
         setNewChildName('');
         setShowNewChildForm(false);
-        toast.success('Child added!', `${newChildName} has been added to your classroom`);
       }).catch(() => {
         ErrorLogger.error('Failed to create child during behavior log flow');
+        toast.error('Failed to add child', 'Please try again');
       });
     }
   };
@@ -256,8 +256,7 @@ export const BehaviorLogFlow: React.FC = () => {
       localStorage.removeItem('lumi_behavior_log_progress');
     } catch (error) {
       console.error('Error generating strategy:', error);
-      // Show error to user
-      alert('Failed to generate strategy. Please try again.');
+      toast.error('Strategy generation failed', error.message || 'Please try again');
     } finally {
       setLoading(false);
     }

@@ -71,6 +71,7 @@ export const ChildProfileDetail: React.FC<ChildProfileDetailProps> = ({ childId 
       localStorage.removeItem('lumi_child_profile_backup');
     } catch (error) {
       console.error('Failed to update child:', error);
+      // Error is already handled by updateChild function in context
     } finally {
       setLoading(false);
     }

@@ -64,6 +64,8 @@ export const ProfileSettings: React.FC = () => {
       // Auto-save profile data
       safeLocalStorageSet('lumi_profile_backup', profileData);
       await updateProfile(profileData);
+      // Clear backup after successful save
+      localStorage.removeItem('lumi_profile_backup');
     } catch (error) {
       console.error('Error updating profile:', error);
       // Error handled by updateProfile function

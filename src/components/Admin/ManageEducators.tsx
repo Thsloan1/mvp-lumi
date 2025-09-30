@@ -114,11 +114,11 @@ export const ManageEducators: React.FC = () => {
 
   const handleRemoveEducator = async (educatorId: string) => {
     try {
-      await organizationApi.removeMember(educatorId);
+      await organizationApi.delete(`/organizations/members?memberId=${educatorId}`);
       await fetchEducators(); // Refresh the list
       setActionMenuOpen(null);
     } catch (error) {
-      handleApiError(error, { action: 'removeEducator', educatorId });
+      console.error('Failed to remove educator:', error);
     }
   };
 
@@ -127,7 +127,7 @@ export const ManageEducators: React.FC = () => {
       await organizationApi.delete(`/organizations/invitations?invitationId=${invitationId}`);
       await fetchPendingInvitations(); // Refresh the list
     } catch (error) {
-      handleApiError(error, { action: 'cancelInvitation', invitationId });
+      console.error('Failed to cancel invitation:', error);
     }
   };
 
@@ -136,7 +136,7 @@ export const ManageEducators: React.FC = () => {
       await organizationApi.post(`/organizations/invitations/resend`, { invitationId });
       await fetchPendingInvitations(); // Refresh the list
     } catch (error) {
-      handleApiError(error, { action: 'resendInvitation', invitationId });
+      console.error('Failed to resend invitation:', error);
     }
   };
 

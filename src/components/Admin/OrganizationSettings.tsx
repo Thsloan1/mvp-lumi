@@ -81,15 +81,17 @@ export const OrganizationSettings: React.FC = () => {
     try {
       // Auto-save before API call
       safeLocalStorageSet('lumi_org_settings_backup', orgData);
-      await organizationApi.put('/organizations', {
+      const result = await organizationApi.put('/organizations/settings', {
         name: orgData.name,
         type: orgData.type,
         settings: orgData.settings
       });
       // Clear backup after successful save
       localStorage.removeItem('lumi_org_settings_backup');
+      toast.success('Settings saved!', 'Organization settings updated successfully');
     } catch (error) {
-      handleApiError(error, { action: 'saveOrganizationSettings' });
+      console.error('Failed to save settings:', error);
+      toast.error('Save failed', error.message || 'Please try again');
     } finally {
       setLoading(false);
     }
@@ -100,12 +102,17 @@ export const OrganizationSettings: React.FC = () => {
     
     setLoading(true);
     try {
-      await organizationApi.transferOwnership(transferEmail, transferReason);
+      await organizationApi.post('/organizations/transfer-ownership', {
+        newOwnerEmail: transferEmail,
+        reason: transferReason
+      });
       setShowTransferOwnership(false);
       setTransferEmail('');
       setTransferReason('');
+      toast.success('Ownership transferred!', 'Organization ownership has been transferred');
     } catch (error) {
-      handleApiError(error, { action: 'transferOwnership', transferEmail });
+      console.error('Failed to transfer ownership:', error);
+      toast.error('Transfer failed', error.message || 'Please try again');
     } finally {
       setLoading(false);
     }

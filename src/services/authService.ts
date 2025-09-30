@@ -98,6 +98,11 @@ export class AuthService {
 
   static async updateOnboarding(data: any): Promise<User> {
     try {
+      const token = this.getToken();
+      if (!token) {
+        throw new Error('Authentication required. Please sign in again.');
+      }
+      
       console.log('=== AUTH SERVICE ONBOARDING START ===');
       console.log('Data being sent to API:', JSON.stringify(data, null, 2));
       console.log('Request headers:', this.getAuthHeaders());

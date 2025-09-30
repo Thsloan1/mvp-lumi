@@ -150,7 +150,7 @@ export const ClassroomLogFlow: React.FC = () => {
       localStorage.removeItem('lumi_classroom_log_progress');
     } catch (error) {
       console.error('Error generating strategy:', error);
-      ErrorLogger.error('Failed to generate classroom strategy', { error: error.message });
+      toast.error('Strategy generation failed', error.message || 'Please try again');
     } finally {
       setLoading(false);
     }

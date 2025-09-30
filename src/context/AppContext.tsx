@@ -395,21 +395,62 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   const updateOnboarding = async (data: any) => {
     ErrorLogger.logOnboardingEvent('completion_attempt', undefined, { userId: currentUser?.id });
     
-    // Check if user is authenticated before proceeding
-    if (!currentUser) {
-      const authError = new Error('User not authenticated. Please sign in again.');
-      ErrorLogger.logOnboardingEvent('completion_error', undefined, { error: 'user_not_authenticated' });
-      error('Authentication required', 'Please sign in again to complete onboarding');
-      setCurrentView('signin');
-      throw authError;
-    }
-    
     try {
       console.log('=== FRONTEND ONBOARDING START ===');
       console.log('Current user:', currentUser?.id, currentUser?.fullName);
       console.log('Onboarding data being sent:', JSON.stringify(data, null, 2));
       
-      const response = await AuthService.apiRequest('/api/user/onboarding', {
+      const response = await AuthService.updateOnboarding(data);
+      
+      if (!response) {
+        throw new Error('No response received from server');
+      }
+      
+      console.log('=== ONBOARDING API RESPONSE ===');
+      console.log('Response received:', JSON.stringify(response, null, 2));
+      
+      // Update current user with response
+      setCurrentUser(response);
+      
+      // Create classroom if provided in onboarding data
+      if (data.classroomData) {
+        ErrorLogger.info('Creating classroom during onboarding', { classroomName: data.classroomData.name });
+        try {
+          console.log('Creating classroom from onboarding data:', data.classroomData);
+          await createClassroom(data.classroomData);
+        } catch (classroomError) {
+          console.warn('Failed to create classroom during onboarding:', classroomError);
+          // Continue with onboarding even if classroom creation fails
+        }
+      }
+      
+      ErrorLogger.logOnboardingEvent('completed', undefined, { userId: response.id });
+      success('Profile updated!', 'Your preferences have been saved');
+      
+      // Route based on user role
+      if (response.role === 'admin') {
+        console.log('Redirecting admin user to admin dashboard');
+        setCurrentView('admin-dashboard');
+      } else {
+        console.log('Redirecting educator to completion screen');
+        setCurrentView('onboarding-complete-new');
+      }
+      
+      console.log('=== FRONTEND ONBOARDING COMPLETE ===');
+    } catch (err: any) {
+      console.error('=== ONBOARDING ERROR DETAILS ===');
+      console.error('Error object:', {
+        error: err,
+        message: err.message,
+        stack: err.stack,
+        sentData: data,
+        currentUser: currentUser?.id
+      });
+      ErrorLogger.logOnboardingEvent('completion_error', undefined, { userId: currentUser?.id, error: err.message });
+      error('Onboarding failed', err.message || 'Please try again');
+      throw err;
+    }
+  };
         method: 'PUT',
         body: JSON.stringify(data)
       });

@@ -57,6 +57,7 @@ export const ClassroomProfileManager: React.FC = () => {
         })
         .catch(error => {
           console.error('Failed to update classroom:', error);
+          // Error is already handled by updateClassroom function in context
         })
         .finally(() => {
           setLoading(false);
