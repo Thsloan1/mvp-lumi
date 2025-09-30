@@ -66,7 +66,7 @@ export const ClassroomStep: React.FC<ClassroomStepProps> = ({ data, updateData }
             />
 
             <Select
-              label="Classroom In-Ratio Teachers"
+              label="Classroom In-Ratio Teacher Count"
               value={data.classroomInRatioTeachers}
               onChange={(value) => handleInputChange('classroomInRatioTeachers', value)}
               options={[

@@ -45,7 +45,7 @@ export const OnboardingWizard: React.FC = () => {
       classroomName: '',
       gradeBand: '',
       studentCount: '',
-      classroomInRatioTeachers: '',
+      classroomInRatioTeachers: '', // Classroom In-Ratio Teacher Count
       hasIEP: false,
       iepCount: 0,
       hasIFSP: false,
