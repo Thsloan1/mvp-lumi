@@ -114,42 +114,6 @@ ${email.content}`;
     }
   };
 
-  const loadPendingEmails = () => {
-    const emails = EmailService.getPendingEmails();
-    setPendingEmails(emails);
-  };
-
-  const copyEmailContent = (email: any) => {
-    const content = `To: ${email.to}
-Subject: ${email.subject}
-Access Code: ${email.accessCode}
-
-${email.content}`;
-    
-    navigator.clipboard.writeText(content);
-    setCopiedEmail(email.to);
-    setTimeout(() => setCopiedEmail(null), 2000);
-    toast.success('Email Copied', 'Email content copied to clipboard');
-  };
-
-  const markEmailAsSent = (emailIndex: number) => {
-    const updatedEmails = pendingEmails.filter((_, index) => index !== emailIndex);
-    localStorage.setItem('lumi_pending_emails', JSON.stringify(updatedEmails));
-    setPendingEmails(updatedEmails);
-    toast.success('Email Marked as Sent', 'Removed from pending list');
-  };
-
-  const clearAllEmails = () => {
-    EmailService.clearPendingEmails();
-    setPendingEmails([]);
-    toast.info('All Emails Cleared', 'Pending email list cleared');
-  };
-
-  const exportEmails = () => {
-    EmailService.exportPendingEmails();
-    toast.success('Emails Exported', 'Pending emails exported to CSV');
-  };
-
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
