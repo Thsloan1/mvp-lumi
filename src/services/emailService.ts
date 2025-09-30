@@ -263,6 +263,10 @@ Human Potential Partners`;
 
   // Store email for tracking and manual delivery
   private static storeEmailForTracking(invitation: TestUserInvitation, template: EmailTemplate) {
+    const storeEmailForManualDelivery = (invitation: TestUserInvitation, template: EmailTemplate) => {
+      this.storeEmailForTracking(invitation, template);
+    };
+    
     const emailData = {
       to: invitation.email,
       subject: template.subject,
@@ -277,6 +281,11 @@ Human Potential Partners`;
     localStorage.setItem('lumi_pending_emails', JSON.stringify(pendingEmails));
 
     console.log('📧 Email stored for tracking:', emailData);
+  }
+
+  // Store email for manual delivery (alias for compatibility)
+  private static storeEmailForManualDelivery(invitation: TestUserInvitation, template: EmailTemplate) {
+    this.storeEmailForTracking(invitation, template);
   }
 
   // Send feedback notification to development team
@@ -305,7 +314,7 @@ Human Potential Partners`;
   }
 
   // Show visual notification for feedback
-  static showFeedbackNotification(feedback: any) {
+  private static showFeedbackNotification(feedback: any) {
     const notification = document.createElement('div');
     notification.innerHTML = `
       <div style="
@@ -343,7 +352,7 @@ Human Potential Partners`;
     }, 4000);
   }
 
-  private static generateFeedbackNotificationTemplate(feedback: any): EmailTemplate {
+  static generateFeedbackNotificationTemplate(feedback: any): EmailTemplate {
     const subject = `Lumi Test Feedback: ${feedback.category} (${feedback.priority} priority)`;
     
     const textContent = `New test feedback received for Lumi:

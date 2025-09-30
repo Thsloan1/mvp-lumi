@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Code, Users, Database, Settings, Download, Upload, RefreshCw, Play, Book, Zap, FileText, ArrowLeft, BarChart3, TrendingUp, AlertTriangle, Eye, Filter, X, Mail, Copy, Check, Star, Clock, Plus, Trash2, Send } from 'lucide-react';
+import { Code, Users, Database, Settings, Download, Upload, RefreshCw, Play, Book, Zap, FileText, BarChart3, TrendingUp, AlertTriangle, Eye, Filter, X, Mail, Copy, Check, Star, Clock, Plus, Trash2, Send } from 'lucide-react';
 import { Button } from '../UI/Button';
 import { Card } from '../UI/Card';
 import { Input } from '../UI/Input';
@@ -24,28 +24,12 @@ interface TestUser {
   expiresAt?: string;
 }
 
-interface TestFeedback {
-  id: string;
-  testUserId: string;
-  module: string;
-  rating: number;
-  feedback: string;
-  category: string;
-  priority: string;
-  submittedAt: string;
-  userAgent: string;
-  url: string;
-}
-
 export const TestEnvironmentPanel: React.FC = () => {
   const { currentUser, setCurrentUser, setCurrentView, toast } = useAppContext();
   const [isOpen, setIsOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'users' | 'scenarios' | 'data' | 'analytics' | 'email' | 'feedback'>('users');
   const [testUsers, setTestUsers] = useState<TestUser[]>(() => 
     safeLocalStorageGet('lumi_test_users', [])
-  );
-  const [testFeedback, setTestFeedback] = useState<TestFeedback[]>(() => 
-    safeLocalStorageGet('lumi_test_feedback', [])
   );
   const [newUser, setNewUser] = useState({
     name: '',
@@ -260,7 +244,6 @@ export const TestEnvironmentPanel: React.FC = () => {
     try {
       const exportData = {
         testUsers,
-        testFeedback,
         exportedAt: new Date().toISOString(),
         environment: currentEnv.name
       };
@@ -565,88 +548,33 @@ export const TestEnvironmentPanel: React.FC = () => {
     </div>
   );
 
-  const renderFeedbackManagement = () => (
+  const renderAnalytics = () => (
     <div className="space-y-6">
       <Card className="p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-[#1A1A1A]">
-            Test User Feedback ({testFeedback.length})
-          </h3>
-          <Button
-            onClick={() => {
-              const feedback = safeLocalStorageGet('lumi_test_feedback', []);
-              setTestFeedback(feedback);
-              toast.info('Feedback Refreshed', `Loaded ${feedback.length} feedback entries`);
-            }}
-            size="sm"
-            variant="outline"
-            icon={RefreshCw}
-          >
-            Refresh
-          </Button>
+        <h3 className="text-lg font-semibold text-[#1A1A1A] mb-4">
+          Test Environment Analytics
+        </h3>
+        
+        <div className="grid md:grid-cols-3 gap-6">
+          <div className="text-center">
+            <div className="text-2xl font-bold text-blue-600 mb-1">
+              {testUsers.length}
+            </div>
+            <p className="text-sm text-gray-600">Test Users</p>
+          </div>
+          <div className="text-center">
+            <div className="text-2xl font-bold text-green-600 mb-1">
+              {testUsers.filter(u => u.lastActive).length}
+            </div>
+            <p className="text-sm text-gray-600">Active Users</p>
+          </div>
+          <div className="text-center">
+            <div className="text-2xl font-bold text-purple-600 mb-1">
+              {testUsers.reduce((sum, u) => sum + (u.feedbackSubmitted || 0), 0)}
+            </div>
+            <p className="text-sm text-gray-600">Feedback Submitted</p>
+          </div>
         </div>
-
-        {testFeedback.length === 0 ? (
-          <div className="text-center py-8">
-            <Star className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-600">No feedback submitted yet</p>
-            <p className="text-sm text-gray-500 mt-1">
-              Test users can submit feedback using the green feedback button
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {testFeedback.slice(0, 10).map((feedback) => (
-              <div key={feedback.id} className="p-4 border border-[#E6E2DD] rounded-xl">
-                <div className="flex items-start justify-between mb-2">
-                  <div>
-                    <div className="flex items-center space-x-2 mb-1">
-                      <div className="flex items-center">
-                        {Array.from({length: 5}).map((_, i) => (
-                          <Star 
-                            key={i}
-                            className={`w-4 h-4 ${
-                              i < feedback.rating ? 'text-yellow-400 fill-current' : 'text-gray-300'
-                            }`} 
-                          />
-                        ))}
-                      </div>
-                      <span className="text-sm font-medium text-[#1A1A1A]">
-                        {feedback.rating}/5
-                      </span>
-                      <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">
-                        {feedback.category}
-                      </span>
-                      <span className={`px-2 py-1 text-xs rounded-full ${
-                        feedback.priority === 'critical' ? 'bg-red-100 text-red-700' :
-                        feedback.priority === 'high' ? 'bg-orange-100 text-orange-700' :
-                        feedback.priority === 'medium' ? 'bg-yellow-100 text-yellow-700' :
-                        'bg-blue-100 text-blue-700'
-                      }`}>
-                        {feedback.priority}
-                      </span>
-                    </div>
-                    <p className="text-sm text-gray-600">
-                      Module: {feedback.module} • {new Date(feedback.submittedAt).toLocaleDateString()}
-                    </p>
-                  </div>
-                </div>
-                
-                <p className="text-sm text-gray-700 mb-2">
-                  {feedback.feedback}
-                </p>
-                
-                {feedback.suggestions && (
-                  <div className="bg-blue-50 border border-blue-200 p-3 rounded-lg">
-                    <p className="text-sm text-blue-800">
-                      <strong>Suggestions:</strong> {feedback.suggestions}
-                    </p>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
       </Card>
     </div>
   );
@@ -656,57 +584,15 @@ export const TestEnvironmentPanel: React.FC = () => {
     
     return (
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h3 className="text-lg font-semibold text-[#1A1A1A]">
-              Email Delivery Management
-            </h3>
-            <p className="text-gray-600">
-              Manage test user invitations and email delivery
-            </p>
-          </div>
-          <div className="flex space-x-2">
-            <Button
-              onClick={() => {
-                const emails = safeLocalStorageGet('lumi_pending_emails', []);
-                toast.info('Emails Refreshed', `Found ${emails.length} pending emails`);
-              }}
-              size="sm"
-              variant="outline"
-              icon={RefreshCw}
-            >
-              Refresh
-            </Button>
-            {pendingEmails.length > 0 && (
-              <Button
-                onClick={() => {
-                  localStorage.removeItem('lumi_pending_emails');
-                  toast.success('All Emails Cleared', 'Pending email list cleared');
-                }}
-                size="sm"
-                variant="outline"
-                icon={Trash2}
-                className="text-red-600"
-              >
-                Clear All
-              </Button>
-            )}
-          </div>
-        </div>
-
-        {/* Email Service Status */}
-        <Card className="p-4">
-          <div className="flex items-center space-x-3 mb-4">
-            <div className="w-3 h-3 rounded-full bg-green-500" />
-            <h4 className="font-medium text-[#1A1A1A]">
-              Email Service Status
-            </h4>
-          </div>
+        <Card className="p-6">
+          <h4 className="font-medium text-[#1A1A1A] mb-4">
+            Email Delivery Status
+          </h4>
           
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
               <span className="text-gray-600">Environment:</span>
-              <span className="font-medium">{import.meta.env.VITE_ENVIRONMENT || 'development'}</span>
+              <span className="font-medium">{currentEnv.name}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-600">Delivery Method:</span>
@@ -718,61 +604,46 @@ export const TestEnvironmentPanel: React.FC = () => {
             </div>
           </div>
         </Card>
+      </div>
+    );
+  };
 
-        {/* Pending Emails */}
-        <Card className="p-4">
+  const renderFeedbackManagement = () => {
+    const testFeedback = safeLocalStorageGet('lumi_test_feedback', []);
+    
+    return (
+      <div className="space-y-6">
+        <Card className="p-6">
           <h4 className="font-medium text-[#1A1A1A] mb-4">
-            Pending Email Deliveries ({pendingEmails.length})
+            Test User Feedback ({testFeedback.length})
           </h4>
           
-          {pendingEmails.length === 0 ? (
-            <div className="text-center py-6">
-              <Mail className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-              <p className="text-sm text-gray-600">No pending emails</p>
-              <p className="text-xs text-gray-500 mt-1">
-                Create test users to see email invitations here
-              </p>
+          {testFeedback.length === 0 ? (
+            <div className="text-center py-8">
+              <Star className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+              <p className="text-gray-600">No feedback submitted yet</p>
             </div>
           ) : (
-            <div className="space-y-3">
-              {pendingEmails.map((email: any, index: number) => (
-                <div key={index} className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                  <div className="flex items-start justify-between mb-2">
-                    <div>
-                      <p className="font-medium text-sm">{email.to}</p>
-                      <p className="text-xs text-yellow-700">
-                        Access Code: <strong>{email.accessCode}</strong>
-                      </p>
+            <div className="space-y-4">
+              {testFeedback.slice(0, 5).map((feedback: any, index: number) => (
+                <div key={index} className="p-4 border border-[#E6E2DD] rounded-xl">
+                  <div className="flex items-center space-x-2 mb-2">
+                    <div className="flex items-center">
+                      {Array.from({length: 5}).map((_, i) => (
+                        <Star 
+                          key={i}
+                          className={`w-4 h-4 ${
+                            i < feedback.rating ? 'text-yellow-400 fill-current' : 'text-gray-300'
+                          }`} 
+                        />
+                      ))}
                     </div>
-                    <span className="text-xs text-gray-500">
-                      {new Date(email.createdAt).toLocaleDateString()}
+                    <span className="text-sm font-medium">{feedback.rating}/5</span>
+                    <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">
+                      {feedback.category}
                     </span>
                   </div>
-                  
-                  <div className="flex space-x-2">
-                    <Button
-                      onClick={() => {
-                        navigator.clipboard.writeText(email.content);
-                        toast.success('Email Copied', 'Email content copied to clipboard');
-                      }}
-                      size="sm"
-                      variant="outline"
-                      icon={Copy}
-                    >
-                      Copy Email
-                    </Button>
-                    <Button
-                      onClick={() => {
-                        const updatedEmails = pendingEmails.filter((_: any, i: number) => i !== index);
-                        safeLocalStorageSet('lumi_pending_emails', updatedEmails);
-                        toast.success('Email Marked as Sent', 'Removed from pending list');
-                      }}
-                      size="sm"
-                      icon={Send}
-                    >
-                      Mark as Sent
-                    </Button>
-                  </div>
+                  <p className="text-sm text-gray-700">{feedback.feedback}</p>
                 </div>
               ))}
             </div>
@@ -872,17 +743,7 @@ export const TestEnvironmentPanel: React.FC = () => {
             {activeTab === 'users' && renderUserManagement()}
             {activeTab === 'scenarios' && renderTestScenarios()}
             {activeTab === 'data' && renderDataManagement()}
-            {activeTab === 'analytics' && (
-              <Card className="p-8 text-center">
-                <BarChart3 className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                <h4 className="text-lg font-medium text-[#1A1A1A] mb-2">
-                  Analytics Dashboard
-                </h4>
-                <p className="text-gray-600">
-                  Analytics and insights for test environment usage.
-                </p>
-              </Card>
-            )}
+            {activeTab === 'analytics' && renderAnalytics()}
             {activeTab === 'email' && renderEmailDelivery()}
             {activeTab === 'feedback' && renderFeedbackManagement()}
           </div>
