@@ -37,19 +37,19 @@ export const EnvironmentStep: React.FC<EnvironmentStepProps> = ({ data, updateDa
   const stressorCategories = [
     {
       title: 'Educator Stressors',
-      stressors: STRESSOR_OPTIONS.slice(0, 5)
+      stressors: STRESSOR_OPTIONS.slice(0, 9)
     },
     {
       title: 'Child Development and Behavior',
-      stressors: STRESSOR_OPTIONS.slice(5, 15)
+      stressors: STRESSOR_OPTIONS.slice(9, 18)
     },
     {
       title: 'Family and Home Factors',
-      stressors: STRESSOR_OPTIONS.slice(15, 20)
+      stressors: STRESSOR_OPTIONS.slice(18, 24)
     },
     {
       title: 'Environment and System Factors',
-      stressors: STRESSOR_OPTIONS.slice(20)
+      stressors: STRESSOR_OPTIONS.slice(24)
     }
   ];
 
@@ -125,7 +125,7 @@ export const EnvironmentStep: React.FC<EnvironmentStepProps> = ({ data, updateDa
               Stressful Conditions <span className="text-red-500">*</span>
             </h3>
             <p className="text-sm text-gray-600 mb-6">
-              Select the challenges you're currently experiencing (select at least one):
+              For each list, select as many that represent you, your classroom and families (select at least one):
             </p>
             
             <div className="space-y-6">
