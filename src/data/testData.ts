@@ -497,6 +497,20 @@ export class TestDataManager {
     }
   }
 
+  // Find user by email
+  findUserByEmail(email: string): User | undefined {
+    return this.users.find(u => u.email === email);
+  }
+
+  // Add or update user
+  addOrUpdateUser(user: User): void {
+    const existingIndex = this.users.findIndex(u => u.id === user.id || u.email === user.email);
+    if (existingIndex !== -1) {
+      this.users[existingIndex] = { ...this.users[existingIndex], ...user };
+    } else {
+      this.users.push(user);
+    }
+  }
   updateChild(id: string, updates: Partial<Child>): void {
     const index = this.children.findIndex(c => c.id === id);
     if (index !== -1) {

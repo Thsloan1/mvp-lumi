@@ -492,12 +492,38 @@ export const DeveloperPortal: React.FC = () => {
                 <Button
                   onClick={() => {
                     // Quick login as this user
-                    const userData = testDataManager.getUsers().find(u => u.email === user.email);
-                    if (userData) {
-                      setCurrentUser(userData);
-                      setCurrentView(userData.role === 'admin' ? 'admin-dashboard' : 'dashboard');
-                      toast.success('Quick Login', `Logged in as ${userData.fullName}`);
+                    // Map test user to actual user data
+                    const staticUsers = testDataManager.getUsers();
+                    let userData = staticUsers.find(u => u.email === user.email);
+                    
+                    // If no matching static user, create one based on test user
+                    if (!userData) {
+                      userData = {
+                        id: user.id,
+                        fullName: user.fullName,
+                        email: user.email,
+                        role: user.role === 'admin' ? 'admin' : 'educator',
+                        preferredLanguage: 'english',
+                        learningStyle: 'I learn best with visuals',
+                        teachingStyle: 'We learn together',
+                        onboardingStatus: 'complete',
+                        createdAt: new Date()
+                      };
                     }
+                    
+                    setCurrentUser(userData);
+                    
+                    // Route based on role and onboarding status
+                    if (userData.role === 'admin') {
+                      setCurrentView('admin-dashboard');
+                    } else if (userData.onboardingStatus === 'incomplete') {
+                      setCurrentView('onboarding-start');
+                    } else {
+                      setCurrentView('dashboard');
+                    }
+                    
+                    toast.success('Quick Login', `Logged in as ${userData.fullName}`);
+                    setIsOpen(false); // Close developer portal after login
                   }}
                   size="sm"
                   variant="outline"
