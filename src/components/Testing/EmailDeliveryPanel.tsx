@@ -140,7 +140,7 @@ ${email.content}`;
             <p className="text-xs text-gray-500 mt-1">
               Emails will appear here when API delivery fails
             </p>
-                      icon={copiedEmail === email.to ? CheckCircle : Mail}
+          </div>
         ) : (
           <div className="space-y-3">
             {pendingEmails.map((email, index) => (
@@ -148,7 +148,6 @@ ${email.content}`;
                 <div className="flex items-start justify-between mb-2">
                   <div>
                     <p className="font-medium text-sm">{email.to}</p>
-                      icon={CheckCircle}
                     <p className="text-xs text-yellow-700">
                       Access Code: <strong>{email.accessCode}</strong>
                     </p>
