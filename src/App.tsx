@@ -39,7 +39,7 @@ import { FamilyScriptGenerator } from './components/FamilyNotes/FamilyScriptGene
 import { AccessibilityProvider } from './components/UI/AccessibilityProvider';
 import { ChildProfileDetail } from './components/ChildProfiles/ChildProfileDetail';
 import { LandingPage } from './components/Landing/LandingPage';
-import { DeveloperPortal } from './components/Testing/TestEnvironmentPanel';
+import { TestEnvironmentPanel } from './components/Testing/TestEnvironmentPanel';
 import { TestUserFeedbackWidget } from './components/Testing/TestUserFeedbackWidget';
 import { SecurityExpertReport } from './components/Security/SecurityExpertReport';
 import { ProductionReadinessChecklist } from './components/Testing/ProductionReadinessChecklist';
@@ -90,7 +90,7 @@ const AppContent: React.FC = () => {
       {renderView()}
       <ToastContainer />
       <TestUserFeedbackWidget module={currentView} />
-      <DeveloperPortal />
+      <TestEnvironmentPanel />
     </div>
   );
 
