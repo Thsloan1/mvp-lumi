@@ -18,6 +18,7 @@ import { OnboardingWizard } from './components/Onboarding/OnboardingWizard';
 import { OnboardingComplete } from './components/Onboarding/OnboardingComplete';
 import { OnboardingCompleteNew } from './components/Onboarding/OnboardingCompleteNew';
 import { WelcomeToLumiScreen } from './components/Welcome/WelcomeToLumiScreen';
+import { ProductionDashboard } from './components/ProductionAssessment/ProductionDashboard';
 import { EducatorDashboard } from './components/Dashboard/EducatorDashboard';
 import { BehaviorLogFlow } from './components/BehaviorLog/BehaviorLogFlow';
 import { ClassroomLogFlow } from './components/ClassroomLog/ClassroomLogFlow';
@@ -207,6 +208,8 @@ const AppContent: React.FC = () => {
         return <ChildProfilesManager />;
       case 'classroom-profile':
         return <ClassroomProfileManager />;
+      case 'production-assessment':
+        return <ProductionDashboard />;
       case 'profile-settings':
         return <ProfileSettings />;
       case 'admin-dashboard':
