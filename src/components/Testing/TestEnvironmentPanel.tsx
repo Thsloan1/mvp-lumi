@@ -180,19 +180,6 @@ export const TestEnvironmentPanel: React.FC = () => {
     toast.success('Access Code Copied!', 'Ready to share with tester');
   };
 
-  const handleQuickLogin = (testUser: TestUser) => {
-    try {
-      // Check for test code in URL
-      const urlParams = new URLSearchParams(window.location.search);
-      const testCode = urlParams.get('testCode');
-      
-      if (testCode) {
-        // Auto-login with test code
-        const testUser = testUsers.find(u => u.accessCode === testCode);
-        if (testUser) {
-          handleQuickLogin(testUser);
-          return;
-        }
       }
       
       // Find or create corresponding user data
@@ -204,7 +191,6 @@ export const TestEnvironmentPanel: React.FC = () => {
           id: testUser.id,
           fullName: testUser.name,
           firstName: testUser.name.split(' ')[0],
-          lastName: testUser.name.split(' ').slice(1).join(' ') || '',
           email: testUser.email,
           password: 'hashed-password',
           role: testUser.role,
@@ -501,6 +487,9 @@ export const TestEnvironmentPanel: React.FC = () => {
           <div className="text-center py-8">
             <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
             <p className="text-gray-600">No test users created yet</p>
+            <p className="text-sm text-gray-500 mt-2">
+              Create test users to enable quick login and scenario testing
+            </p>
           </div>
         ) : (
           <div className="space-y-3">
@@ -571,6 +560,49 @@ export const TestEnvironmentPanel: React.FC = () => {
             ))}
           </div>
         )}
+      </Card>
+
+      {/* Quick Test User Creation */}
+      <Card className="p-6 bg-gradient-to-r from-blue-50 to-green-50 border-blue-200">
+        <h3 className="text-lg font-semibold text-[#1A1A1A] mb-4">
+          Quick Test User Setup
+        </h3>
+        <div className="grid grid-cols-2 gap-3">
+          <Button
+            onClick={() => {
+              const quickUser = {
+                name: 'Sarah Test Educator',
+                email: 'sarah.test@lumi.app',
+                role: 'educator' as const,
+                modules: ['all']
+              };
+              setNewUser(quickUser);
+              createTestUser();
+            }}
+            size="sm"
+            variant="outline"
+            icon={Users}
+          >
+            Create Test Educator
+          </Button>
+          <Button
+            onClick={() => {
+              const quickAdmin = {
+                name: 'Admin Test User',
+                email: 'admin.test@lumi.app',
+                role: 'admin' as const,
+                modules: ['all']
+              };
+              setNewUser(quickAdmin);
+              createTestUser();
+            }}
+            size="sm"
+            variant="outline"
+            icon={Settings}
+          >
+            Create Test Admin
+          </Button>
+        </div>
       </Card>
     </div>
   );
