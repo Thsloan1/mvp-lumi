@@ -118,7 +118,7 @@ export const ChildProfilesManager: React.FC = () => {
                   onChange={(e) => setNewChildData(prev => ({ ...prev, gradeBand: e.target.value }))}
                   className="w-full px-4 py-3 rounded-xl border border-[#E6E2DD] focus:outline-none focus:ring-2 focus:ring-[#C44E38] focus:border-[#C44E38] bg-white"
                 >
-                  <option value="Infants (<2 years old)">Infants (<2 years old)</option>
+                  <option value="Infants (<2 years old)">Infants (&lt;2 years old)</option>
                   <option value="Toddlers (2-3 years old)">Toddlers (2-3 years old)</option>
                   <option value="Preschool (4-5 years old)">Preschool (4-5 years old)</option>
                   <option value="Transitional Kindergarten (4-5 years old)">Transitional Kindergarten (4-5 years old)</option>
