@@ -182,9 +182,11 @@ export const TestEnvironmentPanel: React.FC = () => {
 
   const handleQuickLogin = async (testUser: TestUser) => {
     try {
-      // Clear any existing session
-      localStorage.removeItem('lumi_token');
-      localStorage.removeItem('lumi_current_user');
+      // Update test user status
+      if (testUser.status !== 'active') {
+        toast.error('User Inactive', 'This test user is not active');
+        return;
+      }
       
       // Find or create corresponding user data
       let userData = testDataManager.findUserByEmail(testUser.email);
@@ -617,6 +619,9 @@ export const TestEnvironmentPanel: React.FC = () => {
         <h3 className="text-lg font-semibold text-[#1A1A1A] mb-4">
           Quick Test Scenarios
         </h3>
+        <p className="text-sm text-gray-600 mb-6">
+          Click any scenario to instantly set up the testing environment
+        </p>
         
         <div className="grid md:grid-cols-2 gap-4">
           {[
@@ -625,28 +630,32 @@ export const TestEnvironmentPanel: React.FC = () => {
               name: 'Fresh Educator',
               description: 'New user with no data - test onboarding flow',
               icon: Users,
-              color: 'text-blue-600'
+              color: 'text-blue-600',
+              bgColor: 'bg-blue-100'
             },
             {
               id: 'experienced-educator',
               name: 'Experienced Educator',
               description: 'Educator with children and behavior logs',
               icon: BarChart3,
-              color: 'text-green-600'
+              color: 'text-green-600',
+              bgColor: 'bg-green-100'
             },
             {
               id: 'admin-setup',
               name: 'Admin Setup',
               description: 'Organization management testing',
               icon: Settings,
-              color: 'text-purple-600'
+              color: 'text-purple-600',
+              bgColor: 'bg-purple-100'
             },
             {
               id: 'invited-user',
               name: 'Invited User',
               description: 'Test invitation acceptance flow',
               icon: Mail,
-              color: 'text-orange-600'
+              color: 'text-orange-600',
+              bgColor: 'bg-orange-100'
             }
           ].map((scenario) => {
             const IconComponent = scenario.icon;
@@ -655,10 +664,10 @@ export const TestEnvironmentPanel: React.FC = () => {
                 key={scenario.id}
                 hoverable
                 onClick={() => runTestScenario(scenario.id)}
-                className="p-4 cursor-pointer"
+                className="p-4 cursor-pointer hover:shadow-md transition-all duration-200"
               >
                 <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center">
+                  <div className={`w-10 h-10 ${scenario.bgColor} rounded-xl flex items-center justify-center`}>
                     <IconComponent className={`w-5 h-5 ${scenario.color}`} />
                   </div>
                   <div>
@@ -677,6 +686,9 @@ export const TestEnvironmentPanel: React.FC = () => {
         <h3 className="text-lg font-semibold text-[#1A1A1A] mb-4">
           Advanced Test Scenarios
         </h3>
+        <p className="text-sm text-gray-600 mb-6">
+          Specialized testing environments for performance and compliance validation
+        </p>
         
         <div className="grid md:grid-cols-2 gap-4">
           {[
@@ -685,28 +697,32 @@ export const TestEnvironmentPanel: React.FC = () => {
               name: 'Stress Test Data',
               description: 'Generate large dataset for performance testing',
               icon: Zap,
-              color: 'text-yellow-600'
+              color: 'text-yellow-600',
+              bgColor: 'bg-yellow-100'
             },
             {
               id: 'multi-classroom',
               name: 'Multi-Classroom',
               description: 'Multiple classrooms with varied data',
               icon: Users,
-              color: 'text-indigo-600'
+              color: 'text-indigo-600',
+              bgColor: 'bg-indigo-100'
             },
             {
               id: 'compliance-test',
               name: 'Compliance Testing',
               description: 'FERPA/HIPAA compliance validation',
               icon: Shield,
-              color: 'text-red-600'
+              color: 'text-red-600',
+              bgColor: 'bg-red-100'
             },
             {
               id: 'knowledge-library',
               name: 'Knowledge Library',
               description: 'Framework and strategy management',
               icon: Book,
-              color: 'text-green-600'
+              color: 'text-green-600',
+              bgColor: 'bg-green-100'
             }
           ].map((scenario) => {
             const IconComponent = scenario.icon;
@@ -716,10 +732,10 @@ export const TestEnvironmentPanel: React.FC = () => {
                 hoverable
                 onClick={() => scenario.id === 'knowledge-library' || scenario.id === 'production-assessment' ? 
                   runTestScenario(scenario.id) : runAdvancedScenario(scenario.id)}
-                className="p-4 cursor-pointer"
+                className="p-4 cursor-pointer hover:shadow-md transition-all duration-200"
               >
                 <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center">
+                  <div className={`w-10 h-10 ${scenario.bgColor} rounded-xl flex items-center justify-center`}>
                     <IconComponent className={`w-5 h-5 ${scenario.color}`} />
                   </div>
                   <div>
@@ -738,6 +754,9 @@ export const TestEnvironmentPanel: React.FC = () => {
         <h3 className="text-lg font-semibold text-[#1A1A1A] mb-4">
           Quick Navigation
         </h3>
+        <p className="text-sm text-gray-600 mb-4">
+          Direct access to specialized testing and development interfaces
+        </p>
         
         <div className="grid grid-cols-2 gap-2">
           <Button
@@ -776,6 +795,12 @@ export const TestEnvironmentPanel: React.FC = () => {
           >
             Stress Testing
           </Button>
+        </div>
+        
+        <div className="mt-4 p-3 bg-[#C3D4B7] bg-opacity-10 rounded-lg border border-[#C3D4B7] border-opacity-30">
+          <p className="text-sm text-gray-700">
+            <strong>Tip:</strong> Use these navigation shortcuts to quickly access development tools without closing the portal.
+          </p>
         </div>
       </Card>
     </div>
