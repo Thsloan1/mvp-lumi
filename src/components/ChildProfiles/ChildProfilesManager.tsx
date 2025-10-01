@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { User, Plus, Search, Filter, Calendar, FileText, TrendingUp } from 'lucide-react';
+import { User, Plus, Search, Filter, Calendar, FileText, TrendingUp, Heart, BarChart3 } from 'lucide-react';
 import { Button } from '../UI/Button';
 import { Card } from '../UI/Card';
 import { Input } from '../UI/Input';
@@ -61,7 +61,7 @@ export const ChildProfilesManager: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-[#F8F6F4]">
       <div className="max-w-7xl mx-auto px-6 py-8">
         {/* Header */}
         <div className="mb-8">
@@ -70,13 +70,14 @@ export const ChildProfilesManager: React.FC = () => {
               <h1 className="text-3xl font-bold text-[#1A1A1A] mb-2">
                 Child Profiles
               </h1>
-              <p className="text-gray-600">
+              <p className="text-[#615E59]">
                 Manage individual child profiles and track behavior patterns
               </p>
             </div>
             <Button
               onClick={() => setShowNewChildForm(true)}
               icon={Plus}
+              className="bg-[#C44E38] hover:bg-[#A63D2A] text-white shadow-sm"
             >
               Add New Child
             </Button>
@@ -88,23 +89,25 @@ export const ChildProfilesManager: React.FC = () => {
               value={searchQuery}
               onChange={setSearchQuery}
               placeholder="Search children..."
+              className="bg-white border-[#E6E2DD] focus:border-[#C44E38] focus:ring-[#C44E38]"
             />
           </div>
         </div>
 
         {/* New Child Form */}
         {showNewChildForm && (
-          <Card className="p-6 mb-8">
-            <h3 className="text-lg font-semibold text-[#1A1A1A] mb-4">
+          <Card className="p-8 mb-8 bg-white border-[#E6E2DD] shadow-sm">
+            <h3 className="text-xl font-semibold text-[#1A1A1A] mb-6">
               Add New Child
             </h3>
-            <div className="grid md:grid-cols-2 gap-4 mb-6">
+            <div className="grid md:grid-cols-2 gap-6 mb-6">
               <Input
                 label="Child's Name"
                 value={newChildData.name}
                 onChange={(value) => setNewChildData(prev => ({ ...prev, name: value }))}
                 placeholder="Enter child's name"
                 required
+                className="bg-white border-[#E6E2DD] focus:border-[#C44E38] focus:ring-[#C44E38]"
               />
               <div>
                 <label className="block text-sm font-medium text-[#1A1A1A] mb-2">
@@ -113,9 +116,9 @@ export const ChildProfilesManager: React.FC = () => {
                 <select
                   value={newChildData.gradeBand}
                   onChange={(e) => setNewChildData(prev => ({ ...prev, gradeBand: e.target.value }))}
-                  className="w-full px-4 py-3 rounded-xl border border-[#E6E2DD] focus:outline-none focus:ring-2 focus:ring-[#C44E38] focus:border-[#C44E38]"
+                  className="w-full px-4 py-3 rounded-xl border border-[#E6E2DD] focus:outline-none focus:ring-2 focus:ring-[#C44E38] focus:border-[#C44E38] bg-white"
                 >
-                  <option value="Infants (<2 years old)">Infants (&lt;2 years old)</option>
+                  <option value="Infants (<2 years old)">Infants (<2 years old)</option>
                   <option value="Toddlers (2-3 years old)">Toddlers (2-3 years old)</option>
                   <option value="Preschool (4-5 years old)">Preschool (4-5 years old)</option>
                   <option value="Transitional Kindergarten (4-5 years old)">Transitional Kindergarten (4-5 years old)</option>
@@ -132,6 +135,7 @@ export const ChildProfilesManager: React.FC = () => {
                 onChange={(value) => setNewChildData(prev => ({ ...prev, developmentalNotes: value }))}
                 placeholder="Any relevant developmental information..."
                 rows={3}
+                className="bg-white border-[#E6E2DD] focus:border-[#C44E38] focus:ring-[#C44E38]"
               />
             </div>
 
@@ -143,7 +147,7 @@ export const ChildProfilesManager: React.FC = () => {
                   onChange={(e) => setNewChildData(prev => ({ ...prev, hasIEP: e.target.checked }))}
                   className="rounded border-[#E6E2DD] text-[#C44E38] focus:ring-[#C44E38]"
                 />
-                <span className="text-sm">Has IEP</span>
+                <span className="text-sm text-[#1A1A1A]">Has IEP</span>
               </label>
               <label className="flex items-center space-x-2">
                 <input
@@ -152,17 +156,21 @@ export const ChildProfilesManager: React.FC = () => {
                   onChange={(e) => setNewChildData(prev => ({ ...prev, hasIFSP: e.target.checked }))}
                   className="rounded border-[#E6E2DD] text-[#C44E38] focus:ring-[#C44E38]"
                 />
-                <span className="text-sm">Has IFSP</span>
+                <span className="text-sm text-[#1A1A1A]">Has IFSP</span>
               </label>
             </div>
 
             <div className="flex space-x-3">
-              <Button onClick={handleCreateChild}>
+              <Button 
+                onClick={handleCreateChild}
+                className="bg-[#C44E38] hover:bg-[#A63D2A] text-white"
+              >
                 Create Child Profile
               </Button>
               <Button
                 variant="ghost"
                 onClick={() => setShowNewChildForm(false)}
+                className="text-[#615E59] hover:text-[#1A1A1A]"
               >
                 Cancel
               </Button>
@@ -172,13 +180,29 @@ export const ChildProfilesManager: React.FC = () => {
 
         {/* Children Grid */}
         {filteredChildren.length === 0 ? (
-          <EmptyState
-            icon={User}
-            title="No children found"
-            description={searchQuery ? 'Try adjusting your search' : 'Add your first child to get started'}
-            actionLabel={!searchQuery ? "Add First Child" : undefined}
-            onAction={!searchQuery ? () => setShowNewChildForm(true) : undefined}
-          />
+          <div className="text-center py-16">
+            <div className="w-20 h-20 bg-white rounded-2xl border border-[#E6E2DD] flex items-center justify-center mx-auto mb-6 shadow-sm">
+              <User className="w-10 h-10 text-[#C44E38]" />
+            </div>
+            <h3 className="text-xl font-semibold text-[#1A1A1A] mb-3">
+              {searchQuery ? 'No children found' : 'No children added yet'}
+            </h3>
+            <p className="text-[#615E59] mb-8 max-w-md mx-auto">
+              {searchQuery ? 
+                'Try adjusting your search to find the child you\'re looking for.' : 
+                'Add your first child to start tracking behaviors and getting personalized strategies.'
+              }
+            </p>
+            {!searchQuery && (
+              <Button
+                onClick={() => setShowNewChildForm(true)}
+                icon={Plus}
+                className="bg-[#C44E38] hover:bg-[#A63D2A] text-white px-8"
+              >
+                Add Your First Child
+              </Button>
+            )}
+          </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredChildren.map((child) => {
@@ -186,63 +210,79 @@ export const ChildProfilesManager: React.FC = () => {
               const lastBehaviorDate = getLastBehaviorDate(child.id);
               
               return (
-                <Card key={child.id} className="p-6 hover:shadow-md transition-shadow duration-200">
+                <Card 
+                  key={child.id} 
+                  className="p-6 bg-white border-[#E6E2DD] hover:shadow-lg hover:border-[#C44E38] transition-all duration-200 cursor-pointer group"
+                  onClick={() => setCurrentView(`child-profile-detail-${child.id}`)}
+                >
+                  {/* Child Header */}
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex items-center space-x-3">
-                      <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                        <User className="w-6 h-6 text-blue-600" />
+                      <div className="w-12 h-12 bg-[#C44E38] bg-opacity-10 rounded-full flex items-center justify-center group-hover:bg-[#C44E38] group-hover:bg-opacity-20 transition-colors duration-200">
+                        <User className="w-6 h-6 text-[#C44E38]" />
                       </div>
                       <div>
-                        <h3 className="text-lg font-semibold text-[#1A1A1A]">
+                        <h3 className="text-lg font-semibold text-[#1A1A1A] group-hover:text-[#C44E38] transition-colors duration-200">
                           {child.name}
                         </h3>
-                        <p className="text-sm text-gray-600">
+                        <p className="text-sm text-[#615E59]">
                           {child.gradeBand}
                         </p>
                       </div>
                     </div>
                     <div className="flex space-x-1">
                       {child.hasIEP && (
-                        <span className="px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded-full">
+                        <span className="px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded-full font-medium">
                           IEP
                         </span>
                       )}
                       {child.hasIFSP && (
-                        <span className="px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full">
+                        <span className="px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full font-medium">
                           IFSP
                         </span>
                       )}
                     </div>
                   </div>
 
+                  {/* Stats */}
                   <div className="space-y-3 mb-6">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-600">Behavior Logs:</span>
-                      <span className="font-medium text-[#1A1A1A]">{behaviorCount}</span>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <Heart className="w-4 h-4 text-[#C44E38]" />
+                        <span className="text-sm text-[#615E59]">Behavior Logs</span>
+                      </div>
+                      <span className="text-lg font-bold text-[#1A1A1A]">{behaviorCount}</span>
                     </div>
+                    
                     {lastBehaviorDate && (
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-gray-600">Last Entry:</span>
-                        <span className="font-medium text-[#1A1A1A]">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                          <Calendar className="w-4 h-4 text-blue-600" />
+                          <span className="text-sm text-[#615E59]">Last Entry</span>
+                        </div>
+                        <span className="text-sm font-medium text-[#1A1A1A]">
                           {lastBehaviorDate.toLocaleDateString()}
                         </span>
                       </div>
                     )}
+                    
                     {child.developmentalNotes && (
-                      <div className="text-sm">
-                        <span className="text-gray-600">Notes:</span>
-                        <p className="text-[#1A1A1A] mt-1 line-clamp-2">
+                      <div className="pt-2 border-t border-[#E6E2DD]">
+                        <p className="text-xs text-[#615E59] mb-1">Developmental Notes:</p>
+                        <p className="text-sm text-[#1A1A1A] line-clamp-2 leading-relaxed">
                           {child.developmentalNotes}
                         </p>
                       </div>
                     )}
                   </div>
 
+                  {/* Action Buttons */}
                   <div className="flex space-x-2">
                     <Button
                       size="sm"
-                      className="flex-1"
-                      onClick={() => {
+                      className="flex-1 bg-[#C44E38] hover:bg-[#A63D2A] text-white"
+                      onClick={(e) => {
+                        e.stopPropagation();
                         setCurrentView(`child-profile-detail-${child.id}`);
                       }}
                     >
@@ -251,9 +291,10 @@ export const ChildProfilesManager: React.FC = () => {
                     <Button
                       variant="outline"
                       size="sm"
-                      icon={FileText}
-                      onClick={() => {
-                        // Navigate to behavior log for this child
+                      icon={Heart}
+                      className="border-[#E6E2DD] text-[#615E59] hover:border-[#C44E38] hover:text-[#C44E38]"
+                      onClick={(e) => {
+                        e.stopPropagation();
                         setCurrentView('behavior-log');
                       }}
                     >
@@ -265,7 +306,6 @@ export const ChildProfilesManager: React.FC = () => {
             })}
           </div>
         )}
-
       </div>
     </div>
   );
