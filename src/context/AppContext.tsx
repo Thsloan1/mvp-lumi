@@ -7,6 +7,7 @@ import { OrganizationApi, InvitationApi } from '../services/apiClient';
 import { ErrorLogger } from '../utils/errorLogger';
 import { AuditService } from '../services/auditService';
 import { EncryptionService } from '../services/encryptionService';
+import { supabase } from '../lib/supabase';
 
 interface AppContextType {
   // Auth
@@ -640,6 +641,52 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
 
   const createBehaviorLog = async (data: any) => {
     try {
+      // Try Supabase first
+      const { data: behaviorLogData, error } = await supabase
+        .from('behavior_logs')
+        .insert({
+          educator_id: currentUser?.id,
+          child_id: data.childId,
+          classroom_id: data.classroomId,
+          behavior_description: data.behaviorDescription,
+          context: data.context,
+          time_of_day: data.timeOfDay,
+          severity: data.severity,
+          educator_mood: data.educatorMood,
+          stressors: data.stressors,
+          ai_response: data.aiResponse,
+          selected_strategy: data.selectedStrategy,
+          confidence_rating: data.confidenceRating,
+          phi_flag: data.phiFlag
+        })
+        .select()
+        .single();
+
+      if (!error && behaviorLogData) {
+        const newLog = {
+          id: behaviorLogData.id,
+          educatorId: behaviorLogData.educator_id,
+          childId: behaviorLogData.child_id,
+          classroomId: behaviorLogData.classroom_id,
+          behaviorDescription: behaviorLogData.behavior_description,
+          context: behaviorLogData.context,
+          timeOfDay: behaviorLogData.time_of_day,
+          severity: behaviorLogData.severity as 'low' | 'medium' | 'high',
+          educatorMood: behaviorLogData.educator_mood,
+          stressors: behaviorLogData.stressors || [],
+          aiResponse: behaviorLogData.ai_response,
+          selectedStrategy: behaviorLogData.selected_strategy,
+          confidenceRating: behaviorLogData.confidence_rating,
+          phiFlag: behaviorLogData.phi_flag,
+          createdAt: new Date(behaviorLogData.created_at)
+        };
+        
+        setBehaviorLogs(prev => [newLog, ...prev]);
+        success('Behavior logged!', 'Strategy saved to your dashboard');
+        return newLog;
+      }
+
+      // Fallback to existing mock logic
       // Encrypt sensitive data before sending to API
       const encryptedData = await EncryptionService.encryptBehaviorLog(data);
       
@@ -689,6 +736,51 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
 
   const createChild = async (data: any) => {
     try {
+      // Try Supabase first
+      const { data: childData, error } = await supabase
+        .from('children')
+        .insert({
+          name: data.name,
+          grade_band: data.gradeBand,
+          classroom_id: data.classroomId || classrooms[0]?.id,
+          developmental_notes: data.developmentalNotes,
+          has_iep: data.hasIEP,
+          has_ifsp: data.hasIFSP,
+          language_ability: data.languageAbility,
+          self_regulation_skills: data.selfRegulationSkills,
+          home_language: data.homeLanguage,
+          family_context: data.familyContext
+        })
+        .select()
+        .single();
+
+      if (!error && childData) {
+        const newChild = {
+          id: childData.id,
+          name: childData.name,
+          age: childData.age,
+          gradeBand: childData.grade_band,
+          classroomId: childData.classroom_id,
+          developmentalNotes: childData.developmental_notes,
+          languageAbility: childData.language_ability,
+          selfRegulationSkills: childData.self_regulation_skills,
+          sensorySensitivities: childData.sensory_sensitivities || [],
+          hasIEP: childData.has_iep || false,
+          hasIFSP: childData.has_ifsp || false,
+          supportPlans: childData.support_plans || [],
+          knownTriggers: childData.known_triggers || [],
+          homeLanguage: childData.home_language,
+          familyContext: childData.family_context,
+          createdAt: new Date(childData.created_at),
+          updatedAt: new Date(childData.updated_at)
+        };
+        
+        setApiChildren(prev => [...prev, newChild]);
+        success('Child added!', `${data.name} has been added to your classroom`);
+        return newChild;
+      }
+
+      // Fallback to existing mock logic
       // Encrypt sensitive child data
       const encryptedData = await EncryptionService.encryptChildProfile(data);
       
@@ -724,6 +816,41 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
 
   const createClassroom = async (data: any) => {
     try {
+      // Try Supabase first
+      const { data: classroomData, error } = await supabase
+        .from('classrooms')
+        .insert({
+          name: data.name,
+          grade_band: data.gradeBand,
+          student_count: data.studentCount,
+          teacher_student_ratio: data.teacherStudentRatio,
+          iep_count: data.iepCount,
+          ifsp_count: data.ifspCount,
+          stressors: data.stressors,
+          educator_id: currentUser?.id
+        })
+        .select()
+        .single();
+
+      if (!error && classroomData) {
+        const newClassroom = {
+          id: classroomData.id,
+          name: classroomData.name,
+          gradeBand: classroomData.grade_band,
+          studentCount: classroomData.student_count,
+          teacherStudentRatio: classroomData.teacher_student_ratio || '1:8',
+          iepCount: classroomData.iep_count,
+          ifspCount: classroomData.ifsp_count,
+          stressors: classroomData.stressors || [],
+          educatorId: classroomData.educator_id
+        };
+        
+        setClassrooms(prev => [...prev, newClassroom]);
+        success('Classroom created!', `${data.name} has been set up`);
+        return newClassroom;
+      }
+
+      // Fallback to existing mock logic
       const result = await AuthService.apiRequest('/api/classrooms', {
         method: 'POST',
         body: JSON.stringify(data)
