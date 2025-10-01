@@ -512,6 +512,7 @@ export class TestDataManager {
     }
     console.log('👤 User added/updated:', user.fullName, user.email);
   }
+  
   updateChild(id: string, updates: Partial<Child>): void {
     const index = this.children.findIndex(c => c.id === id);
     if (index !== -1) {
@@ -524,6 +525,57 @@ export class TestDataManager {
     if (index !== -1) {
       this.classrooms[index] = { ...this.classrooms[index], ...updates };
     }
+  }
+
+  // Create quick test users for scenarios
+  createQuickTestUser(role: 'educator' | 'admin', withData: boolean = false): User {
+    const timestamp = Date.now();
+    const user: User = {
+      id: `quick-${role}-${timestamp}`,
+      fullName: role === 'admin' ? 'Quick Test Admin' : 'Quick Test Educator',
+      email: `quick.${role}@test.lumi.app`,
+      role,
+      preferredLanguage: 'english',
+      learningStyle: 'I learn best with visuals',
+      teachingStyle: 'We learn together',
+      createdAt: new Date(),
+      onboardingStatus: withData ? 'complete' : 'incomplete'
+    };
+    
+    this.addOrUpdateUser(user);
+    
+    if (withData && role === 'educator') {
+      // Add sample classroom and children for experienced educator
+      this.addClassroom({
+        id: `quick-classroom-${timestamp}`,
+        name: `${user.fullName}'s Classroom`,
+        gradeBand: 'Preschool (4-5 years old)',
+        studentCount: 18,
+        teacherStudentRatio: '1:9',
+        stressors: ['High ratios or large group sizes'],
+        educatorId: user.id
+      });
+      
+      // Add sample children
+      for (let i = 0; i < 3; i++) {
+        this.addChild({
+          id: `quick-child-${timestamp}-${i}`,
+          name: `Test Child ${i + 1}`,
+          age: 4 + i,
+          gradeBand: 'Preschool (4-5 years old)',
+          classroomId: `quick-classroom-${timestamp}`,
+          hasIEP: i === 0,
+          hasIFSP: false,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        });
+      }
+      
+      // Generate some behavior logs
+      this.generateTestBehaviorLogs(10);
+    }
+    
+    return user;
   }
 }
 
