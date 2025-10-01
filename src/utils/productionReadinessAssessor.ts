@@ -838,3 +838,4 @@ export class ProductionTester {
 
 // Export singleton instance
 export const productionTester = new ProductionTester();
+export const productionAssessor = new ProductionTester();
