@@ -8,6 +8,7 @@ import { useAppContext } from '../../context/AppContext';
 import { testDataManager } from '../../data/testData';
 import { getCurrentEnvironment, isTestEnvironment } from '../../config/environments';
 import { EmailService } from '../../services/emailService';
+import { SREDiagnosticPanel } from './SREDiagnosticPanel';
 import { safeLocalStorageGet, safeLocalStorageSet } from '../../utils/jsonUtils';
 import React from 'react';
 
