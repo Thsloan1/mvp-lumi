@@ -284,22 +284,68 @@ export const TestEnvironmentPanel: React.FC = () => {
       switch (scenario) {
         case 'fresh-educator':
           testDataManager.resetData();
+          // Clear any existing user session
+          localStorage.removeItem('lumi_token');
+          localStorage.removeItem('lumi_current_user');
+          setCurrentUser(null);
+          setCurrentView('welcome');
           toast.success('Fresh Educator Ready', 'Clean environment for new user testing');
           break;
         case 'experienced-educator':
           testDataManager.resetData();
           testDataManager.addSampleData();
           testDataManager.generateTestBehaviorLogs(20);
+          // Set up experienced educator user
+          const experiencedUser = {
+            id: 'experienced-educator-test',
+            fullName: 'Sarah Johnson',
+            email: 'sarah.experienced@test.lumi.app',
+            role: 'educator',
+            preferredLanguage: 'english',
+            learningStyle: 'I learn best with visuals',
+            teachingStyle: 'We learn together',
+            createdAt: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000), // 90 days ago
+            onboardingStatus: 'complete'
+          };
+          setCurrentUser(experiencedUser);
+          setCurrentView('dashboard');
           toast.success('Experienced Educator Ready', 'Environment loaded with sample data');
           break;
         case 'admin-setup':
           testDataManager.resetData();
+          // Set up admin user
+          const adminUser = {
+            id: 'admin-test',
+            fullName: 'Dr. Michael Chen',
+            email: 'admin@test.lumi.app',
+            role: 'admin',
+            preferredLanguage: 'english',
+            learningStyle: 'A mix of all works for me',
+            teachingStyle: 'I set the stage, they take the lead',
+            createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), // 30 days ago
+            onboardingStatus: 'complete'
+          };
+          setCurrentUser(adminUser);
+          setCurrentView('admin-dashboard');
           toast.success('Admin Setup Ready', 'Clean environment for organization testing');
           break;
         case 'invited-user':
           testDataManager.resetData();
+          // Clear user session and set up invitation flow
+          localStorage.removeItem('lumi_token');
+          localStorage.removeItem('lumi_current_user');
+          setCurrentUser(null);
           window.history.pushState({}, '', '?token=test-invite-token-123');
+          setCurrentView('invited-signup');
           toast.success('Invited User Ready', 'Invitation flow ready for testing');
+          break;
+        case 'knowledge-library':
+          setCurrentView('knowledge-library-manager');
+          toast.success('Knowledge Library Ready', 'Framework and strategy management interface loaded');
+          break;
+        case 'production-assessment':
+          setCurrentView('production-readiness');
+          toast.success('Production Assessment Ready', 'Comprehensive testing interface loaded');
           break;
         default:
           toast.warning('Unknown Scenario', 'Scenario not implemented');
@@ -307,6 +353,43 @@ export const TestEnvironmentPanel: React.FC = () => {
     } catch (error) {
       console.error('Failed to run test scenario:', error);
       toast.error('Scenario Failed', 'Could not set up test scenario');
+    }
+  };
+
+  const runAdvancedScenario = (scenario: string) => {
+    try {
+      switch (scenario) {
+        case 'stress-test':
+          testDataManager.generateTestBehaviorLogs(500);
+          toast.success('Stress Test Data Ready', '500 behavior logs generated for performance testing');
+          break;
+        case 'multi-classroom':
+          testDataManager.resetData();
+          testDataManager.addSampleData();
+          // Add multiple classrooms
+          for (let i = 0; i < 5; i++) {
+            testDataManager.addClassroom({
+              id: `classroom-${i}`,
+              name: `Test Classroom ${i + 1}`,
+              gradeBand: 'Preschool (4-5 years old)',
+              studentCount: 15 + i * 3,
+              teacherStudentRatio: '1:8',
+              stressors: ['High ratios or large group sizes'],
+              educatorId: 'educator-1'
+            });
+          }
+          toast.success('Multi-Classroom Ready', '5 classrooms with varied data created');
+          break;
+        case 'compliance-test':
+          setCurrentView('security-compliance-center');
+          toast.success('Compliance Testing Ready', 'FERPA/HIPAA compliance interface loaded');
+          break;
+        default:
+          toast.warning('Unknown Advanced Scenario', 'Scenario not implemented');
+      }
+    } catch (error) {
+      console.error('Failed to run advanced scenario:', error);
+      toast.error('Scenario Failed', 'Could not set up advanced test scenario');
     }
   };
 
@@ -550,6 +633,113 @@ export const TestEnvironmentPanel: React.FC = () => {
               </Card>
             );
           })}
+        </div>
+      </Card>
+      
+      {/* Advanced Scenarios */}
+      <Card className="p-6">
+        <h3 className="text-lg font-semibold text-[#1A1A1A] mb-4">
+          Advanced Test Scenarios
+        </h3>
+        
+        <div className="grid md:grid-cols-2 gap-4">
+          {[
+            {
+              id: 'stress-test',
+              name: 'Stress Test Data',
+              description: 'Generate large dataset for performance testing',
+              icon: Zap,
+              color: 'text-yellow-600'
+            },
+            {
+              id: 'multi-classroom',
+              name: 'Multi-Classroom',
+              description: 'Multiple classrooms with varied data',
+              icon: Users,
+              color: 'text-indigo-600'
+            },
+            {
+              id: 'compliance-test',
+              name: 'Compliance Testing',
+              description: 'FERPA/HIPAA compliance validation',
+              icon: Shield,
+              color: 'text-red-600'
+            },
+            {
+              id: 'knowledge-library',
+              name: 'Knowledge Library',
+              description: 'Framework and strategy management',
+              icon: Book,
+              color: 'text-green-600'
+            }
+          ].map((scenario) => {
+            const IconComponent = scenario.icon;
+            return (
+              <Card
+                key={scenario.id}
+                hoverable
+                onClick={() => scenario.id === 'knowledge-library' || scenario.id === 'production-assessment' ? 
+                  runTestScenario(scenario.id) : runAdvancedScenario(scenario.id)}
+                className="p-4 cursor-pointer"
+              >
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center">
+                    <IconComponent className={`w-5 h-5 ${scenario.color}`} />
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-[#1A1A1A]">{scenario.name}</h4>
+                    <p className="text-sm text-gray-600">{scenario.description}</p>
+                  </div>
+                </div>
+              </Card>
+            );
+          })}
+        </div>
+      </Card>
+      
+      {/* Quick Navigation */}
+      <Card className="p-6">
+        <h3 className="text-lg font-semibold text-[#1A1A1A] mb-4">
+          Quick Navigation
+        </h3>
+        
+        <div className="grid grid-cols-2 gap-2">
+          <Button
+            onClick={() => setCurrentView('production-readiness')}
+            variant="outline"
+            size="sm"
+            icon={BarChart3}
+            className="justify-start"
+          >
+            Production Assessment
+          </Button>
+          <Button
+            onClick={() => setCurrentView('security-expert-report')}
+            variant="outline"
+            size="sm"
+            icon={Shield}
+            className="justify-start"
+          >
+            Security Report
+          </Button>
+          <Button
+            onClick={() => setCurrentView('knowledge-library-manager')}
+            variant="outline"
+            size="sm"
+            icon={Book}
+            className="justify-start"
+          >
+            Knowledge Library
+          </Button>
+          <Button
+            onClick={() => setCurrentView('stress-testing')}
+            variant="outline"
+            size="sm"
+            icon={Zap}
+            className="justify-start"
+          >
+            Stress Testing
+          </Button>
         </div>
       </Card>
     </div>
