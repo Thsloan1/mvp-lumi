@@ -44,6 +44,7 @@ import { LandingPage } from './components/Landing/LandingPage';
 import { TestEnvironmentPanel } from './components/Testing/TestEnvironmentPanel';
 import { TestUserFeedbackWidget } from './components/Testing/TestUserFeedbackWidget';
 import { SecurityExpertReport } from './components/Security/SecurityExpertReport';
+import { SREDiagnosticPanel } from './components/Testing/SREDiagnosticPanel';
 import { DeveloperAppManager } from './components/Developer/DeveloperAppManager';
 import { ProductionReadinessChecklist } from './components/Testing/ProductionReadinessChecklist';
 import { ProductionReadinessReport } from './components/Testing/ProductionReadinessReport';
@@ -51,6 +52,7 @@ import { ProductionChecklist } from './components/Testing/ProductionChecklist';
 import { StressTestRunner } from './components/Testing/StressTestRunner';
 import { ParentPortal } from './components/Security/ParentPortal';
 import { SecurityComplianceCenter } from './components/Admin/SecurityComplianceCenter';
+import { LumiSREDashboard } from './components/Testing/LumiSREDashboard';
 import { ArrowLeft } from 'lucide-react';
 import { Button } from './components/UI/Button';
 
@@ -303,6 +305,38 @@ const AppContent: React.FC = () => {
                 Back to Assessment
               </Button>
               <StressTestRunner />
+            </div>
+          </div>
+        );
+      case 'sre-diagnosis':
+        return (
+          <div className="min-h-screen bg-white">
+            <div className="max-w-7xl mx-auto px-6 py-8">
+              <Button
+                variant="ghost"
+                onClick={() => setCurrentView('dashboard')}
+                icon={ArrowLeft}
+                className="mb-6 -ml-2"
+              >
+                Back to Dashboard
+              </Button>
+              <SREDiagnosticPanel />
+            </div>
+          </div>
+        );
+      case 'sre-diagnosis':
+        return (
+          <div className="min-h-screen bg-white">
+            <div className="max-w-7xl mx-auto px-6 py-8">
+              <Button
+                variant="ghost"
+                onClick={() => setCurrentView('dashboard')}
+                icon={ArrowLeft}
+                className="mb-6 -ml-2"
+              >
+                Back to Dashboard
+              </Button>
+              <LumiSREDashboard />
             </div>
           </div>
         );

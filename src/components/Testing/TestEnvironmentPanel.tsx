@@ -10,6 +10,7 @@ import { getCurrentEnvironment, isTestEnvironment } from '../../config/environme
 import { EmailService } from '../../services/emailService';
 import { SREDiagnosticPanel } from './SREDiagnosticPanel';
 import { safeLocalStorageGet, safeLocalStorageSet } from '../../utils/jsonUtils';
+import { LumiSREDashboard } from './LumiSREDashboard';
 import React from 'react';
 
 interface TestUser {
@@ -1728,6 +1729,14 @@ export const TestEnvironmentPanel: React.FC = () => {
   };
 
   const tabs = [
+    { 
+      id: 'sre-diagnosis', 
+      label: '🚨 SRE: Critical Diagnosis', 
+      icon: AlertTriangle, 
+      color: 'text-red-600',
+      bgColor: 'bg-red-100',
+      priority: true
+    },
     { id: 'health', label: 'System Health', icon: AlertTriangle },
     { id: 'users', label: 'User Management', icon: Users },
     { id: 'scenarios', label: 'Test Scenarios', icon: Play },
@@ -1812,15 +1821,20 @@ export const TestEnvironmentPanel: React.FC = () => {
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id as any)}
                   className={`
-                    flex items-center space-x-2 py-3 px-1 border-b-2 font-medium text-sm transition-colors whitespace-nowrap
+                    flex items-center space-x-2 py-3 px-1 border-b-2 font-medium text-sm transition-colors whitespace-nowrap ${
+                      tab.priority ? 'ring-2 ring-red-500 ring-opacity-50' : ''
+                    }
                     ${activeTab === tab.id
-                      ? 'border-purple-600 text-purple-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                      ? tab.priority ? 'bg-red-600 text-white' : 'border-purple-600 text-purple-600'
+                      : tab.priority ? 'bg-red-50 text-red-700 border border-red-200' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                     }
                   `}
                 >
-                  <IconComponent className="w-4 h-4" />
+                  <IconComponent className={`w-4 h-4 ${tab.priority && activeTab !== tab.id ? 'text-red-600' : ''}`} />
                   <span>{tab.label}</span>
+                  {tab.priority && (
+                    <span className="animate-pulse">🚨</span>
+                  )}
                 </button>
               );
             })}
@@ -1835,6 +1849,7 @@ export const TestEnvironmentPanel: React.FC = () => {
             maxHeight: `${size.height - 140}px`
           }}
         >
+          {activeTab === 'sre-diagnosis' && <LumiSREDashboard />}
           {activeTab === 'health' && renderHealthPanel()}
           {activeTab === 'users' && renderUserManagement()}
           {activeTab === 'scenarios' && renderTestScenarios()}

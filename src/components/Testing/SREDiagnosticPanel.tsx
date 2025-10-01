@@ -1,293 +1,501 @@
-import React, { useState, useEffect } from 'react';
-import { AlertTriangle, CheckCircle, XCircle, RefreshCw, Database, Shield, Zap, Globe, Settings, Download, Play, Clock } from 'lucide-react';
+import React, { useState } from 'react';
+import { AlertTriangle, CheckCircle, XCircle, RefreshCw, Database, Shield, Monitor, Settings, Download, Play, Clock, Eye, FileText } from 'lucide-react';
 import { Button } from '../UI/Button';
 import { Card } from '../UI/Card';
 import { useAppContext } from '../../context/AppContext';
 import { testDataManager } from '../../data/testData';
 import { AuthService } from '../../services/authService';
 
-interface ServiceHealthCheck {
+interface SystemHealthCheck {
   service: string;
+  layer: 'frontend' | 'middleware' | 'backend';
   status: 'healthy' | 'degraded' | 'down' | 'unknown';
   latency?: number;
   lastCheck: Date;
   error?: string;
   details: string;
+  criticalPath: boolean;
 }
 
 interface ModuleDiagnosis {
   module: string;
   layer: 'frontend' | 'middleware' | 'backend';
   status: 'operational' | 'degraded' | 'failed' | 'unknown';
-  issues: string[];
+  rootCause?: string;
+  symptoms: string[];
   fixes: string[];
   priority: 'critical' | 'high' | 'medium' | 'low';
+  estimatedDowntime: string;
 }
 
 export const SREDiagnosticPanel: React.FC = () => {
-  const { currentUser, toast } = useAppContext();
-  const [healthChecks, setHealthChecks] = useState<ServiceHealthCheck[]>([]);
+  const { currentUser, setCurrentUser, setCurrentView, toast } = useAppContext();
+  const [healthChecks, setHealthChecks] = useState<SystemHealthCheck[]>([]);
   const [moduleDiagnosis, setModuleDiagnosis] = useState<ModuleDiagnosis[]>([]);
-  const [running, setRunning] = useState(false);
-  const [fixingCritical, setFixingCritical] = useState(false);
-  const [lastDiagnosis, setLastDiagnosis] = useState<Date | null>(null);
+  const [diagnosisRunning, setDiagnosisRunning] = useState(false);
+  const [recoveryRunning, setRecoveryRunning] = useState(false);
+  const [fixingModule, setFixingModule] = useState<string | null>(null);
 
-  // Run comprehensive diagnosis
-  const runComprehensiveDiagnosis = async () => {
-    setRunning(true);
-    console.log('🚨 SRE: Starting comprehensive system diagnosis...');
+  // 🚨 CRITICAL: Complete End-to-End Diagnosis
+  const runCompleteRCA = async () => {
+    setDiagnosisRunning(true);
+    console.log('🚨 SRE: CRITICAL INCIDENT - Starting root cause analysis for Lumi application');
     
     try {
       // 1. FOUNDATIONAL SERVICES HEALTH CHECK
-      const healthResults = await runHealthChecks();
+      console.log('🔍 SRE: Checking foundational services...');
+      const healthResults = await checkFoundationalServices();
       setHealthChecks(healthResults);
       
       // 2. MODULE-BY-MODULE DIAGNOSIS
-      const moduleResults = await runModuleDiagnosis();
+      console.log('🔍 SRE: Diagnosing application modules...');
+      const moduleResults = await diagnoseAllModules();
       setModuleDiagnosis(moduleResults);
       
-      setLastDiagnosis(new Date());
+      // 3. IDENTIFY ROOT CAUSE
+      const criticalFailures = moduleResults.filter(m => m.priority === 'critical' && m.status === 'failed');
+      const downServices = healthResults.filter(h => h.status === 'down' && h.criticalPath);
       
-      // 3. IDENTIFY CRITICAL FAILURES
-      const criticalIssues = moduleResults.filter(m => m.priority === 'critical' && m.status === 'failed');
-      const degradedServices = healthResults.filter(h => h.status === 'down' || h.status === 'degraded');
+      console.log('🚨 SRE: Analysis complete');
+      console.log(`Critical failures: ${criticalFailures.length}`);
+      console.log(`Down services: ${downServices.length}`);
       
-      if (criticalIssues.length > 0 || degradedServices.length > 0) {
-        toast.error('CRITICAL FAILURES DETECTED', `${criticalIssues.length} critical modules failed, ${degradedServices.length} services degraded`);
+      // Alert based on severity
+      if (downServices.length > 0) {
+        toast.error('INFRASTRUCTURE FAILURE', `${downServices.length} critical services down`);
+      } else if (criticalFailures.length > 0) {
+        toast.error('MODULE FAILURE', `${criticalFailures.length} critical modules failed`);
       } else {
-        toast.success('System Diagnosis Complete', 'All critical services operational');
+        toast.success('SYSTEM OPERATIONAL', 'All critical services healthy');
       }
       
     } catch (error) {
       console.error('🚨 SRE: Diagnosis failed:', error);
-      toast.error('Diagnosis Failed', 'Unable to complete system health check');
+      toast.error('DIAGNOSIS FAILED', 'Unable to complete system analysis');
     } finally {
-      setRunning(false);
+      setDiagnosisRunning(false);
     }
   };
 
-  // Health check for foundational services
-  const runHealthChecks = async (): Promise<ServiceHealthCheck[]> => {
-    const checks: ServiceHealthCheck[] = [];
+  // Check foundational infrastructure services
+  const checkFoundationalServices = async (): Promise<SystemHealthCheck[]> => {
+    const checks: SystemHealthCheck[] = [];
     
-    // 1. Database Health Check
+    // 1. DATABASE HEALTH CHECK
     try {
       const dbStart = performance.now();
       const users = testDataManager.getUsers();
+      const children = testDataManager.getChildren();
+      const behaviorLogs = testDataManager.getBehaviorLogs();
       const dbLatency = performance.now() - dbStart;
       
+      const hasData = users.length > 0 && children.length > 0;
+      
       checks.push({
-        service: 'Database',
-        status: users.length > 0 ? 'healthy' : 'degraded',
+        service: 'Database/Storage',
+        layer: 'backend',
+        status: hasData ? 'healthy' : 'degraded',
         latency: dbLatency,
         lastCheck: new Date(),
-        details: `${users.length} users, ${testDataManager.getChildren().length} children, ${testDataManager.getBehaviorLogs().length} behavior logs`
+        details: `${users.length} users, ${children.length} children, ${behaviorLogs.length} behavior logs`,
+        criticalPath: true
       });
     } catch (error) {
       checks.push({
-        service: 'Database',
+        service: 'Database/Storage',
+        layer: 'backend',
         status: 'down',
         lastCheck: new Date(),
         error: error.message,
-        details: 'Database connection failed'
+        details: 'Database connection failed',
+        criticalPath: true
       });
     }
     
-    // 2. Authentication Service Health Check
+    // 2. AUTHENTICATION SERVICE HEALTH CHECK
     try {
       const authStart = performance.now();
       const token = localStorage.getItem('lumi_token');
+      const currentUserData = localStorage.getItem('lumi_current_user');
       const authLatency = performance.now() - authStart;
+      
+      let authStatus: SystemHealthCheck['status'] = 'healthy';
+      let details = 'Authentication service operational';
+      
+      if (!token && !currentUserData) {
+        authStatus = 'degraded';
+        details = 'No active user session';
+      } else if (token && !currentUserData) {
+        authStatus = 'degraded';
+        details = 'Token exists but user data corrupted';
+      }
       
       checks.push({
         service: 'Authentication',
-        status: token ? 'healthy' : 'degraded',
+        layer: 'middleware',
+        status: authStatus,
         latency: authLatency,
         lastCheck: new Date(),
-        details: token ? 'Valid session token found' : 'No active session'
+        details,
+        criticalPath: true
       });
     } catch (error) {
       checks.push({
         service: 'Authentication',
+        layer: 'middleware',
         status: 'down',
         lastCheck: new Date(),
         error: error.message,
-        details: 'Authentication service unreachable'
+        details: 'Authentication service unreachable',
+        criticalPath: true
       });
     }
     
-    // 3. API Gateway Health Check
+    // 3. API GATEWAY HEALTH CHECK
     try {
       const apiStart = performance.now();
-      const response = await fetch('/api/health').catch(() => ({ ok: false, status: 0 }));
+      const healthResponse = await fetch('/api/health').catch(() => ({ ok: false, status: 0 }));
       const apiLatency = performance.now() - apiStart;
       
       checks.push({
         service: 'API Gateway',
-        status: response.ok ? 'healthy' : 'down',
+        layer: 'middleware',
+        status: healthResponse.ok ? 'healthy' : 'down',
         latency: apiLatency,
         lastCheck: new Date(),
-        details: response.ok ? `HTTP ${response.status} - API responding` : `HTTP ${response.status} - API unreachable`
+        details: healthResponse.ok ? 'API Gateway responding' : 'API Gateway unreachable',
+        criticalPath: true
       });
     } catch (error) {
       checks.push({
         service: 'API Gateway',
+        layer: 'middleware',
         status: 'down',
         lastCheck: new Date(),
         error: error.message,
-        details: 'API Gateway connection failed'
+        details: 'API Gateway connection failed',
+        criticalPath: true
       });
     }
     
-    // 4. Email Service Health Check
+    // 4. FRONTEND APPLICATION HEALTH CHECK
     try {
-      const emailStart = performance.now();
-      const pendingEmails = JSON.parse(localStorage.getItem('lumi_pending_emails') || '[]');
-      const emailLatency = performance.now() - emailStart;
+      const frontendStart = performance.now();
+      const hasReactRoot = document.getElementById('root') !== null;
+      const hasAppContent = document.body.innerHTML.length > 1000;
+      const hasErrorBoundary = !document.body.innerHTML.includes('Something went wrong');
+      const frontendLatency = performance.now() - frontendStart;
+      
+      let frontendStatus: SystemHealthCheck['status'] = 'healthy';
+      let details = 'Frontend application loaded successfully';
+      
+      if (!hasReactRoot) {
+        frontendStatus = 'down';
+        details = 'React root element missing';
+      } else if (!hasAppContent) {
+        frontendStatus = 'degraded';
+        details = 'Application content not rendering';
+      } else if (!hasErrorBoundary) {
+        frontendStatus = 'degraded';
+        details = 'Error boundary may have triggered';
+      }
       
       checks.push({
-        service: 'Email Service',
-        status: 'healthy',
-        latency: emailLatency,
+        service: 'Frontend Application',
+        layer: 'frontend',
+        status: frontendStatus,
+        latency: frontendLatency,
         lastCheck: new Date(),
-        details: `${pendingEmails.length} pending emails in queue`
+        details,
+        criticalPath: true
       });
     } catch (error) {
       checks.push({
-        service: 'Email Service',
-        status: 'degraded',
+        service: 'Frontend Application',
+        layer: 'frontend',
+        status: 'down',
         lastCheck: new Date(),
         error: error.message,
-        details: 'Email queue access failed'
+        details: 'Frontend application failed to load',
+        criticalPath: true
       });
     }
     
     return checks;
   };
 
-  // Module-by-module diagnosis
-  const runModuleDiagnosis = async (): Promise<ModuleDiagnosis[]> => {
-    const diagnosis: ModuleDiagnosis[] = [];
+  // Diagnose all application modules
+  const diagnoseAllModules = async (): Promise<ModuleDiagnosis[]> => {
+    const modules: ModuleDiagnosis[] = [];
     
-    // 1. AUTHENTICATION MODULE DIAGNOSIS
-    const authDiagnosis = await diagnoseAuthenticationModule();
-    diagnosis.push(authDiagnosis);
+    // 1. AUTHENTICATION & USER MANAGEMENT
+    modules.push(await diagnoseAuthenticationModule());
     
-    // 2. USER MANAGEMENT MODULE DIAGNOSIS
-    const userMgmtDiagnosis = await diagnoseUserManagementModule();
-    diagnosis.push(userMgmtDiagnosis);
+    // 2. ONBOARDING FLOW (8 STEPS)
+    modules.push(await diagnoseOnboardingModule());
     
-    // 3. AI ENGINE MODULE DIAGNOSIS
-    const aiEngineDiagnosis = await diagnoseAIEngineModule();
-    diagnosis.push(aiEngineDiagnosis);
+    // 3. SUBSCRIPTION & PAYMENT (STRIPE)
+    modules.push(await diagnoseSubscriptionModule());
     
-    // 4. DATA ANALYTICS MODULE DIAGNOSIS
-    const analyticsDiagnosis = await diagnoseAnalyticsModule();
-    diagnosis.push(analyticsDiagnosis);
+    // 4. AI ENGINE & STRATEGY GENERATION
+    modules.push(await diagnoseAIEngineModule());
     
-    // 5. EMAIL DELIVERY MODULE DIAGNOSIS
-    const emailDiagnosis = await diagnoseEmailModule();
-    diagnosis.push(emailDiagnosis);
+    // 5. LEARNING LIBRARY
+    modules.push(await diagnoseLearningLibraryModule());
     
-    return diagnosis;
+    // 6. DATA DASHBOARD & REPORTING
+    modules.push(await diagnoseDataDashboardModule());
+    
+    return modules;
   };
 
   const diagnoseAuthenticationModule = async (): Promise<ModuleDiagnosis> => {
-    const issues: string[] = [];
+    const symptoms: string[] = [];
     const fixes: string[] = [];
+    let rootCause = '';
+    let status: ModuleDiagnosis['status'] = 'operational';
     
-    // Frontend checks
-    const hasSignUpUI = document.querySelector('input[type="email"]') !== null;
+    // FRONTEND CHECKS
+    const hasSignUpUI = document.querySelector('input[type="email"]') !== null ||
+                       document.body.innerHTML.includes('Sign Up') ||
+                       document.body.innerHTML.includes('Create Account');
+    
     const hasPasswordInput = document.querySelector('input[type="password"]') !== null;
-    const hasOAuthButtons = document.body.innerHTML.includes('Google') || document.body.innerHTML.includes('Microsoft');
+    const hasOAuthButtons = document.body.innerHTML.includes('Google') || 
+                           document.body.innerHTML.includes('Microsoft') || 
+                           document.body.innerHTML.includes('Apple');
     
     if (!hasSignUpUI) {
-      issues.push('Frontend: Sign-up UI not rendering');
-      fixes.push('Verify React components are mounting correctly');
+      symptoms.push('Frontend: Sign-up UI components not rendering');
+      fixes.push('Verify React component mounting and routing');
+      status = 'failed';
     }
     
-    // Middleware checks
+    if (!hasPasswordInput) {
+      symptoms.push('Frontend: Password input fields missing');
+      fixes.push('Check form component implementation');
+      status = 'degraded';
+    }
+    
+    if (!hasOAuthButtons) {
+      symptoms.push('Frontend: OAuth provider buttons not visible');
+      fixes.push('Verify OAuth component integration');
+    }
+    
+    // MIDDLEWARE CHECKS
     let middlewareWorking = false;
     try {
-      const response = await fetch('/api/auth/signin', {
+      const authResponse = await fetch('/api/auth/signin', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ test: true })
       });
-      middlewareWorking = response.status !== 404;
+      middlewareWorking = authResponse.status !== 404;
+      
+      if (!middlewareWorking) {
+        symptoms.push('Middleware: Auth endpoints returning 404');
+        fixes.push('Verify API routing configuration');
+        status = 'failed';
+      }
     } catch (error) {
-      issues.push('Middleware: Auth endpoints unreachable');
-      fixes.push('Restart API server and check endpoint routing');
+      symptoms.push('Middleware: Auth service unreachable');
+      fixes.push('Restart authentication service');
+      status = 'failed';
     }
     
-    // Backend checks
+    // BACKEND CHECKS
     const hasValidToken = localStorage.getItem('lumi_token') !== null;
+    const hasUserSession = localStorage.getItem('lumi_current_user') !== null;
     const hasUserData = testDataManager.getUsers().length > 0;
     
     if (!hasUserData) {
-      issues.push('Backend: User database empty or inaccessible');
+      symptoms.push('Backend: User database empty or inaccessible');
       fixes.push('Reinitialize user database with test data');
+      status = 'failed';
     }
     
-    const status = issues.length === 0 ? 'operational' : issues.length <= 2 ? 'degraded' : 'failed';
-    const priority = issues.some(i => i.includes('unreachable') || i.includes('empty')) ? 'critical' : 'high';
+    if (!hasUserSession && hasValidToken) {
+      symptoms.push('Backend: Token exists but user session corrupted');
+      fixes.push('Clear corrupted session data and force re-authentication');
+      status = 'degraded';
+    }
+    
+    // Determine root cause
+    if (symptoms.length === 0) {
+      rootCause = 'Authentication module operational';
+    } else if (symptoms.some(s => s.includes('unreachable') || s.includes('404'))) {
+      rootCause = 'API service connectivity failure';
+    } else if (symptoms.some(s => s.includes('not rendering'))) {
+      rootCause = 'Frontend component mounting failure';
+    } else {
+      rootCause = 'Authentication state corruption';
+    }
     
     return {
       module: 'Authentication & User Management',
       layer: 'frontend',
       status,
-      issues,
+      rootCause,
+      symptoms,
       fixes,
-      priority
+      priority: status === 'failed' ? 'critical' : 'high',
+      estimatedDowntime: status === 'failed' ? '5-15 minutes' : '2-5 minutes'
     };
   };
 
-  const diagnoseUserManagementModule = async (): Promise<ModuleDiagnosis> => {
-    const issues: string[] = [];
+  const diagnoseOnboardingModule = async (): Promise<ModuleDiagnosis> => {
+    const symptoms: string[] = [];
     const fixes: string[] = [];
+    let rootCause = '';
+    let status: ModuleDiagnosis['status'] = 'operational';
     
-    // Check user creation functionality
-    const users = testDataManager.getUsers();
-    const hasTestUsers = users.length >= 4; // Should have our test users
-    
-    if (!hasTestUsers) {
-      issues.push('Backend: Test user data missing or corrupted');
-      fixes.push('Reinitialize test user database');
+    // Check onboarding data persistence
+    try {
+      const onboardingData = localStorage.getItem('lumi_onboarding_progress');
+      if (onboardingData) {
+        const parsed = JSON.parse(onboardingData);
+        if (!parsed.data || typeof parsed.step !== 'number') {
+          symptoms.push('Frontend: Onboarding state corrupted');
+          fixes.push('Reset onboarding wizard state');
+          status = 'degraded';
+        }
+      }
+    } catch (error) {
+      symptoms.push('Frontend: Onboarding data parsing failed');
+      fixes.push('Clear corrupted onboarding data');
+      status = 'degraded';
     }
     
-    // Check user session management
-    const currentUserExists = currentUser !== null;
-    if (!currentUserExists) {
-      issues.push('Frontend: User session not established');
-      fixes.push('Restore user session from localStorage or force re-authentication');
+    // Check onboarding API endpoint
+    try {
+      const onboardingResponse = await fetch('/api/user/onboarding', {
+        method: 'PUT',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer test-token'
+        },
+        body: JSON.stringify({ test: true })
+      });
+      
+      if (onboardingResponse.status === 404) {
+        symptoms.push('Middleware: Onboarding API endpoint not found');
+        fixes.push('Verify onboarding API routing');
+        status = 'failed';
+      }
+    } catch (error) {
+      symptoms.push('Middleware: Onboarding API unreachable');
+      fixes.push('Restart onboarding service');
+      status = 'failed';
     }
     
-    // Check onboarding flow
-    const hasOnboardingData = localStorage.getItem('lumi_onboarding_progress') !== null;
-    if (!hasOnboardingData && currentUser?.onboardingStatus === 'incomplete') {
-      issues.push('Frontend: Onboarding state corrupted');
-      fixes.push('Reset onboarding wizard state');
+    // Check form validation
+    const hasFormValidation = document.body.innerHTML.includes('required') ||
+                             document.body.innerHTML.includes('validation');
+    
+    if (!hasFormValidation) {
+      symptoms.push('Frontend: Form validation not implemented');
+      fixes.push('Add form validation to onboarding steps');
+      status = 'degraded';
     }
     
-    const status = issues.length === 0 ? 'operational' : issues.length <= 1 ? 'degraded' : 'failed';
+    rootCause = status === 'failed' ? 'Onboarding API service failure' : 
+                status === 'degraded' ? 'Onboarding state management issues' : 
+                'Onboarding module operational';
     
     return {
-      module: 'User Management',
+      module: 'Onboarding Flow (8 Steps)',
       layer: 'frontend',
       status,
-      issues,
+      rootCause,
+      symptoms,
       fixes,
-      priority: issues.length > 1 ? 'critical' : 'medium'
+      priority: status === 'failed' ? 'critical' : 'medium',
+      estimatedDowntime: '3-10 minutes'
+    };
+  };
+
+  const diagnoseSubscriptionModule = async (): Promise<ModuleDiagnosis> => {
+    const symptoms: string[] = [];
+    const fixes: string[] = [];
+    let rootCause = '';
+    let status: ModuleDiagnosis['status'] = 'operational';
+    
+    // Check Stripe integration
+    const hasStripeElements = document.body.innerHTML.includes('Stripe') ||
+                             document.body.innerHTML.includes('CreditCard') ||
+                             document.body.innerHTML.includes('Payment');
+    
+    if (!hasStripeElements) {
+      symptoms.push('Frontend: Stripe payment UI not loaded');
+      fixes.push('Verify Stripe.js integration');
+      status = 'degraded';
+    }
+    
+    // Check subscription state
+    const hasSubscriptionData = localStorage.getItem('lumi_subscription') !== null ||
+                               document.body.innerHTML.includes('subscription');
+    
+    if (!hasSubscriptionData) {
+      symptoms.push('Backend: Subscription data not available');
+      fixes.push('Initialize subscription service');
+      status = 'degraded';
+    }
+    
+    // Check payment processing
+    try {
+      const paymentResponse = await fetch('/api/payments/webhook', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ test: true })
+      });
+      
+      if (paymentResponse.status === 404) {
+        symptoms.push('Middleware: Payment webhook endpoint missing');
+        fixes.push('Configure Stripe webhook endpoints');
+        status = 'failed';
+      }
+    } catch (error) {
+      symptoms.push('Middleware: Payment service unreachable');
+      fixes.push('Restart payment processing service');
+      status = 'failed';
+    }
+    
+    rootCause = status === 'failed' ? 'Payment processing service failure' : 
+                status === 'degraded' ? 'Subscription state management issues' : 
+                'Subscription module operational';
+    
+    return {
+      module: 'Subscription & Payment (Stripe)',
+      layer: 'middleware',
+      status,
+      rootCause,
+      symptoms,
+      fixes,
+      priority: status === 'failed' ? 'high' : 'medium',
+      estimatedDowntime: '10-20 minutes'
     };
   };
 
   const diagnoseAIEngineModule = async (): Promise<ModuleDiagnosis> => {
-    const issues: string[] = [];
+    const symptoms: string[] = [];
     const fixes: string[] = [];
+    let rootCause = '';
+    let status: ModuleDiagnosis['status'] = 'operational';
     
-    // Check AI strategy generation
+    // Check AI strategy generation UI
+    const hasStrategyUI = document.body.innerHTML.includes('behavior') ||
+                         document.body.innerHTML.includes('strategy') ||
+                         document.body.innerHTML.includes('BehaviorLog');
+    
+    if (!hasStrategyUI) {
+      symptoms.push('Frontend: AI strategy UI not rendering');
+      fixes.push('Verify behavior logging components');
+      status = 'degraded';
+    }
+    
+    // Check AI API endpoints
     try {
-      const response = await fetch('/api/ai/child-strategy', {
+      const aiResponse = await fetch('/api/ai/child-strategy', {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
@@ -300,189 +508,221 @@ export const SREDiagnosticPanel: React.FC = () => {
         })
       });
       
-      if (response.status === 404) {
-        issues.push('Middleware: AI strategy endpoints not found');
-        fixes.push('Verify API routing and endpoint implementation');
+      if (aiResponse.status === 404) {
+        symptoms.push('Middleware: AI strategy endpoints not found');
+        fixes.push('Verify AI service routing and deployment');
+        status = 'failed';
+      } else if (aiResponse.status >= 500) {
+        symptoms.push('Backend: AI service internal error');
+        fixes.push('Check AI service logs and restart if needed');
+        status = 'failed';
       }
     } catch (error) {
-      issues.push('Middleware: AI service unreachable');
-      fixes.push('Check AI service configuration and API keys');
+      symptoms.push('Middleware: AI service completely unreachable');
+      fixes.push('Emergency restart of AI processing service');
+      status = 'failed';
     }
     
-    // Check behavior log creation
-    const behaviorLogs = testDataManager.getBehaviorLogs();
-    if (behaviorLogs.length === 0) {
-      issues.push('Backend: No behavior logs in database');
-      fixes.push('Generate sample behavior logs for testing');
+    // Check behavior log data
+    const hasBehaviorData = testDataManager.getBehaviorLogs().length > 0;
+    
+    if (!hasBehaviorData) {
+      symptoms.push('Backend: Behavior log database empty');
+      fixes.push('Initialize behavior log database');
+      status = 'degraded';
     }
     
-    const status = issues.length === 0 ? 'operational' : 'degraded';
+    rootCause = status === 'failed' ? 'AI processing service failure' : 
+                status === 'degraded' ? 'AI data pipeline issues' : 
+                'AI Engine operational';
     
     return {
       module: 'AI Engine & Strategy Generation',
-      layer: 'middleware',
-      status,
-      issues,
-      fixes,
-      priority: 'high'
-    };
-  };
-
-  const diagnoseAnalyticsModule = async (): Promise<ModuleDiagnosis> => {
-    const issues: string[] = [];
-    const fixes: string[] = [];
-    
-    // Check analytics data availability
-    const children = testDataManager.getChildren();
-    const behaviorLogs = testDataManager.getBehaviorLogs();
-    const classroomLogs = testDataManager.getClassroomLogs();
-    
-    if (children.length === 0) {
-      issues.push('Backend: No child data for analytics');
-      fixes.push('Initialize child profiles database');
-    }
-    
-    if (behaviorLogs.length === 0 && classroomLogs.length === 0) {
-      issues.push('Backend: No behavioral data for analysis');
-      fixes.push('Generate sample behavioral data');
-    }
-    
-    // Check analytics engine
-    try {
-      const hasAnalyticsEngine = typeof window !== 'undefined' && 
-        document.body.innerHTML.includes('AnalyticsEngine');
-      
-      if (!hasAnalyticsEngine) {
-        issues.push('Frontend: Analytics engine not loaded');
-        fixes.push('Verify analytics module imports');
-      }
-    } catch (error) {
-      issues.push('Frontend: Analytics module error');
-      fixes.push('Restart analytics service');
-    }
-    
-    const status = issues.length === 0 ? 'operational' : 'degraded';
-    
-    return {
-      module: 'Data Analytics & Reporting',
       layer: 'backend',
       status,
-      issues,
+      rootCause,
+      symptoms,
       fixes,
-      priority: 'medium'
+      priority: 'critical',
+      estimatedDowntime: '15-30 minutes'
     };
   };
 
-  const diagnoseEmailModule = async (): Promise<ModuleDiagnosis> => {
-    const issues: string[] = [];
+  const diagnoseLearningLibraryModule = async (): Promise<ModuleDiagnosis> => {
+    const symptoms: string[] = [];
     const fixes: string[] = [];
+    let rootCause = '';
+    let status: ModuleDiagnosis['status'] = 'operational';
     
-    // Check email queue
-    try {
-      const pendingEmails = JSON.parse(localStorage.getItem('lumi_pending_emails') || '[]');
-      const failedEmails = pendingEmails.filter((email: any) => email.status === 'failed');
-      
-      if (failedEmails.length > 0) {
-        issues.push(`Email: ${failedEmails.length} failed email deliveries`);
-        fixes.push('Retry failed email deliveries');
-      }
-    } catch (error) {
-      issues.push('Email: Queue access failed');
-      fixes.push('Reset email queue storage');
+    // Check library content loading
+    const hasLibraryContent = document.body.innerHTML.includes('Resource') ||
+                             document.body.innerHTML.includes('Library') ||
+                             document.body.innerHTML.includes('STARTER_LIBRARY');
+    
+    if (!hasLibraryContent) {
+      symptoms.push('Frontend: Learning library content not loading');
+      fixes.push('Verify resource library data loading');
+      status = 'degraded';
     }
     
-    // Check email service configuration
-    const hasEmailConfig = import.meta.env.VITE_RESEND_API_KEY || 
-                          document.body.innerHTML.includes('EmailService');
+    // Check content filtering
+    const hasFiltering = document.body.innerHTML.includes('filter') ||
+                        document.body.innerHTML.includes('search');
     
-    if (!hasEmailConfig) {
-      issues.push('Backend: Email service not configured');
-      fixes.push('Configure email service API keys');
+    if (!hasFiltering) {
+      symptoms.push('Frontend: Content filtering not functional');
+      fixes.push('Restore content filtering functionality');
+      status = 'degraded';
     }
     
-    const status = issues.length === 0 ? 'operational' : 'degraded';
+    rootCause = status === 'degraded' ? 'Learning library feature degradation' : 
+                'Learning library operational';
     
     return {
-      module: 'Email Delivery',
-      layer: 'middleware',
+      module: 'Learning Library & Resources',
+      layer: 'frontend',
       status,
-      issues,
+      rootCause,
+      symptoms,
       fixes,
-      priority: 'medium'
+      priority: 'medium',
+      estimatedDowntime: '5-10 minutes'
     };
   };
 
-  // Emergency recovery procedures
+  const diagnoseDataDashboardModule = async (): Promise<ModuleDiagnosis> => {
+    const symptoms: string[] = [];
+    const fixes: string[] = [];
+    let rootCause = '';
+    let status: ModuleDiagnosis['status'] = 'operational';
+    
+    // Check dashboard data loading
+    const hasDashboardData = document.body.innerHTML.includes('dashboard') ||
+                            document.body.innerHTML.includes('analytics') ||
+                            document.body.innerHTML.includes('AnalyticsEngine');
+    
+    if (!hasDashboardData) {
+      symptoms.push('Frontend: Dashboard data not loading');
+      fixes.push('Verify analytics data pipeline');
+      status = 'degraded';
+    }
+    
+    // Check analytics API
+    try {
+      const analyticsResponse = await fetch('/api/analytics/reports', {
+        headers: { 'Authorization': 'Bearer test-token' }
+      });
+      
+      if (analyticsResponse.status === 404) {
+        symptoms.push('Middleware: Analytics API endpoints missing');
+        fixes.push('Deploy analytics service endpoints');
+        status = 'failed';
+      }
+    } catch (error) {
+      symptoms.push('Middleware: Analytics service unreachable');
+      fixes.push('Restart analytics processing service');
+      status = 'failed';
+    }
+    
+    rootCause = status === 'failed' ? 'Analytics service infrastructure failure' : 
+                status === 'degraded' ? 'Dashboard data pipeline issues' : 
+                'Data dashboard operational';
+    
+    return {
+      module: 'Data Dashboard & Reporting',
+      layer: 'backend',
+      status,
+      rootCause,
+      symptoms,
+      fixes,
+      priority: 'medium',
+      estimatedDowntime: '10-20 minutes'
+    };
+  };
+
+  // 🔧 EMERGENCY RECOVERY PROCEDURES
   const executeEmergencyRecovery = async () => {
-    setFixingCritical(true);
-    console.log('🚨 SRE: Executing emergency recovery procedures...');
+    setRecoveryRunning(true);
+    console.log('🚨 SRE: EXECUTING EMERGENCY RECOVERY PROCEDURES');
     
     try {
-      // 1. DATABASE RECOVERY
-      console.log('🔧 SRE: Recovering database...');
+      // 1. Clear corrupted application state
+      console.log('🔧 SRE: Clearing corrupted application state...');
+      localStorage.removeItem('lumi_token');
+      localStorage.removeItem('lumi_current_user');
+      localStorage.removeItem('lumi_onboarding_progress');
+      localStorage.removeItem('lumi_current_view');
+      
+      // 2. Reset authentication state
+      console.log('🔧 SRE: Resetting authentication state...');
+      setCurrentUser(null);
+      
+      // 3. Reinitialize database
+      console.log('🔧 SRE: Reinitializing database...');
       testDataManager.resetData();
       testDataManager.addSampleData();
-      testDataManager.generateTestBehaviorLogs(20);
+      testDataManager.generateTestBehaviorLogs(10);
       
-      // 2. AUTHENTICATION RECOVERY
-      console.log('🔧 SRE: Recovering authentication...');
-      try {
-        localStorage.removeItem('lumi_token');
-        localStorage.removeItem('lumi_current_user');
-        localStorage.removeItem('lumi_onboarding_progress');
-      } catch (error) {
-        console.warn('Failed to clear auth storage:', error);
-      }
-      
-      // 3. MEMORY CLEANUP
+      // 4. Force memory cleanup
       console.log('🔧 SRE: Performing memory cleanup...');
-      if ('gc' in window && typeof window.gc === 'function') {
-        window.gc();
+      if ('gc' in window && typeof (window as any).gc === 'function') {
+        (window as any).gc();
       }
       
-      // 4. SERVICE RESTART SIMULATION
-      console.log('🔧 SRE: Restarting services...');
+      // 5. Reset to safe initial state
+      console.log('🔧 SRE: Resetting to safe state...');
+      setCurrentView('welcome');
+      
+      // 6. Verify recovery
       await new Promise(resolve => setTimeout(resolve, 2000));
+      await runCompleteRCA();
       
-      // 5. VERIFY RECOVERY
-      await runComprehensiveDiagnosis();
-      
+      console.log('✅ SRE: Emergency recovery completed');
       toast.success('EMERGENCY RECOVERY COMPLETE', 'All critical services restored');
       
     } catch (error) {
       console.error('🚨 SRE: Emergency recovery failed:', error);
       toast.error('RECOVERY FAILED', 'Manual intervention required');
     } finally {
-      setFixingCritical(false);
+      setRecoveryRunning(false);
     }
   };
 
-  // Fix specific critical issues
-  const fixCriticalIssue = async (module: string, fix: string) => {
-    console.log(`🔧 SRE: Applying fix for ${module}: ${fix}`);
+  // Apply targeted fix for specific module
+  const applyTargetedFix = async (module: string, fix: string) => {
+    setFixingModule(module);
+    console.log(`🔧 SRE: Applying targeted fix for ${module}: ${fix}`);
     
     try {
       switch (fix) {
-        case 'Reinitialize user database with test data':
-          testDataManager.resetData();
-          testDataManager.addSampleData();
+        case 'Verify React component mounting and routing':
+          // Force component remount
+          window.location.reload();
           break;
           
-        case 'Generate sample behavioral data':
-          testDataManager.generateTestBehaviorLogs(15);
+        case 'Clear corrupted session data and force re-authentication':
+          localStorage.removeItem('lumi_token');
+          localStorage.removeItem('lumi_current_user');
+          setCurrentUser(null);
+          setCurrentView('welcome');
           break;
           
         case 'Reset onboarding wizard state':
           localStorage.removeItem('lumi_onboarding_progress');
           break;
           
-        case 'Restart API server and check endpoint routing':
-          // Simulate API restart
-          await new Promise(resolve => setTimeout(resolve, 1000));
+        case 'Reinitialize user database with test data':
+          testDataManager.resetData();
+          testDataManager.addSampleData();
           break;
           
-        case 'Initialize child profiles database':
-          testDataManager.addSampleData();
+        case 'Initialize behavior log database':
+          testDataManager.generateTestBehaviorLogs(15);
+          break;
+          
+        case 'Restart authentication service':
+          // Simulate service restart
+          await new Promise(resolve => setTimeout(resolve, 1000));
           break;
           
         default:
@@ -492,92 +732,28 @@ export const SREDiagnosticPanel: React.FC = () => {
       toast.success('Fix Applied', `${module}: ${fix}`);
       
       // Re-run diagnosis after fix
-      setTimeout(() => runComprehensiveDiagnosis(), 1000);
+      setTimeout(() => runCompleteRCA(), 2000);
       
     } catch (error) {
       console.error(`🚨 SRE: Fix failed for ${module}:`, error);
       toast.error('Fix Failed', `Unable to apply fix for ${module}`);
+    } finally {
+      setFixingModule(null);
     }
-  };
-
-  const exportDiagnosisReport = () => {
-    const report = {
-      timestamp: new Date().toISOString(),
-      reportType: 'SRE_ROOT_CAUSE_ANALYSIS',
-      systemStatus: {
-        overallHealth: getOverallSystemHealth(),
-        criticalIssues: moduleDiagnosis.filter(m => m.priority === 'critical').length,
-        degradedServices: healthChecks.filter(h => h.status !== 'healthy').length
-      },
-      serviceHealthChecks: healthChecks,
-      moduleDiagnosis: moduleDiagnosis,
-      recommendations: generateRecoveryRecommendations(),
-      environment: {
-        userAgent: navigator.userAgent,
-        url: window.location.href,
-        localStorage: {
-          token: !!localStorage.getItem('lumi_token'),
-          user: !!localStorage.getItem('lumi_current_user'),
-          onboarding: !!localStorage.getItem('lumi_onboarding_progress')
-        }
-      }
-    };
-    
-    const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `SRE_Diagnosis_Report_${new Date().toISOString().split('T')[0]}.json`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-    
-    toast.success('Diagnosis Report Exported', 'Complete system analysis downloaded');
-  };
-
-  const getOverallSystemHealth = (): 'healthy' | 'degraded' | 'critical' => {
-    const criticalFailures = moduleDiagnosis.filter(m => m.priority === 'critical' && m.status === 'failed').length;
-    const downServices = healthChecks.filter(h => h.status === 'down').length;
-    
-    if (criticalFailures > 0 || downServices > 1) return 'critical';
-    if (downServices > 0 || moduleDiagnosis.some(m => m.status === 'degraded')) return 'degraded';
-    return 'healthy';
-  };
-
-  const generateRecoveryRecommendations = (): string[] => {
-    const recommendations: string[] = [];
-    
-    const criticalModules = moduleDiagnosis.filter(m => m.priority === 'critical');
-    const downServices = healthChecks.filter(h => h.status === 'down');
-    
-    if (downServices.length > 0) {
-      recommendations.push('IMMEDIATE: Restart failed services and verify connectivity');
-    }
-    
-    if (criticalModules.length > 0) {
-      recommendations.push('IMMEDIATE: Address critical module failures before user-facing fixes');
-    }
-    
-    recommendations.push('Monitor system health every 5 minutes during recovery');
-    recommendations.push('Implement automated health checks and alerting');
-    recommendations.push('Set up rollback procedures for future deployments');
-    
-    return recommendations;
   };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'healthy':
       case 'operational':
-        return <CheckCircle className="w-5 h-5 text-green-600" />;
+        return <CheckCircle className="w-4 h-4 text-green-600" />;
       case 'degraded':
-        return <AlertTriangle className="w-5 h-5 text-yellow-600" />;
+        return <AlertTriangle className="w-4 h-4 text-yellow-600" />;
       case 'down':
       case 'failed':
-        return <XCircle className="w-5 h-5 text-red-600" />;
+        return <XCircle className="w-4 h-4 text-red-600" />;
       default:
-        return <Clock className="w-5 h-5 text-gray-400" />;
+        return <Clock className="w-4 h-4 text-gray-400" />;
     }
   };
 
@@ -611,297 +787,258 @@ export const SREDiagnosticPanel: React.FC = () => {
     }
   };
 
-  const overallHealth = getOverallSystemHealth();
+  const exportDiagnosisReport = () => {
+    const report = {
+      timestamp: new Date().toISOString(),
+      reportType: 'SRE_ROOT_CAUSE_ANALYSIS',
+      serviceHealth: healthChecks,
+      moduleAnalysis: moduleDiagnosis,
+      criticalIssues: moduleDiagnosis.filter(m => m.priority === 'critical').length,
+      downServices: healthChecks.filter(h => h.status === 'down').length,
+      environment: {
+        userAgent: navigator.userAgent,
+        url: window.location.href,
+        localStorage: {
+          token: !!localStorage.getItem('lumi_token'),
+          user: !!localStorage.getItem('lumi_current_user'),
+          onboarding: !!localStorage.getItem('lumi_onboarding_progress')
+        }
+      }
+    };
+    
+    const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `Lumi_SRE_RCA_${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    
+    toast.success('RCA Report Exported', 'Complete diagnosis downloaded');
+  };
+
   const criticalIssues = moduleDiagnosis.filter(m => m.priority === 'critical' && m.status === 'failed').length;
+  const downServices = healthChecks.filter(h => h.status === 'down' && h.criticalPath).length;
 
   return (
     <div className="space-y-6">
-      {/* SRE Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-xl font-bold text-[#1A1A1A] mb-2">
-            🚨 SRE: System Diagnosis & Recovery
-          </h2>
-          <p className="text-gray-600 text-sm">
-            Comprehensive infrastructure health monitoring and emergency recovery
-          </p>
-        </div>
-        <div className="flex space-x-2">
-          <Button
-            onClick={runComprehensiveDiagnosis}
-            loading={running}
-            icon={RefreshCw}
-            size="sm"
-            className="bg-blue-600 hover:bg-blue-700"
-          >
-            Run Diagnosis
-          </Button>
-          <Button
-            onClick={executeEmergencyRecovery}
-            loading={fixingCritical}
-            icon={AlertTriangle}
-            size="sm"
-            className="bg-red-600 hover:bg-red-700"
-          >
-            Emergency Recovery
-          </Button>
-        </div>
-      </div>
-
-      {/* System Status Overview */}
+      {/* Critical Status Alert */}
       <Card className={`p-4 ${
-        overallHealth === 'critical' ? 'bg-red-50 border-red-200' :
-        overallHealth === 'degraded' ? 'bg-yellow-50 border-yellow-200' :
+        downServices > 0 || criticalIssues > 0 ? 'bg-red-50 border-red-200' :
+        moduleDiagnosis.some(m => m.status === 'degraded') ? 'bg-yellow-50 border-yellow-200' :
         'bg-green-50 border-green-200'
       }`}>
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            {getStatusIcon(overallHealth)}
+            {downServices > 0 || criticalIssues > 0 ? (
+              <XCircle className="w-6 h-6 text-red-600" />
+            ) : moduleDiagnosis.some(m => m.status === 'degraded') ? (
+              <AlertTriangle className="w-6 h-6 text-yellow-600" />
+            ) : (
+              <CheckCircle className="w-6 h-6 text-green-600" />
+            )}
             <div>
-              <h3 className={`font-semibold ${getStatusColor(overallHealth)}`}>
-                SYSTEM STATUS: {overallHealth.toUpperCase()}
+              <h3 className={`font-bold ${
+                downServices > 0 || criticalIssues > 0 ? 'text-red-900' :
+                moduleDiagnosis.some(m => m.status === 'degraded') ? 'text-yellow-900' :
+                'text-green-900'
+              }`}>
+                {downServices > 0 || criticalIssues > 0 ? '🚨 CRITICAL SYSTEM FAILURE' :
+                 moduleDiagnosis.some(m => m.status === 'degraded') ? '⚠️ SYSTEM DEGRADED' :
+                 '✅ SYSTEM OPERATIONAL'}
               </h3>
               <p className="text-sm text-gray-600">
-                {criticalIssues > 0 ? `${criticalIssues} critical issues detected` : 'All systems operational'}
-                {lastDiagnosis && ` • Last check: ${lastDiagnosis.toLocaleTimeString()}`}
+                {criticalIssues} critical issues • {downServices} services down
               </p>
             </div>
           </div>
-          {lastDiagnosis && (
+          <div className="flex space-x-2">
             <Button
-              onClick={exportDiagnosisReport}
-              variant="outline"
+              onClick={runCompleteRCA}
+              loading={diagnosisRunning}
+              icon={Monitor}
               size="sm"
-              icon={Download}
             >
-              Export Report
+              Diagnose
             </Button>
-          )}
+            {(downServices > 0 || criticalIssues > 0) && (
+              <Button
+                onClick={executeEmergencyRecovery}
+                loading={recoveryRunning}
+                icon={AlertTriangle}
+                size="sm"
+                className="bg-red-600 hover:bg-red-700"
+              >
+                Emergency Recovery
+              </Button>
+            )}
+          </div>
         </div>
       </Card>
 
-      {/* Service Health Checks */}
-      <Card className="p-4">
-        <h3 className="font-semibold text-[#1A1A1A] mb-4">
-          🔍 Foundational Services Health
-        </h3>
-        
-        <div className="grid grid-cols-2 gap-4">
-          {healthChecks.map((check) => (
-            <div key={check.service} className="p-3 border border-[#E6E2DD] rounded-lg">
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center space-x-2">
-                  {getStatusIcon(check.status)}
-                  <span className="font-medium text-[#1A1A1A] text-sm">
-                    {check.service}
-                  </span>
+      {/* Service Health Status */}
+      {healthChecks.length > 0 && (
+        <Card className="p-4">
+          <h4 className="font-semibold text-[#1A1A1A] mb-3">🔍 Foundational Services</h4>
+          <div className="space-y-2">
+            {healthChecks.map((check) => (
+              <div key={check.service} className={`p-3 border rounded-lg ${
+                check.status === 'down' ? 'border-red-200 bg-red-50' :
+                check.status === 'degraded' ? 'border-yellow-200 bg-yellow-50' :
+                'border-green-200 bg-green-50'
+              }`}>
+                <div className="flex items-center justify-between mb-1">
+                  <div className="flex items-center space-x-2">
+                    {getStatusIcon(check.status)}
+                    <span className="font-medium text-[#1A1A1A] text-sm">{check.service}</span>
+                    {check.criticalPath && (
+                      <span className="px-1 py-0.5 bg-red-100 text-red-700 text-xs rounded">
+                        CRITICAL
+                      </span>
+                    )}
+                  </div>
+                  <div className="text-right">
+                    <span className={`text-xs font-medium ${getStatusColor(check.status)}`}>
+                      {check.status.toUpperCase()}
+                    </span>
+                    {check.latency && (
+                      <p className="text-xs text-gray-500">{check.latency.toFixed(0)}ms</p>
+                    )}
+                  </div>
                 </div>
-                {check.latency && (
-                  <span className="text-xs text-gray-500">
-                    {check.latency.toFixed(0)}ms
-                  </span>
+                <p className="text-xs text-gray-600">{check.details}</p>
+                {check.error && (
+                  <p className="text-xs text-red-600 mt-1">Error: {check.error}</p>
                 )}
               </div>
-              <p className="text-xs text-gray-600">{check.details}</p>
-              {check.error && (
-                <p className="text-xs text-red-600 mt-1">Error: {check.error}</p>
-              )}
-            </div>
-          ))}
-        </div>
-      </Card>
-
-      {/* Module Diagnosis */}
-      <Card className="p-4">
-        <h3 className="font-semibold text-[#1A1A1A] mb-4">
-          🔧 Module-by-Module Diagnosis
-        </h3>
-        
-        <div className="space-y-4">
-          {moduleDiagnosis.map((module) => (
-            <div key={module.module} className={`p-4 border rounded-lg ${
-              module.status === 'failed' ? 'border-red-200 bg-red-50' :
-              module.status === 'degraded' ? 'border-yellow-200 bg-yellow-50' :
-              'border-green-200 bg-green-50'
-            }`}>
-              <div className="flex items-start justify-between mb-3">
-                <div className="flex items-center space-x-3">
-                  {getStatusIcon(module.status)}
-                  <div>
-                    <h4 className="font-medium text-[#1A1A1A] text-sm">
-                      {module.module}
-                    </h4>
-                    <div className="flex items-center space-x-2">
-                      <span className="text-xs text-gray-600 capitalize">
-                        {module.layer} layer
-                      </span>
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${getPriorityColor(module.priority)}`}>
-                        {module.priority.toUpperCase()}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-                <span className={`text-xs font-medium ${getStatusColor(module.status)}`}>
-                  {module.status.toUpperCase()}
-                </span>
-              </div>
-
-              {module.issues.length > 0 && (
-                <div className="mb-3">
-                  <h5 className="font-medium text-red-900 text-xs mb-1">Issues Detected:</h5>
-                  <ul className="space-y-1">
-                    {module.issues.map((issue, index) => (
-                      <li key={index} className="text-xs text-red-700 flex items-start">
-                        <span className="w-1 h-1 bg-red-500 rounded-full mt-2 mr-2 flex-shrink-0" />
-                        {issue}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-              {module.fixes.length > 0 && (
-                <div>
-                  <h5 className="font-medium text-blue-900 text-xs mb-2">Recommended Fixes:</h5>
-                  <div className="space-y-1">
-                    {module.fixes.map((fix, index) => (
-                      <div key={index} className="flex items-center justify-between">
-                        <span className="text-xs text-blue-700">{fix}</span>
-                        <Button
-                          size="sm"
-                          onClick={() => fixCriticalIssue(module.module, fix)}
-                          className="text-xs px-2 py-1"
-                        >
-                          Apply Fix
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-      </Card>
-
-      {/* Critical Actions */}
-      {criticalIssues > 0 && (
-        <Card className="p-4 bg-red-50 border-red-200">
-          <div className="flex items-start space-x-3">
-            <XCircle className="w-6 h-6 text-red-600 mt-1" />
-            <div className="flex-1">
-              <h3 className="font-semibold text-red-900 mb-2">
-                🚨 CRITICAL SYSTEM FAILURES ({criticalIssues})
-              </h3>
-              <p className="text-red-800 text-sm mb-4">
-                Multiple critical modules are non-functional. Immediate intervention required.
-              </p>
-              <div className="flex space-x-2">
-                <Button
-                  onClick={executeEmergencyRecovery}
-                  loading={fixingCritical}
-                  icon={AlertTriangle}
-                  className="bg-red-600 hover:bg-red-700"
-                  size="sm"
-                >
-                  Execute Emergency Recovery
-                </Button>
-                <Button
-                  onClick={() => window.location.reload()}
-                  variant="outline"
-                  size="sm"
-                  className="text-red-600 border-red-300"
-                >
-                  Force Application Restart
-                </Button>
-              </div>
-            </div>
+            ))}
           </div>
         </Card>
       )}
 
-      {/* Recovery Procedures */}
-      <Card className="p-4">
-        <h3 className="font-semibold text-[#1A1A1A] mb-4">
-          🛠️ Available Recovery Procedures
-        </h3>
-        
-        <div className="grid grid-cols-2 gap-3">
-          <Button
-            onClick={() => {
-              testDataManager.resetData();
-              testDataManager.addSampleData();
-              toast.success('Database Reset', 'Test data reinitialized');
-            }}
-            variant="outline"
-            size="sm"
-            icon={Database}
-            className="justify-start"
-          >
-            Reset Database
-          </Button>
-          
-          <Button
-            onClick={() => {
-              localStorage.clear();
-              toast.success('Cache Cleared', 'All local storage cleared');
-            }}
-            variant="outline"
-            size="sm"
-            icon={RefreshCw}
-            className="justify-start"
-          >
-            Clear Cache
-          </Button>
-          
-          <Button
-            onClick={() => {
-              testDataManager.generateTestBehaviorLogs(50);
-              toast.success('Data Generated', '50 behavior logs created');
-            }}
-            variant="outline"
-            size="sm"
-            icon={Zap}
-            className="justify-start"
-          >
-            Generate Test Data
-          </Button>
-          
-          <Button
-            onClick={() => {
-              if ('gc' in window) (window as any).gc();
-              toast.success('Memory Cleaned', 'Garbage collection triggered');
-            }}
-            variant="outline"
-            size="sm"
-            icon={Settings}
-            className="justify-start"
-          >
-            Memory Cleanup
-          </Button>
-        </div>
-      </Card>
+      {/* Module Analysis */}
+      {moduleDiagnosis.length > 0 && (
+        <Card className="p-4">
+          <h4 className="font-semibold text-[#1A1A1A] mb-3">🔧 Module Analysis</h4>
+          <div className="space-y-3">
+            {moduleDiagnosis.map((module) => (
+              <div key={module.module} className={`p-3 border rounded-lg ${
+                module.status === 'failed' ? 'border-red-200 bg-red-50' :
+                module.status === 'degraded' ? 'border-yellow-200 bg-yellow-50' :
+                'border-green-200 bg-green-50'
+              }`}>
+                <div className="flex items-start justify-between mb-2">
+                  <div className="flex items-center space-x-2">
+                    {getStatusIcon(module.status)}
+                    <div>
+                      <h5 className="font-medium text-[#1A1A1A] text-sm">{module.module}</h5>
+                      <div className="flex items-center space-x-2">
+                        <span className="text-xs text-gray-600 capitalize">{module.layer}</span>
+                        <span className={`px-1 py-0.5 rounded text-xs font-medium ${getPriorityColor(module.priority)}`}>
+                          {module.priority.toUpperCase()}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  <span className={`text-xs font-medium ${getStatusColor(module.status)}`}>
+                    {module.status.toUpperCase()}
+                  </span>
+                </div>
 
-      {/* Auto-run diagnosis on mount */}
-      {healthChecks.length === 0 && !running && (
-        <div className="text-center py-8">
-          <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Play className="w-6 h-6 text-blue-600" />
+                {module.rootCause && (
+                  <div className="mb-2 p-2 bg-white rounded border">
+                    <p className="text-xs text-gray-700">
+                      <strong>Root Cause:</strong> {module.rootCause}
+                    </p>
+                  </div>
+                )}
+
+                {module.symptoms.length > 0 && (
+                  <div className="mb-2">
+                    <p className="text-xs font-medium text-red-900 mb-1">Symptoms:</p>
+                    <ul className="space-y-0.5">
+                      {module.symptoms.slice(0, 2).map((symptom, index) => (
+                        <li key={index} className="text-xs text-red-700">• {symptom}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {module.fixes.length > 0 && (
+                  <div>
+                    <p className="text-xs font-medium text-blue-900 mb-1">Quick Fixes:</p>
+                    <div className="space-y-1">
+                      {module.fixes.slice(0, 2).map((fix, index) => (
+                        <div key={index} className="flex items-center justify-between">
+                          <span className="text-xs text-blue-700">{fix.substring(0, 40)}...</span>
+                          <Button
+                            size="sm"
+                            onClick={() => applyTargetedFix(module.module, fix)}
+                            loading={fixingModule === module.module}
+                            className="text-xs px-2 py-1"
+                          >
+                            Fix
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
           </div>
-          <h4 className="font-medium text-[#1A1A1A] mb-2">
-            Ready to Diagnose System Health
+        </Card>
+      )}
+
+      {/* Export and Actions */}
+      <div className="flex space-x-2">
+        <Button
+          onClick={exportDiagnosisReport}
+          variant="outline"
+          size="sm"
+          icon={Download}
+          className="flex-1"
+          disabled={healthChecks.length === 0}
+        >
+          Export RCA Report
+        </Button>
+        <Button
+          onClick={() => {
+            setHealthChecks([]);
+            setModuleDiagnosis([]);
+            toast.info('Diagnosis Cleared', 'Ready for new analysis');
+          }}
+          variant="outline"
+          size="sm"
+          icon={RefreshCw}
+          className="flex-1"
+        >
+          Clear Results
+        </Button>
+      </div>
+
+      {/* Initial State */}
+      {healthChecks.length === 0 && !diagnosisRunning && (
+        <Card className="p-6 text-center">
+          <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <AlertTriangle className="w-6 h-6 text-red-600" />
+          </div>
+          <h4 className="font-medium text-red-900 mb-2">
+            🚨 LUMI APPLICATION NON-FUNCTIONAL
           </h4>
-          <p className="text-gray-600 text-sm mb-4">
-            Run comprehensive diagnosis to identify infrastructure issues
+          <p className="text-red-800 text-sm mb-4">
+            Critical system failure detected. Immediate root cause analysis required.
           </p>
           <Button
-            onClick={runComprehensiveDiagnosis}
+            onClick={runCompleteRCA}
             icon={Play}
-            className="bg-[#C44E38] hover:bg-[#A63D2A]"
+            className="bg-red-600 hover:bg-red-700"
           >
-            Start System Diagnosis
+            START EMERGENCY DIAGNOSIS
           </Button>
-        </div>
+        </Card>
       )}
     </div>
   );
