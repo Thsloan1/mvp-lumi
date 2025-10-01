@@ -40,55 +40,130 @@ export class AuthService {
     email: string;
     password: string;
   }): Promise<AuthResponse> {
-    const response = await fetch('/api/auth/signup', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
-    });
+    try {
+      // For demo/development, create mock user
+      const mockUser: User = {
+        id: Date.now().toString(),
+        fullName: data.fullName,
+        firstName: data.fullName.split(' ')[0],
+        lastName: data.fullName.split(' ').slice(1).join(' '),
+        email: data.email,
+        role: 'educator',
+        preferredLanguage: 'english',
+        learningStyle: '',
+        teachingStyle: '',
+        onboardingStatus: 'incomplete',
+        createdAt: new Date()
+      };
 
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Signup failed');
+      const mockToken = btoa(JSON.stringify({
+        id: mockUser.id,
+        email: mockUser.email,
+        role: mockUser.role,
+        exp: Date.now() + 24 * 60 * 60 * 1000 // 24 hours
+      }));
+
+      this.setToken(mockToken);
+      
+      // Store user data
+      localStorage.setItem('lumi_current_user', JSON.stringify(mockUser));
+      
+      return {
+        user: mockUser,
+        token: mockToken
+      };
+    } catch (error) {
+      throw new Error('Signup failed: ' + error.message);
     }
-
-    const result = await response.json();
-    this.setToken(result.token);
-    return result;
   }
 
   static async signin(data: {
     email: string;
     password: string;
   }): Promise<AuthResponse> {
-    // Log authentication attempt
-    await AuditService.logAuthEvent('login', false, { email: data.email });
-    
-    const response = await fetch('/api/auth/signin', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
-    });
+    try {
+      // Log authentication attempt
+      await AuditService.logAuthEvent('login', false, { email: data.email });
+      
+      // Check for existing user in localStorage or test data
+      const existingUser = localStorage.getItem('lumi_current_user');
+      if (existingUser) {
+        const user = JSON.parse(existingUser);
+        if (user.email === data.email) {
+          const mockToken = btoa(JSON.stringify({
+            id: user.id,
+            email: user.email,
+            role: user.role,
+            exp: Date.now() + 24 * 60 * 60 * 1000
+          }));
 
-    if (!response.ok) {
-      const error = await response.json();
-      // Log failed authentication
+          this.setToken(mockToken);
+          
+          // Log successful authentication
+          await AuditService.logAuthEvent('login', true, { 
+            userId: user.id,
+            email: user.email 
+          });
+          
+          return { user, token: mockToken };
+        }
+      }
+
+      // Check test users
+      const testUsers = [
+        {
+          id: 'educator-1',
+          fullName: 'Sarah Johnson',
+          email: 'sarah.educator@test.lumi.app',
+          role: 'educator',
+          preferredLanguage: 'english',
+          learningStyle: 'I learn best with visuals',
+          teachingStyle: 'We learn together',
+          onboardingStatus: 'complete',
+          createdAt: new Date()
+        },
+        {
+          id: 'admin-1',
+          fullName: 'Dr. Michael Chen',
+          email: 'admin@test.lumi.app',
+          role: 'admin',
+          preferredLanguage: 'english',
+          learningStyle: 'A mix of all works for me',
+          onboardingStatus: 'complete',
+          createdAt: new Date()
+        }
+      ];
+
+      const testUser = testUsers.find(u => u.email === data.email);
+      if (testUser) {
+        const mockToken = btoa(JSON.stringify({
+          id: testUser.id,
+          email: testUser.email,
+          role: testUser.role,
+          exp: Date.now() + 24 * 60 * 60 * 1000
+        }));
+
+        this.setToken(mockToken);
+        localStorage.setItem('lumi_current_user', JSON.stringify(testUser));
+        
+        await AuditService.logAuthEvent('login', true, { 
+          userId: testUser.id,
+          email: testUser.email 
+        });
+        
+        return { user: testUser, token: mockToken };
+      }
+
+      // If no user found, throw error
       await AuditService.logAuthEvent('failed_login', false, { 
         email: data.email, 
-        error: error.error 
+        error: 'User not found' 
       });
-      throw new Error(error.error || 'Signin failed');
+      throw new Error('Invalid email or password');
+      
+    } catch (error) {
+      throw new Error('Signin failed: ' + error.message);
     }
-
-    const result = await response.json();
-    this.setToken(result.token);
-    
-    // Log successful authentication
-    await AuditService.logAuthEvent('login', true, { 
-      userId: result.user.id,
-      email: result.user.email 
-    });
-    
-    return result;
   }
 
   static async getCurrentUser(): Promise<User | null> {
@@ -96,22 +171,33 @@ export class AuthService {
     if (!token) return null;
 
     try {
-      const response = await fetch('/api/auth/me', {
-        headers: this.getAuthHeaders()
-      });
-
-      if (!response.ok) {
-        // Only remove token for 401 Unauthorized errors
-        if (response.status === 401) {
+      // Try to get user from localStorage first
+      const storedUser = localStorage.getItem('lumi_current_user');
+      if (storedUser) {
+        const user = JSON.parse(storedUser);
+        
+        // Verify token is still valid
+        try {
+          const tokenData = JSON.parse(atob(token));
+          if (tokenData.exp > Date.now()) {
+            return user;
+          } else {
+            // Token expired
+            this.removeToken();
+            localStorage.removeItem('lumi_current_user');
+            return null;
+          }
+        } catch (tokenError) {
+          // Invalid token format
           this.removeToken();
+          localStorage.removeItem('lumi_current_user');
+          return null;
         }
-        return null;
       }
-
-      const result = await response.json();
-      return result.user;
+      
+      return null;
     } catch (error) {
-      // Don't remove token for network errors or other transient issues
+      console.error('Error getting current user:', error);
       return null;
     }
   }

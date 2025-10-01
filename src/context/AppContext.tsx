@@ -330,7 +330,30 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   const microsoftSignin = async () => {
     ErrorLogger.logAuthEvent('microsoft_signin_attempt', {});
     try {
-      const result = await AuthService.microsoftSignin();
+      // Mock Microsoft OAuth for demo
+      const mockUser = {
+        id: 'microsoft-' + Date.now(),
+        fullName: 'Microsoft Demo User',
+        email: 'demo@microsoft.com',
+        role: 'educator',
+        preferredLanguage: 'english',
+        learningStyle: 'I learn best with visuals',
+        teachingStyle: 'We learn together',
+        onboardingStatus: 'incomplete',
+        createdAt: new Date()
+      };
+      
+      const mockToken = btoa(JSON.stringify({
+        id: mockUser.id,
+        email: mockUser.email,
+        role: mockUser.role,
+        exp: Date.now() + 24 * 60 * 60 * 1000
+      }));
+      
+      localStorage.setItem('lumi_token', mockToken);
+      localStorage.setItem('lumi_current_user', JSON.stringify(mockUser));
+      
+      const result = { user: mockUser, token: mockToken };
       setCurrentUser(result.user);
       ErrorLogger.logAuthEvent('microsoft_signin_success', { userId: result.user.id });
       success('Welcome!', 'Successfully signed in with Microsoft');
@@ -350,7 +373,30 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   const googleSignin = async () => {
     ErrorLogger.logAuthEvent('google_signin_attempt', {});
     try {
-      const result = await AuthService.googleSignin();
+      // Mock Google OAuth for demo
+      const mockUser = {
+        id: 'google-' + Date.now(),
+        fullName: 'Google Demo User',
+        email: 'demo@google.com',
+        role: 'educator',
+        preferredLanguage: 'english',
+        learningStyle: 'I learn best with visuals',
+        teachingStyle: 'We learn together',
+        onboardingStatus: 'incomplete',
+        createdAt: new Date()
+      };
+      
+      const mockToken = btoa(JSON.stringify({
+        id: mockUser.id,
+        email: mockUser.email,
+        role: mockUser.role,
+        exp: Date.now() + 24 * 60 * 60 * 1000
+      }));
+      
+      localStorage.setItem('lumi_token', mockToken);
+      localStorage.setItem('lumi_current_user', JSON.stringify(mockUser));
+      
+      const result = { user: mockUser, token: mockToken };
       setCurrentUser(result.user);
       ErrorLogger.logAuthEvent('google_signin_success', { userId: result.user.id });
       success('Welcome!', 'Successfully signed in with Google');
@@ -370,7 +416,30 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   const appleSignin = async () => {
     ErrorLogger.logAuthEvent('apple_signin_attempt', {});
     try {
-      const result = await AuthService.appleSignin();
+      // Mock Apple OAuth for demo
+      const mockUser = {
+        id: 'apple-' + Date.now(),
+        fullName: 'Apple Demo User',
+        email: 'demo@apple.com',
+        role: 'educator',
+        preferredLanguage: 'english',
+        learningStyle: 'I learn best with visuals',
+        teachingStyle: 'We learn together',
+        onboardingStatus: 'incomplete',
+        createdAt: new Date()
+      };
+      
+      const mockToken = btoa(JSON.stringify({
+        id: mockUser.id,
+        email: mockUser.email,
+        role: mockUser.role,
+        exp: Date.now() + 24 * 60 * 60 * 1000
+      }));
+      
+      localStorage.setItem('lumi_token', mockToken);
+      localStorage.setItem('lumi_current_user', JSON.stringify(mockUser));
+      
+      const result = { user: mockUser, token: mockToken };
       setCurrentUser(result.user);
       ErrorLogger.logAuthEvent('apple_signin_success', { userId: result.user.id });
       success('Welcome!', 'Successfully signed in with Apple');
