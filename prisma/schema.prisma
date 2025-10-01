@@ -1,0 +1,205 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                String   @id @default(cuid())
+  email             String   @unique
+  fullName          String
+  firstName         String?
+  lastName          String?
+  passwordHash      String
+  role              String   // 'educator' | 'admin'
+  preferredLanguage String   @default("english")
+  learningStyle     String?
+  teachingStyle     String?
+  profilePhotoUrl   String?
+  onboardingStatus  String   @default("incomplete")
+  emailVerified     Boolean  @default(false)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // Organization relationships
+  ownedOrganizations Organization[] @relation("OrganizationOwner")
+  organizationMemberships OrganizationMember[]
+
+  // Data relationships
+  classrooms     Classroom[]
+  behaviorLogs   BehaviorLog[]
+  classroomLogs  ClassroomLog[]
+
+  @@map("users")
+}
+
+model Organization {
+  id          String   @id @default(cuid())
+  name        String
+  type        String   // 'school' | 'district' | 'childcare_center' | 'nonprofit' | 'other'
+  ownerId     String
+  maxSeats    Int      @default(5)
+  activeSeats Int      @default(1)
+  plan        String   @default("organization_annual")
+  status      String   @default("active")
+  settings    Json     @default("{}")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relationships
+  owner   User @relation("OrganizationOwner", fields: [ownerId], references: [id])
+  members OrganizationMember[]
+  invitations Invitation[]
+
+  @@map("organizations")
+}
+
+model OrganizationMember {
+  id             String   @id @default(cuid())
+  organizationId String
+  userId         String
+  role           String   @default("educator") // 'owner' | 'admin' | 'educator'
+  joinedAt       DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relationships
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, userId])
+  @@map("organization_members")
+}
+
+model Invitation {
+  id               String   @id @default(cuid())
+  email            String
+  organizationId   String
+  organizationName String
+  inviterName      String
+  token            String   @unique
+  status           String   @default("pending")
+  expiresAt        DateTime
+  acceptedAt       DateTime?
+  createdAt        DateTime @default(now())
+
+  // Relationships
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@map("invitations")
+}
+
+model Classroom {
+  id                   String   @id @default(cuid())
+  name                 String
+  gradeBand            String
+  studentCount         Int      @default(15)
+  teacherStudentRatio  String   @default("1:8")
+  iepCount             Int?     @default(0)
+  ifspCount            Int?     @default(0)
+  stressors            String[] @default([])
+  educatorId           String
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  // Relationships
+  educator      User          @relation(fields: [educatorId], references: [id])
+  children      Child[]
+  behaviorLogs  BehaviorLog[]
+  classroomLogs ClassroomLog[]
+
+  @@map("classrooms")
+}
+
+model Child {
+  id                   String   @id @default(cuid())
+  name                 String
+  age                  Int?
+  gradeBand            String
+  classroomId          String
+  developmentalNotes   String?
+  languageAbility      String?
+  selfRegulationSkills String?
+  sensorySensitivities String[] @default([])
+  hasIEP               Boolean  @default(false)
+  hasIFSP              Boolean  @default(false)
+  supportPlans         String[] @default([])
+  knownTriggers        String[] @default([])
+  homeLanguage         String?
+  familyContext        String?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  // Relationships
+  classroom    Classroom     @relation(fields: [classroomId], references: [id])
+  behaviorLogs BehaviorLog[]
+
+  @@map("children")
+}
+
+model BehaviorLog {
+  id                    String   @id @default(cuid())
+  educatorId            String
+  childId               String?
+  classroomId           String?
+  behaviorDescription   String
+  context               String
+  timeOfDay             String?
+  severity              String   // 'low' | 'medium' | 'high'
+  educatorMood          String?
+  stressors             String[] @default([])
+  intensity             String?
+  duration              String?
+  frequency             String?
+  adultResponse         String[] @default([])
+  outcome               String[] @default([])
+  developmentalNotes    String?
+  supports              String[] @default([])
+  classroomRatio        String?
+  resourcesAvailable    String[] @default([])
+  educatorStressLevel   String?
+  confidenceLevel       Int?
+  aiResponse            Json?
+  selectedStrategy      String?
+  confidenceRating      Int?
+  reflectionNotes       String?
+  phiFlag               Json?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  // Relationships
+  educator  User       @relation(fields: [educatorId], references: [id])
+  child     Child?     @relation(fields: [childId], references: [id])
+  classroom Classroom? @relation(fields: [classroomId], references: [id])
+
+  @@map("behavior_logs")
+}
+
+model ClassroomLog {
+  id                        String   @id @default(cuid())
+  educatorId                String
+  classroomId               String
+  challengeDescription      String
+  context                   String
+  severity                  String   // 'low' | 'medium' | 'high'
+  educatorMood              String?
+  stressors                 String[] @default([])
+  aiResponse                Json?
+  selectedStrategy          String?
+  confidenceSelfRating      Int?
+  confidenceStrategyRating  Int?
+  reflectionNotes           String?
+  createdAt                 DateTime @default(now())
+  updatedAt                 DateTime @updatedAt
+
+  // Relationships
+  educator  User      @relation(fields: [educatorId], references: [id])
+  classroom Classroom @relation(fields: [classroomId], references: [id])
+
+  @@map("classroom_logs")
+}
