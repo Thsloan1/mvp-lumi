@@ -121,8 +121,8 @@ export const ChildProfilesManager: React.FC = () => {
                   <option value="Infants (<2 years old)">Infants (&lt;2 years old)</option>
                   <option value="Toddlers (2-3 years old)">Toddlers (2-3 years old)</option>
                   <option value="Preschool (4-5 years old)">Preschool (4-5 years old)</option>
-                  <option value="Transitional Kindergarten (4-5 years old)">Transitional Kindergarten (4-5 years old)</option>
-                  <option value="Kindergarten">Kindergarten</option>
+                  <option value="Transitional Kindergarten (4-5 years old)">TK (4-5 years old)</option>
+                  <option value="Transition/Post-Secondary (18+ years old)">Post-Secondary (18+)</option>
                 </select>
               </div>
             </div>
