@@ -56,302 +56,93 @@ import { LumiSREDashboard } from './components/Testing/LumiSREDashboard';
 import { ArrowLeft } from 'lucide-react';
 import { Button } from './components/UI/Button';
 
-const AppContent: React.FC = () => {
-  const { currentView, setCurrentView, currentUser, isLoading, isAuthenticated, setCurrentUser, setIsLoading } = useAppContext();
-  
-  // Initialize user on app load
-  useEffect(() => {
-    // Check for test user access code in URL
-    const urlParams = new URLSearchParams(window.location.search);
-    const testCode = urlParams.get('testCode');
-    
-    if (testCode) {
-      // Handle test user auto-login
-      const testUsers = JSON.parse(localStorage.getItem('lumi_test_users') || '[]');
-      const testUser = testUsers.find((u: any) => u.accessCode === testCode);
-      
-      if (testUser) {
-        // Create user session for test user
-        const userData = {
-          id: testUser.id,
-          fullName: testUser.name,
-          email: testUser.email,
-          role: testUser.role,
-          preferredLanguage: 'english',
-          learningStyle: 'I learn best with visuals',
-          teachingStyle: 'We learn together',
-          createdAt: new Date(),
-          onboardingStatus: testUser.role === 'admin' ? 'complete' : 'incomplete'
-        };
-        
-        setCurrentUser(userData);
-        
-        // Route based on role
-        if (testUser.role === 'admin') {
-          setCurrentView('admin-dashboard');
-        } else if (userData.onboardingStatus === 'incomplete') {
-          setCurrentView('onboarding-start');
-        } else {
-          setCurrentView('dashboard');
-        }
-        
-        setIsLoading(false);
-        return;
-      }
-    }
-  }, [setCurrentUser, setCurrentView, setIsLoading]);
-  
-  // Show loading while checking authentication
-  if (isLoading) {
-    return <FullPageLoading message="Loading your account..." />;
-  }
-  
-  // Redirect to onboarding if user is authenticated but hasn't completed onboarding
-  if (isAuthenticated && currentUser?.onboardingStatus === 'incomplete' && 
-      !['onboarding-start', 'onboarding-complete', 'welcome', 'signin', 'educator-signup', 'invited-onboarding'].includes(currentView)) {
-    return <OnboardingWizard />;
-  }
-  
-  // Redirect to dashboard if authenticated and trying to access auth pages
-  if (isAuthenticated && ['welcome', 'signin', 'educator-signup'].includes(currentView)) {
-    return <EducatorDashboard />;
-  }
-  
-  // Redirect to welcome if not authenticated and trying to access protected pages
-  const protectedViews = [
-    'dashboard', 'behavior-log', 'classroom-log', 'child-profiles', 
-    'classroom-profile', 'library', 'reports', 'family-notes', 'profile-settings'
-  ];
-  if (!isAuthenticated && protectedViews.includes(currentView)) {
-    return <WelcomeScreen />;
-  }
-
-  // Show sticky navigation for main app views (not auth/onboarding)
-  const showStickyNav = [
-    'dashboard', 'behavior-log', 'classroom-log', 'child-profiles', 'classroom-profile',
-    'library', 'reports', 'family-notes', 'profile-settings', 'child-profile-detail',
-    'admin-dashboard', 'manage-educators', 'organization-settings', 'organization-analytics'
-  ].includes(currentView);
-  return (
-    <div className="relative">
-      {showStickyNav && <StickyNavigation />}
-      {renderView()}
-      <ToastContainer />
-      <TestUserFeedbackWidget module={currentView} />
-      <TestEnvironmentPanel />
-    </div>
-  );
-
-  function renderView() {
-    switch (currentView) {
-      case 'landing':
-        return <LandingPage />;
-      case 'welcome':
-        return <WelcomeScreen />;
-     case 'landing':
-       return <LandingPage />;
-      case 'educator-signup':
-        return <EducatorSignup />;
-      case 'admin-signup':
-        return <AdminSignup />;
-      case 'organization-plan':
-        return <OrganizationPlan />;
-      case 'organization-payment':
-        return <OrganizationPayment />;
-      case 'invite-educators':
-        return <InviteEducators />;
-      case 'organization-complete':
-        return <OrganizationComplete />;
-      case 'invited-signup':
-        return <InvitedSignup />;
-      case 'invited-onboarding':
-        return <InvitedOnboarding />;
-      case 'signin':
-        return <SignIn />;
-      case 'subscription-plan':
-        return <SubscriptionPlan />;
-      case 'payment':
-        return <PaymentScreen />;
-      case 'onboarding-start':
-        return <OnboardingWizard />;
-      case 'onboarding-complete':
-        return <OnboardingComplete />;
-      case 'onboarding-complete-new':
-        return <OnboardingCompleteNew />;
-      case 'welcome-to-lumi':
-        return <WelcomeToLumiScreen />;
-      case 'dashboard':
-        return <EducatorDashboard />;
-      case 'behavior-log':
-        return <BehaviorLogFlow />;
-      case 'classroom-log':
-        return <ClassroomLogFlow />;
-      case 'library':
-        return <ResourceLibrary />;
-      case 'family-notes':
-        return <FamilyNotesManager />;
-      case 'family-script-generator':
-        return (
-          <div className="min-h-screen bg-white">
-            <div className="max-w-4xl mx-auto px-6 py-8">
-              <Button
-                variant="ghost"
-                onClick={() => setCurrentView('family-notes')}
-                icon={ArrowLeft}
-                className="mb-6 -ml-2"
-              >
-                Back to Family Notes
-              </Button>
-              <FamilyScriptGenerator />
-            </div>
-          </div>
-        );
-      case 'child-profiles':
-        return <ChildProfilesManager />;
-      case 'classroom-profile':
-        return <ClassroomProfileManager />;
-      case 'production-assessment':
-        return <ProductionDashboard />;
-      case 'profile-settings':
-        return <ProfileSettings />;
-      case 'admin-dashboard':
-        return <AdminDashboard />;
-      case 'manage-educators':
-        return <ManageEducators />;
-      case 'organization-settings':
-        return <OrganizationSettings />;
-      case 'organization-analytics':
-        return <OrganizationAnalytics />;
-      case 'security-compliance-center':
-        return <SecurityComplianceCenter />;
-      case 'developer-app-manager':
-        return <DeveloperAppManager />;
-      case 'developer-app-manager':
-        return <DeveloperAppManager />;
-      case 'security-expert-report':
-        return (
-          <div className="min-h-screen bg-white">
-            <div className="max-w-7xl mx-auto px-6 py-8">
-              <Button
-                variant="ghost"
-                onClick={() => setCurrentView('admin-dashboard')}
-                icon={ArrowLeft}
-                className="mb-6 -ml-2"
-              >
-                Back to Admin Dashboard
-              </Button>
-              <SecurityExpertReport />
-            </div>
-          </div>
-        );
-      case 'parent-portal':
-        return (
-          <div className="min-h-screen bg-white">
-            <div className="max-w-7xl mx-auto px-6 py-8">
-              <Button
-                variant="ghost"
-                onClick={() => setCurrentView('admin-dashboard')}
-                icon={ArrowLeft}
-                className="mb-6 -ml-2"
-              >
-                Back to Admin Dashboard
-              </Button>
-              <ParentPortal />
-            </div>
-          </div>
-        );
-      case 'production-readiness':
-        return (
-          <div className="min-h-screen bg-white">
-            <div className="max-w-7xl mx-auto px-6 py-8">
-              <Button
-                variant="ghost"
-                onClick={() => setCurrentView('dashboard')}
-                icon={ArrowLeft}
-                className="mb-6 -ml-2"
-              >
-                Back to Dashboard
-              </Button>
-              <ProductionReadinessReport />
-            </div>
-          </div>
-        );
-      case 'production-checklist':
-        return (
-          <div className="min-h-screen bg-white">
-            <div className="max-w-7xl mx-auto px-6 py-8">
-              <Button
-                variant="ghost"
-                onClick={() => setCurrentView('production-readiness')}
-                icon={ArrowLeft}
-                className="mb-6 -ml-2"
-              >
-                Back to Assessment
-              </Button>
-              <ProductionChecklist />
-            </div>
-          </div>
-        );
-      case 'stress-testing':
-        return (
-          <div className="min-h-screen bg-white">
-            <div className="max-w-7xl mx-auto px-6 py-8">
-              <Button
-                variant="ghost"
-                onClick={() => setCurrentView('production-readiness')}
-                icon={ArrowLeft}
-                className="mb-6 -ml-2"
-              >
-                Back to Assessment
-              </Button>
-              <StressTestRunner />
-            </div>
-          </div>
-        );
-      case 'sre-diagnosis':
-        return (
-          <div className="min-h-screen bg-white">
-            <div className="max-w-7xl mx-auto px-6 py-8">
-              <Button
-                variant="ghost"
-                onClick={() => setCurrentView('dashboard')}
-                icon={ArrowLeft}
-                className="mb-6 -ml-2"
-              >
-                Back to Dashboard
-              </Button>
-              <SREDiagnosticPanel />
-            </div>
-          </div>
-        );
-      case 'sre-diagnosis':
-        return (
-          <div className="min-h-screen bg-white">
-            <div className="max-w-7xl mx-auto px-6 py-8">
-              <Button
-                variant="ghost"
-                onClick={() => setCurrentView('dashboard')}
-                icon={ArrowLeft}
-                className="mb-6 -ml-2"
-              >
-                Back to Dashboard
-              </Button>
-              <LumiSREDashboard />
-            </div>
-          </div>
-        );
-      default:
-        // Handle dynamic child profile detail routes
-        if (currentView.startsWith('child-profile-detail-')) {
-          const childId = currentView.replace('child-profile-detail-', '');
-          return <ChildProfileDetail childId={childId} />;
-        }
-        return <WelcomeScreen />;
-    }
-  }
-};
-
 function App() {
+  const AppContent: React.FC = () => {
+    const { currentView, setCurrentView, currentUser, isLoading, isAuthenticated, setCurrentUser, setIsLoading } = useAppContext();
+    
+    // Initialize user on app load
+    useEffect(() => {
+      // Check for test user access code in URL
+      const urlParams = new URLSearchParams(window.location.search);
+      const testCode = urlParams.get('testCode');
+      
+      if (testCode) {
+        // Handle test user auto-login
+        const testUsers = JSON.parse(localStorage.getItem('lumi_test_users') || '[]');
+        const testUser = testUsers.find((u: any) => u.accessCode === testCode);
+        
+        if (testUser) {
+          // Create user session for test user
+          const userData = {
+            id: testUser.id,
+            fullName: testUser.name,
+            email: testUser.email,
+            role: testUser.role,
+            preferredLanguage: 'english',
+            learningStyle: 'I learn best with visuals',
+            teachingStyle: 'We learn together',
+            createdAt: new Date(),
+            onboardingStatus: testUser.role === 'admin' ? 'complete' : 'incomplete'
+          };
+          
+          setCurrentUser(userData);
+          
+          // Route based on role
+          if (testUser.role === 'admin') {
+            setCurrentView('admin-dashboard');
+          } else if (userData.onboardingStatus === 'incomplete') {
+            setCurrentView('onboarding-start');
+          } else {
+            setCurrentView('dashboard');
+          }
+          
+          setIsLoading(false);
+          return;
+        }
+      }
+    }, [setCurrentUser, setCurrentView, setIsLoading]);
+    
+    // Show loading while checking authentication
+    if (isLoading) {
+      return <FullPageLoading message="Loading your account..." />;
+    }
+    
+    // Redirect to onboarding if user is authenticated but hasn't completed onboarding
+    if (isAuthenticated && currentUser?.onboardingStatus === 'incomplete' && 
+        !['onboarding-start', 'onboarding-complete', 'welcome', 'signin', 'educator-signup', 'invited-onboarding'].includes(currentView)) {
+      return <OnboardingWizard />;
+    }
+    
+    // Redirect to dashboard if authenticated and trying to access auth pages
+    if (isAuthenticated && ['welcome', 'signin', 'educator-signup'].includes(currentView)) {
+      return <EducatorDashboard />;
+    }
+    
+    // Redirect to welcome if not authenticated and trying to access protected pages
+    const protectedViews = [
+      'dashboard', 'behavior-log', 'classroom-log', 'child-profiles', 
+      'classroom-profile', 'library', 'reports', 'family-notes', 'profile-settings'
+    ];
+    if (!isAuthenticated && protectedViews.includes(currentView)) {
+      return <WelcomeScreen />;
+    }
+
+    // Show sticky navigation for main app views (not auth/onboarding)
+    const showStickyNav = [
+      'dashboard', 'behavior-log', 'classroom-log', 'child-profiles', 'classroom-profile',
+      'library', 'reports', 'family-notes', 'profile-settings', 'child-profile-detail',
+      'admin-dashboard', 'manage-educators', 'organization-settings', 'organization-analytics'
+    ].includes(currentView);
+    
+    return (
+      <div className="relative">
+        {showStickyNav && <StickyNavigation />}
+        {renderView()}
+        <ToastContainer />
+        <TestUserFeedbackWidget module={currentView} />
+        <TestEnvironmentPanel />
+      </div>
+    );
   return (
     <ErrorBoundary>
       <AccessibilityProvider>
@@ -364,5 +155,214 @@ function App() {
     </ErrorBoundary>
   );
 }
+
+    function renderView() {
+      switch (currentView) {
+        case 'landing':
+          return <LandingPage />;
+        case 'welcome':
+          return <WelcomeScreen />;
+       case 'landing':
+         return <LandingPage />;
+        case 'educator-signup':
+          return <EducatorSignup />;
+        case 'admin-signup':
+          return <AdminSignup />;
+        case 'organization-plan':
+          return <OrganizationPlan />;
+        case 'organization-payment':
+          return <OrganizationPayment />;
+        case 'invite-educators':
+          return <InviteEducators />;
+        case 'organization-complete':
+          return <OrganizationComplete />;
+        case 'invited-signup':
+          return <InvitedSignup />;
+        case 'invited-onboarding':
+          return <InvitedOnboarding />;
+        case 'signin':
+          return <SignIn />;
+        case 'subscription-plan':
+          return <SubscriptionPlan />;
+        case 'payment':
+          return <PaymentScreen />;
+        case 'onboarding-start':
+          return <OnboardingWizard />;
+        case 'onboarding-complete':
+          return <OnboardingComplete />;
+        case 'onboarding-complete-new':
+          return <OnboardingCompleteNew />;
+        case 'welcome-to-lumi':
+          return <WelcomeToLumiScreen />;
+        case 'dashboard':
+          return <EducatorDashboard />;
+        case 'behavior-log':
+          return <BehaviorLogFlow />;
+        case 'classroom-log':
+          return <ClassroomLogFlow />;
+        case 'library':
+          return <ResourceLibrary />;
+        case 'family-notes':
+          return <FamilyNotesManager />;
+        case 'family-script-generator':
+          return (
+            <div className="min-h-screen bg-white">
+              <div className="max-w-4xl mx-auto px-6 py-8">
+                <Button
+                  variant="ghost"
+                  onClick={() => setCurrentView('family-notes')}
+                  icon={ArrowLeft}
+                  className="mb-6 -ml-2"
+                >
+                  Back to Family Notes
+                </Button>
+                <FamilyScriptGenerator />
+              </div>
+            </div>
+          );
+        case 'child-profiles':
+          return <ChildProfilesManager />;
+        case 'classroom-profile':
+          return <ClassroomProfileManager />;
+        case 'production-assessment':
+          return <ProductionDashboard />;
+        case 'profile-settings':
+          return <ProfileSettings />;
+        case 'admin-dashboard':
+          return <AdminDashboard />;
+        case 'manage-educators':
+          return <ManageEducators />;
+        case 'organization-settings':
+          return <OrganizationSettings />;
+        case 'organization-analytics':
+          return <OrganizationAnalytics />;
+        case 'security-compliance-center':
+          return <SecurityComplianceCenter />;
+        case 'developer-app-manager':
+          return <DeveloperAppManager />;
+        case 'developer-app-manager':
+          return <DeveloperAppManager />;
+        case 'security-expert-report':
+          return (
+            <div className="min-h-screen bg-white">
+              <div className="max-w-7xl mx-auto px-6 py-8">
+                <Button
+                  variant="ghost"
+                  onClick={() => setCurrentView('admin-dashboard')}
+                  icon={ArrowLeft}
+                  className="mb-6 -ml-2"
+                >
+                  Back to Admin Dashboard
+                </Button>
+                <SecurityExpertReport />
+              </div>
+            </div>
+          );
+        case 'parent-portal':
+          return (
+            <div className="min-h-screen bg-white">
+              <div className="max-w-7xl mx-auto px-6 py-8">
+                <Button
+                  variant="ghost"
+                  onClick={() => setCurrentView('admin-dashboard')}
+                  icon={ArrowLeft}
+                  className="mb-6 -ml-2"
+                >
+                  Back to Admin Dashboard
+                </Button>
+                <ParentPortal />
+              </div>
+            </div>
+          );
+        case 'production-readiness':
+          return (
+            <div className="min-h-screen bg-white">
+              <div className="max-w-7xl mx-auto px-6 py-8">
+                <Button
+                  variant="ghost"
+                  onClick={() => setCurrentView('dashboard')}
+                  icon={ArrowLeft}
+                  className="mb-6 -ml-2"
+                >
+                  Back to Dashboard
+                </Button>
+                <ProductionReadinessReport />
+              </div>
+            </div>
+          );
+        case 'production-checklist':
+          return (
+            <div className="min-h-screen bg-white">
+              <div className="max-w-7xl mx-auto px-6 py-8">
+                <Button
+                  variant="ghost"
+                  onClick={() => setCurrentView('production-readiness')}
+                  icon={ArrowLeft}
+                  className="mb-6 -ml-2"
+                >
+                  Back to Assessment
+                </Button>
+                <ProductionChecklist />
+              </div>
+            </div>
+          );
+        case 'stress-testing':
+          return (
+            <div className="min-h-screen bg-white">
+              <div className="max-w-7xl mx-auto px-6 py-8">
+                <Button
+                  variant="ghost"
+                  onClick={() => setCurrentView('production-readiness')}
+                  icon={ArrowLeft}
+                  className="mb-6 -ml-2"
+                >
+                  Back to Assessment
+                </Button>
+                <StressTestRunner />
+              </div>
+            </div>
+          );
+        case 'sre-diagnosis':
+          return (
+            <div className="min-h-screen bg-white">
+              <div className="max-w-7xl mx-auto px-6 py-8">
+                <Button
+                  variant="ghost"
+                  onClick={() => setCurrentView('dashboard')}
+                  icon={ArrowLeft}
+                  className="mb-6 -ml-2"
+                >
+                  Back to Dashboard
+                </Button>
+                <SREDiagnosticPanel />
+              </div>
+            </div>
+          );
+        case 'sre-diagnosis':
+          return (
+            <div className="min-h-screen bg-white">
+              <div className="max-w-7xl mx-auto px-6 py-8">
+                <Button
+                  variant="ghost"
+                  onClick={() => setCurrentView('dashboard')}
+                  icon={ArrowLeft}
+                  className="mb-6 -ml-2"
+                >
+                  Back to Dashboard
+                </Button>
+                <LumiSREDashboard />
+              </div>
+            </div>
+          );
+        default:
+          // Handle dynamic child profile detail routes
+          if (currentView.startsWith('child-profile-detail-')) {
+            const childId = currentView.replace('child-profile-detail-', '');
+            return <ChildProfileDetail childId={childId} />;
+          }
+          return <WelcomeScreen />;
+      }
+    }
+  };
 
 export default App;
