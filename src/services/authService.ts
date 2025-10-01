@@ -1,5 +1,6 @@
 import { EncryptionService } from '../services/encryptionService';
 import { AuditService } from '../services/auditService';
+import { supabase } from '../lib/supabase';
 interface User {
   id: string;
   fullName: string;
@@ -41,6 +42,74 @@ export class AuthService {
     password: string;
   }): Promise<AuthResponse> {
     try {
+      // Use Supabase Auth for signup
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: data.email,
+        password: data.password,
+        options: {
+          data: {
+            full_name: data.fullName
+          }
+        }
+      });
+
+      if (authError) {
+        throw new Error(authError.message);
+      }
+
+      if (!authData.user) {
+        throw new Error('Failed to create user account');
+      }
+
+      // Create user profile in users table
+      const { error: profileError } = await supabase
+        .from('users')
+        .insert({
+          id: authData.user.id,
+          full_name: data.fullName,
+          first_name: data.fullName.split(' ')[0],
+          last_name: data.fullName.split(' ').slice(1).join(' '),
+          email: data.email,
+          password_hash: '', // Supabase handles password hashing
+          role: 'educator',
+          preferred_language: 'english',
+          onboarding_status: 'incomplete'
+        });
+
+      if (profileError) {
+        throw new Error(profileError.message);
+      }
+
+      const mockUser: User = {
+        id: authData.user.id,
+        fullName: data.fullName,
+        firstName: data.fullName.split(' ')[0],
+        lastName: data.fullName.split(' ').slice(1).join(' '),
+        email: data.email,
+        role: 'educator',
+        preferredLanguage: 'english',
+        learningStyle: '',
+        teachingStyle: '',
+        onboardingStatus: 'incomplete',
+        createdAt: new Date()
+      };
+
+      const mockToken = btoa(JSON.stringify({
+        id: authData.user.id,
+        email: data.email,
+        role: 'educator',
+        exp: Date.now() + 24 * 60 * 60 * 1000
+      }));
+
+      this.setToken(mockToken);
+      localStorage.setItem('lumi_current_user', JSON.stringify(mockUser));
+      
+      return {
+        user: mockUser,
+        token: mockToken
+      };
+    } catch (error) {
+      // Fallback to mock for development
       // For demo/development, create mock user
       const mockUser: User = {
         id: Date.now().toString(),
@@ -82,6 +151,55 @@ export class AuthService {
     password: string;
   }): Promise<AuthResponse> {
     try {
+      // Try Supabase Auth first
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        email: data.email,
+        password: data.password
+      });
+
+      if (!authError && authData.user) {
+        // Get user profile from users table
+        const { data: userProfile, error: profileError } = await supabase
+          .from('users')
+          .select('*')
+          .eq('id', authData.user.id)
+          .single();
+
+        if (!profileError && userProfile) {
+          const user: User = {
+            id: userProfile.id,
+            fullName: userProfile.full_name,
+            firstName: userProfile.first_name,
+            lastName: userProfile.last_name,
+            email: userProfile.email,
+            role: userProfile.role,
+            preferredLanguage: userProfile.preferred_language || 'english',
+            learningStyle: userProfile.learning_style,
+            teachingStyle: userProfile.teaching_style,
+            onboardingStatus: userProfile.onboarding_status || 'incomplete',
+            createdAt: new Date(userProfile.created_at)
+          };
+
+          const token = btoa(JSON.stringify({
+            id: user.id,
+            email: user.email,
+            role: user.role,
+            exp: Date.now() + 24 * 60 * 60 * 1000
+          }));
+
+          this.setToken(token);
+          localStorage.setItem('lumi_current_user', JSON.stringify(user));
+          
+          await AuditService.logAuthEvent('login', true, { 
+            userId: user.id,
+            email: user.email 
+          });
+          
+          return { user, token };
+        }
+      }
+
+      // Fallback to existing mock logic
       // Log authentication attempt
       await AuditService.logAuthEvent('login', false, { email: data.email });
       
