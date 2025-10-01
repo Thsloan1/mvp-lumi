@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Code, Users, Database, Settings, Download, Upload, RefreshCw, Play, Book, Zap, FileText, BarChart3, TrendingUp, AlertTriangle, Eye, Filter, X, Mail, Copy, Check, Star, Clock, Plus, Trash2, Send } from 'lucide-react';
+import { Code, Users, Database, Settings, Download, Upload, RefreshCw, Play, Book, Zap, FileText, BarChart3, TrendingUp, AlertTriangle, Eye, Filter, X, Mail, Copy, Check, Star, Clock, Plus, Trash2, Send, Shield } from 'lucide-react';
 import { Button } from '../UI/Button';
 import { Card } from '../UI/Card';
 import { Input } from '../UI/Input';
@@ -180,7 +180,11 @@ export const TestEnvironmentPanel: React.FC = () => {
     toast.success('Access Code Copied!', 'Ready to share with tester');
   };
 
-      }
+  const handleQuickLogin = async (testUser: TestUser) => {
+    try {
+      // Clear any existing session
+      localStorage.removeItem('lumi_token');
+      localStorage.removeItem('lumi_current_user');
       
       // Find or create corresponding user data
       let userData = testDataManager.findUserByEmail(testUser.email);
@@ -613,9 +617,6 @@ export const TestEnvironmentPanel: React.FC = () => {
         <h3 className="text-lg font-semibold text-[#1A1A1A] mb-4">
           Quick Test Scenarios
         </h3>
-        <p className="text-sm text-gray-600 mb-6">
-          Click any scenario to instantly set up the testing environment
-        </p>
         
         <div className="grid md:grid-cols-2 gap-4">
           {[
@@ -624,32 +625,28 @@ export const TestEnvironmentPanel: React.FC = () => {
               name: 'Fresh Educator',
               description: 'New user with no data - test onboarding flow',
               icon: Users,
-              color: 'text-blue-600',
-              bgColor: 'bg-blue-100'
+              color: 'text-blue-600'
             },
             {
               id: 'experienced-educator',
               name: 'Experienced Educator',
               description: 'Educator with children and behavior logs',
               icon: BarChart3,
-              color: 'text-green-600',
-              bgColor: 'bg-green-100'
+              color: 'text-green-600'
             },
             {
               id: 'admin-setup',
               name: 'Admin Setup',
               description: 'Organization management testing',
               icon: Settings,
-              color: 'text-purple-600',
-              bgColor: 'bg-purple-100'
+              color: 'text-purple-600'
             },
             {
               id: 'invited-user',
               name: 'Invited User',
               description: 'Test invitation acceptance flow',
               icon: Mail,
-              color: 'text-orange-600',
-              bgColor: 'bg-orange-100'
+              color: 'text-orange-600'
             }
           ].map((scenario) => {
             const IconComponent = scenario.icon;
@@ -658,10 +655,10 @@ export const TestEnvironmentPanel: React.FC = () => {
                 key={scenario.id}
                 hoverable
                 onClick={() => runTestScenario(scenario.id)}
-                className="p-4 cursor-pointer hover:shadow-md transition-all duration-200"
+                className="p-4 cursor-pointer"
               >
                 <div className="flex items-center space-x-3">
-                  <div className={`w-10 h-10 ${scenario.bgColor} rounded-xl flex items-center justify-center`}>
+                  <div className="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center">
                     <IconComponent className={`w-5 h-5 ${scenario.color}`} />
                   </div>
                   <div>
@@ -680,9 +677,6 @@ export const TestEnvironmentPanel: React.FC = () => {
         <h3 className="text-lg font-semibold text-[#1A1A1A] mb-4">
           Advanced Test Scenarios
         </h3>
-        <p className="text-sm text-gray-600 mb-6">
-          Specialized testing environments for performance and compliance validation
-        </p>
         
         <div className="grid md:grid-cols-2 gap-4">
           {[
@@ -691,32 +685,28 @@ export const TestEnvironmentPanel: React.FC = () => {
               name: 'Stress Test Data',
               description: 'Generate large dataset for performance testing',
               icon: Zap,
-              color: 'text-yellow-600',
-              bgColor: 'bg-yellow-100'
+              color: 'text-yellow-600'
             },
             {
               id: 'multi-classroom',
               name: 'Multi-Classroom',
               description: 'Multiple classrooms with varied data',
               icon: Users,
-              color: 'text-indigo-600',
-              bgColor: 'bg-indigo-100'
+              color: 'text-indigo-600'
             },
             {
               id: 'compliance-test',
               name: 'Compliance Testing',
               description: 'FERPA/HIPAA compliance validation',
               icon: Shield,
-              color: 'text-red-600',
-              bgColor: 'bg-red-100'
+              color: 'text-red-600'
             },
             {
               id: 'knowledge-library',
               name: 'Knowledge Library',
               description: 'Framework and strategy management',
               icon: Book,
-              color: 'text-green-600',
-              bgColor: 'bg-green-100'
+              color: 'text-green-600'
             }
           ].map((scenario) => {
             const IconComponent = scenario.icon;
@@ -726,10 +716,10 @@ export const TestEnvironmentPanel: React.FC = () => {
                 hoverable
                 onClick={() => scenario.id === 'knowledge-library' || scenario.id === 'production-assessment' ? 
                   runTestScenario(scenario.id) : runAdvancedScenario(scenario.id)}
-                className="p-4 cursor-pointer hover:shadow-md transition-all duration-200"
+                className="p-4 cursor-pointer"
               >
                 <div className="flex items-center space-x-3">
-                  <div className={`w-10 h-10 ${scenario.bgColor} rounded-xl flex items-center justify-center`}>
+                  <div className="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center">
                     <IconComponent className={`w-5 h-5 ${scenario.color}`} />
                   </div>
                   <div>
@@ -748,9 +738,6 @@ export const TestEnvironmentPanel: React.FC = () => {
         <h3 className="text-lg font-semibold text-[#1A1A1A] mb-4">
           Quick Navigation
         </h3>
-        <p className="text-sm text-gray-600 mb-4">
-          Direct access to specialized testing and development interfaces
-        </p>
         
         <div className="grid grid-cols-2 gap-2">
           <Button
@@ -789,12 +776,6 @@ export const TestEnvironmentPanel: React.FC = () => {
           >
             Stress Testing
           </Button>
-        </div>
-        
-        <div className="mt-4 p-3 bg-[#C3D4B7] bg-opacity-10 rounded-lg border border-[#C3D4B7] border-opacity-30">
-          <p className="text-sm text-gray-700">
-            <strong>Tip:</strong> Use these navigation shortcuts to quickly access development tools without closing the portal.
-          </p>
         </div>
       </Card>
     </div>
@@ -856,57 +837,8 @@ export const TestEnvironmentPanel: React.FC = () => {
               >
                 Generate Sample Data
               </Button>
-              <Button
-                onClick={() => {
-                  testDataManager.generateTestBehaviorLogs(100);
-                  toast.success('Large Dataset Generated!', '100 additional behavior logs created');
-                }}
-                variant="outline"
-                className="w-full"
-                icon={Zap}
-              >
-                Generate Large Dataset
-              </Button>
-              <Button
-                onClick={() => {
-                  const data = {
-                    users: testDataManager.getUsers(),
-                    children: testDataManager.getChildren(),
-                    behaviorLogs: testDataManager.getBehaviorLogs(),
-                    classroomLogs: testDataManager.getClassroomLogs(),
-                    exportedAt: new Date().toISOString()
-                  };
-                  
-                  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-                  const url = URL.createObjectURL(blob);
-                  const link = document.createElement('a');
-                  link.href = url;
-                  link.download = `lumi-test-data-${new Date().toISOString().split('T')[0]}.json`;
-                  document.body.appendChild(link);
-                  link.click();
-                  document.body.removeChild(link);
-                  URL.revokeObjectURL(url);
-                  
-                  toast.success('Data Exported!', 'Test data downloaded');
-                }}
-                variant="outline"
-                className="w-full"
-                icon={Download}
-              >
-                Export All Data
-              </Button>
             </div>
           </div>
-        </div>
-        
-        <div className="mt-6 p-4 bg-[#C3D4B7] bg-opacity-10 rounded-lg border border-[#C3D4B7] border-opacity-30">
-          <h4 className="font-medium text-[#1A1A1A] mb-2">Data Management Tips</h4>
-          <ul className="text-sm text-gray-700 space-y-1">
-            <li>• Reset data before testing new user flows</li>
-            <li>• Generate sample data to test existing user scenarios</li>
-            <li>• Use large datasets to test performance and scaling</li>
-            <li>• Export data for backup or sharing with team</li>
-          </ul>
         </div>
       </Card>
     </div>
