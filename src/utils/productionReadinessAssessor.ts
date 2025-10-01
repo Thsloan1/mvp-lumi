@@ -406,7 +406,7 @@ export class ProductionTester {
 
     backendTests.push(await this.testChildDataPersistence());
     backendTests.push(await this.testChildDataRelationships());
-    back endTests.push(await this.testChildDataMigration());
+    backendTests.push(await this.testChildDataMigration());
 
     return backendTests;
   }
