@@ -2,143 +2,29 @@ const express = require('express');
 const cors = require('cors');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const crypto = require('crypto');
-require('dotenv').config();
+const { testDataManager } = require('./testDataManager.cjs');
 
-// Global error handlers for debugging
-process.on('uncaughtException', (error) => {
-  console.error('❌ Uncaught Exception:', error);
-  console.error('Stack:', error.stack);
-  process.exit(1);
-});
-
-process.on('unhandledRejection', (reason, promise) => {
-  console.error('❌ Unhandled Rejection at:', promise, 'reason:', reason);
-  console.error('Stack:', reason?.stack);
-  process.exit(1);
-});
-
-const PORT = process.env.PORT || 3001;
-const JWT_SECRET = process.env.JWT_SECRET || 'lumi-secret-key-change-in-production';
-
-// Initialize Express app
 const app = express();
+const PORT = 3001;
+const JWT_SECRET = 'your-secret-key-for-development';
 
 // Middleware
 app.use(cors());
 app.use(express.json());
 
-// In-memory database for MVP (replace with real DB later)
-let users = [];
-let behaviorLogs = [];
-let classroomLogs = [];
-let children = [];
-let classrooms = [];
-let verificationCodes = new Map();
-let resetCodes = new Map();
-let auditLogs = [];
-let encryptionKeys = new Map();
+// Get test data
+let users = testDataManager.getAllData().users;
+let children = testDataManager.getAllData().children;
+let classrooms = testDataManager.getAllData().classrooms;
+let behaviorLogs = testDataManager.getAllData().behaviorLogs;
+let classroomLogs = testDataManager.getAllData().classroomLogs;
+let organizations = testDataManager.getAllData().organizations;
+let invitations = testDataManager.getAllData().invitations;
 
-// Import test data for consistency
-const { testDataManager } = require('./testDataManager.cjs');
+// Store for verification codes
+const verificationCodes = new Map();
 
-// Sync with test data manager
-const syncWithTestData = () => {
-  const testData = testDataManager.getAllData();
-  users = testData.users;
-  children = testData.children;
-  classrooms = testData.classrooms;
-  behaviorLogs = testData.behaviorLogs;
-  classroomLogs = testData.classroomLogs;
-};
-
-// Initialize with test data
-syncWithTestData();
-
-// Initialize encryption key
-const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || 'lumi-default-encryption-key-2024-change-in-production';
-encryptionKeys.set('default', ENCRYPTION_KEY);
-
-// Encryption helper functions
-const encryptSensitiveData = (data) => {
-  try {
-    const cipher = crypto.createCipher('aes-256-cbc', ENCRYPTION_KEY);
-    let encrypted = cipher.update(data, 'utf8', 'base64');
-    encrypted += cipher.final('base64');
-    return `enc_${encrypted}`;
-  } catch (error) {
-    console.error('Encryption failed:', error);
-    return data; // Return original data if encryption fails
-  }
-};
-
-const decryptSensitiveData = (encryptedData) => {
-  try {
-    if (!encryptedData.startsWith('enc_')) {
-      return encryptedData; // Not encrypted
-    }
-    
-    const encrypted = encryptedData.substring(4);
-    const decipher = crypto.createDecipher('aes-256-cbc', ENCRYPTION_KEY);
-    let decrypted = decipher.update(encrypted, 'base64', 'utf8');
-    decrypted += decipher.final('utf8');
-    return decrypted;
-  } catch (error) {
-    console.error('Decryption failed:', error);
-    return encryptedData; // Return original if decryption fails
-  }
-};
-
-// Audit logging function
-const logAuditEvent = (req, action, resourceType, resourceId, details = {}) => {
-  try {
-    const auditEntry = {
-      id: Date.now().toString(),
-      timestamp: new Date().toISOString(),
-      userId: req.user?.id || 'anonymous',
-      userEmail: req.user?.email || 'unknown',
-      userRole: req.user?.role || 'unknown',
-      action,
-      resourceType,
-      resourceId,
-      ipAddress: req.ip || req.connection.remoteAddress || 'unknown',
-      userAgent: req.get('User-Agent') || 'unknown',
-      success: true,
-      riskLevel: getRiskLevel(action, resourceType),
-      complianceFlags: getComplianceFlags(resourceType),
-      details
-    };
-    
-    auditLogs.unshift(auditEntry);
-    
-    // Keep only last 10000 entries in memory
-    if (auditLogs.length > 10000) {
-      auditLogs = auditLogs.slice(0, 10000);
-    }
-    
-    console.log('📋 Audit Log:', auditEntry.action, auditEntry.resourceType, auditEntry.userId);
-  } catch (error) {
-    console.error('Audit logging failed:', error);
-  }
-};
-
-const getRiskLevel = (action, resourceType) => {
-  if (resourceType === 'behavior_logs' && action === 'DELETE') return 'critical';
-  if (resourceType === 'children' && action === 'DELETE') return 'critical';
-  if (action === 'DELETE') return 'high';
-  if (action === 'UPDATE') return 'medium';
-  return 'low';
-};
-
-const getComplianceFlags = (resourceType) => {
-  const flags = [];
-  if (['behavior_logs', 'children'].includes(resourceType)) {
-    flags.push('FERPA_EDUCATIONAL_RECORD');
-  }
-  return flags;
-};
-
-// Auth middleware
+// Authentication middleware
 const authenticateToken = (req, res, next) => {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
@@ -149,14 +35,17 @@ const authenticateToken = (req, res, next) => {
 
   jwt.verify(token, JWT_SECRET, (err, user) => {
     if (err) {
-      // Log failed authentication
-      logAuditEvent(req, 'AUTH_FAILED', 'authentication', null, { error: err.message });
-      return res.status(403).json({ error: 'Invalid token' });
+      return res.status(403).json({ error: 'Invalid or expired token' });
     }
     req.user = user;
     next();
   });
 };
+
+// Health check endpoint
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
 
 // Auth Routes
 app.post('/api/auth/signup', async (req, res) => {
@@ -212,16 +101,19 @@ app.post('/api/auth/signup', async (req, res) => {
 
     // Generate token
     const token = jwt.sign(
-      { id: user.id, email: user.email },
+      { id: user.id, email: user.email, role: user.role },
       JWT_SECRET,
       { expiresIn: '7d' }
     );
+
+    console.log('User created:', user.fullName, user.email);
 
     res.status(201).json({
       user: { ...user, password: undefined },
       token
     });
   } catch (error) {
+    console.error('Signup error:', error);
     res.status(500).json({ error: 'Server error' });
   }
 });
@@ -231,43 +123,49 @@ app.post('/api/auth/signin', async (req, res) => {
     const { email, password } = req.body;
 
     if (!email || !password) {
-      return res.status(400).json({ error: 'Email and password required' });
+      return res.status(400).json({ error: 'Email and password are required' });
     }
 
-    // Find user
     const user = users.find(u => u.email === email);
     if (!user) {
       return res.status(400).json({ error: 'Invalid credentials' });
     }
 
-    // Check password
     const validPassword = await bcrypt.compare(password, user.password);
     if (!validPassword) {
       return res.status(400).json({ error: 'Invalid credentials' });
     }
 
-    // Generate token
     const token = jwt.sign(
-      { id: user.id, email: user.email },
+      { id: user.id, email: user.email, role: user.role },
       JWT_SECRET,
       { expiresIn: '7d' }
     );
+
+    console.log('User signed in:', user.fullName, user.email);
 
     res.json({
       user: { ...user, password: undefined },
       token
     });
   } catch (error) {
+    console.error('Signin error:', error);
     res.status(500).json({ error: 'Server error' });
   }
 });
 
 app.get('/api/auth/me', authenticateToken, (req, res) => {
-  const user = users.find(u => u.id === req.user.id);
-  if (!user) {
-    return res.status(404).json({ error: 'User not found' });
+  try {
+    const user = users.find(u => u.id === req.user.id);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    res.json({ user: { ...user, password: undefined } });
+  } catch (error) {
+    console.error('Get user error:', error);
+    res.status(500).json({ error: 'Server error' });
   }
-  res.json({ user: { ...user, password: undefined } });
 });
 
 // User Routes
@@ -288,19 +186,8 @@ app.put('/api/user/onboarding', authenticateToken, (req, res) => {
       updatedAt: new Date().toISOString()
     };
 
-    // Create classroom if provided
-    if (classroomData && classroomData.name) {
-      const classroom = {
-        id: Date.now().toString(),
-        ...classroomData,
-        educatorId: req.user.id,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      };
-      
-      classrooms.push(classroom);
-    }
-
+    console.log('User onboarding completed:', users[userIndex].fullName);
+    
     res.json({ user: { ...users[userIndex], password: undefined } });
   } catch (error) {
     console.error('Onboarding error:', error);
@@ -308,309 +195,187 @@ app.put('/api/user/onboarding', authenticateToken, (req, res) => {
   }
 });
 
-// Get user data route
-app.get('/api/user', authenticateToken, (req, res) => {
-  try {
-    const user = users.find(u => u.id === req.user.id);
-    if (!user) {
-      return res.status(404).json({ error: 'User not found' });
-    }
-    res.json({ user: { ...user, password: undefined } });
-  } catch (error) {
-    console.error('Get user error:', error);
-    res.status(500).json({ error: 'Server error' });
-  }
-});
-
-// Profile photo upload
-app.post('/api/user/photo', authenticateToken, (req, res) => {
-  try {
-    // In a real implementation, this would handle file upload to cloud storage
-    // For MVP, we'll simulate a successful upload
-    const photoUrl = `https://api.dicebear.com/7.x/initials/svg?seed=${req.user.id}`;
-    
-    const userIndex = users.findIndex(u => u.id === req.user.id);
-    if (userIndex !== -1) {
-      users[userIndex].profilePhotoUrl = photoUrl;
-    }
-    
-    res.json({ photoUrl });
-  } catch (error) {
-    console.error('Photo upload error:', error);
-    res.status(500).json({ error: 'Upload failed' });
-  }
-});
-
-// Profile update route
-app.put('/api/user/profile', authenticateToken, (req, res) => {
-  try {
-    const userIndex = users.findIndex(u => u.id === req.user.id);
-    if (userIndex === -1) {
-      return res.status(404).json({ error: 'User not found' });
-    }
-
-    const { fullName, email, preferredLanguage, learningStyle, teachingStyle, profilePhotoUrl } = req.body;
-
-    // Update user profile
-    users[userIndex] = {
-      ...users[userIndex],
-      fullName: fullName || users[userIndex].fullName,
-      email: email || users[userIndex].email,
-      preferredLanguage: preferredLanguage || users[userIndex].preferredLanguage,
-      learningStyle: learningStyle || users[userIndex].learningStyle,
-      teachingStyle: teachingStyle || users[userIndex].teachingStyle,
-      profilePhotoUrl: profilePhotoUrl || users[userIndex].profilePhotoUrl,
-      updatedAt: new Date().toISOString()
-    };
-
-    console.log('User profile updated:', users[userIndex].fullName);
-    
-    res.json({ user: { ...users[userIndex], password: undefined } });
-  } catch (error) {
-    console.error('Profile update error:', error);
-    res.status(500).json({ error: 'Server error' });
-  }
-});
-
-// Password change route
-app.put('/api/user/password', authenticateToken, async (req, res) => {
-  try {
-    const { currentPassword, newPassword } = req.body;
-    
-    if (!currentPassword || !newPassword) {
-      return res.status(400).json({ error: 'Current and new passwords are required' });
-    }
-
-    const user = users.find(u => u.id === req.user.id);
-    if (!user) {
-      return res.status(404).json({ error: 'User not found' });
-    }
-
-    // Verify current password
-    const validPassword = await bcrypt.compare(currentPassword, user.password);
-    if (!validPassword) {
-      return res.status(400).json({ error: 'Current password is incorrect' });
-    }
-
-    // Validate new password
-    if (newPassword.length < 8) {
-      return res.status(400).json({ error: 'Password must be at least 8 characters' });
-    }
-    
-    const hasUppercase = /[A-Z]/.test(newPassword);
-    const hasNumber = /\d/.test(newPassword);
-    if (!hasUppercase || !hasNumber) {
-      return res.status(400).json({ error: 'Password must include a capital letter and number' });
-    }
-
-    // Hash new password
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
-    user.password = hashedPassword;
-    user.updatedAt = new Date().toISOString();
-
-    console.log('Password changed for user:', user.fullName);
-    
-    res.json({ message: 'Password updated successfully' });
-  } catch (error) {
-    console.error('Password change error:', error);
-    res.status(500).json({ error: 'Server error' });
-  }
-});
-
-// Email verification routes
-app.post('/api/auth/verify-email', authenticateToken, (req, res) => {
-  try {
-    const { code } = req.body;
-    const user = users.find(u => u.id === req.user.id);
-    
-    if (!user) {
-      return res.status(404).json({ error: 'User not found' });
-    }
-    
-    const storedCode = verificationCodes.get(user.email);
-    if (!storedCode || storedCode !== code) {
-      return res.status(400).json({ error: 'Invalid verification code' });
-    }
-    
-    // Mark email as verified
-    user.emailVerified = true;
-    verificationCodes.delete(user.email);
-    
-    res.json({ user: { ...user, password: undefined } });
-  } catch (error) {
-    res.status(500).json({ error: 'Server error' });
-  }
-});
-
-app.post('/api/auth/resend-verification', authenticateToken, (req, res) => {
-  try {
-    const user = users.find(u => u.id === req.user.id);
-    
-    if (!user) {
-      return res.status(404).json({ error: 'User not found' });
-    }
-    
-    if (user.emailVerified) {
-      return res.status(400).json({ error: 'Email already verified' });
-    }
-    
-    // Generate new verification code
-    const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
-    verificationCodes.set(user.email, verificationCode);
-    
-    console.log(`📧 New verification code for ${user.email}: ${verificationCode}`);
-    
-    res.json({ message: 'Verification code sent' });
-  } catch (error) {
-    res.status(500).json({ error: 'Server error' });
-  }
-});
-
-// Password reset routes
-app.post('/api/auth/forgot-password', (req, res) => {
-  try {
-    const { email } = req.body;
-    
-    if (!email) {
-      return res.status(400).json({ error: 'Email is required' });
-    }
-    
-    const user = users.find(u => u.email === email);
-    if (!user) {
-      // Don't reveal if email exists for security
-      return res.json({ message: 'If the email exists, a reset code has been sent' });
-    }
-    
-    // Generate reset code
-    const resetCode = Math.floor(100000 + Math.random() * 900000).toString();
-    resetCodes.set(email, resetCode);
-    
-    console.log(`🔑 Password reset code for ${email}: ${resetCode}`);
-    
-    res.json({ message: 'If the email exists, a reset code has been sent' });
-  } catch (error) {
-    res.status(500).json({ error: 'Server error' });
-  }
-});
-
-app.post('/api/auth/reset-password', async (req, res) => {
-  try {
-    const { email, code, newPassword } = req.body;
-    
-    if (!email || !code || !newPassword) {
-      return res.status(400).json({ error: 'Email, code, and new password are required' });
-    }
-    
-    const storedCode = resetCodes.get(email);
-    if (!storedCode || storedCode !== code) {
-      return res.status(400).json({ error: 'Invalid reset code' });
-    }
-    
-    const user = users.find(u => u.email === email);
-    if (!user) {
-      return res.status(404).json({ error: 'User not found' });
-    }
-    
-    // Validate new password
-    if (newPassword.length < 8) {
-      return res.status(400).json({ error: 'Password must be at least 8 characters' });
-    }
-    
-    const hasUppercase = /[A-Z]/.test(newPassword);
-    const hasNumber = /\d/.test(newPassword);
-    if (!hasUppercase || !hasNumber) {
-      return res.status(400).json({ error: 'Password must include a capital letter and number' });
-    }
-    
-    // Hash new password
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
-    user.password = hashedPassword;
-    
-    // Clear reset code
-    resetCodes.delete(email);
-    
-    res.json({ message: 'Password reset successfully' });
-  } catch (error) {
-    res.status(500).json({ error: 'Server error' });
-  }
-});
-
-// Children Routes
+// Data Routes
 app.get('/api/children', authenticateToken, (req, res) => {
-  // Log children data access
-  logAuditEvent(req, 'READ', 'children', null, { educatorId: req.user.id });
-  
-  const userChildren = children.filter(child => {
-    const classroom = classrooms.find(c => c.id === child.classroomId);
-    return classroom && classroom.educatorId === req.user.id;
-  }).map(child => ({
-    ...child,
-    // Decrypt sensitive data for response
-    developmentalNotes: child.developmentalNotes?.startsWith('enc_')
-      ? decryptSensitiveData(child.developmentalNotes)
-      : child.developmentalNotes,
-    familyContext: child.familyContext?.startsWith('enc_')
-      ? decryptSensitiveData(child.familyContext)
-      : child.familyContext
-  }));
-  
-  res.json({ children: userChildren });
+  try {
+    const userChildren = children.filter(child => {
+      const classroom = classrooms.find(c => c.id === child.classroomId);
+      return classroom && classroom.educatorId === req.user.id;
+    });
+    res.json({ children: userChildren });
+  } catch (error) {
+    res.status(500).json({ error: 'Server error' });
+  }
 });
 
 app.post('/api/children', authenticateToken, (req, res) => {
   try {
-    // Log child creation
-    logAuditEvent(req, 'CREATE', 'children', null, { childName: req.body.name });
-    
-    const { name, gradeBand, hasIEP, hasIFSP, developmentalNotes } = req.body;
-
-    if (!name || !gradeBand) {
-      return res.status(400).json({ error: 'Name and grade band required' });
-    }
-
-    // Get or create default classroom
-    let userClassroom = classrooms.find(c => c.educatorId === req.user.id);
-    if (!userClassroom) {
-      const user = users.find(u => u.id === req.user.id);
-      userClassroom = {
-        id: Date.now().toString(),
-        name: `${user.fullName.split(' ')[0]}'s Classroom`,
-        gradeBand: 'Preschool (4-5 years old)',
-        studentCount: 15,
-        teacherStudentRatio: '1:8',
-        stressors: [],
-        educatorId: req.user.id,
-        createdAt: new Date().toISOString()
-      };
-      classrooms.push(userClassroom);
-    }
-
-    // Encrypt sensitive fields
-    const encryptedNotes = developmentalNotes ? encryptSensitiveData(developmentalNotes) : '';
-    
     const child = {
       id: Date.now().toString(),
-      name,
-      gradeBand,
-      classroomId: userClassroom.id,
-      hasIEP: hasIEP || false,
-      hasIFSP: hasIFSP || false,
-      developmentalNotes: encryptedNotes,
+      ...req.body,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
-
     children.push(child);
-    
-    // Return decrypted data for response
-    const responseChild = {
-      ...child,
-      developmentalNotes: developmentalNotes || ''
-    };
-    
-    res.status(201).json({ child: responseChild });
+    res.status(201).json({ child });
   } catch (error) {
     res.status(500).json({ error: 'Server error' });
+  }
+});
+
+app.get('/api/classrooms', authenticateToken, (req, res) => {
+  try {
+    const userClassrooms = classrooms.filter(c => c.educatorId === req.user.id);
+    res.json({ classrooms: userClassrooms });
+  } catch (error) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+app.post('/api/classrooms', authenticateToken, (req, res) => {
+  try {
+    const classroom = {
+      id: Date.now().toString(),
+      ...req.body,
+      educatorId: req.user.id,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    classrooms.push(classroom);
+    res.status(201).json({ classroom });
+  } catch (error) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+app.get('/api/behavior-logs', authenticateToken, (req, res) => {
+  try {
+    const userBehaviorLogs = behaviorLogs.filter(log => log.educatorId === req.user.id);
+    res.json({ behaviorLogs: userBehaviorLogs });
+  } catch (error) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+app.post('/api/behavior-logs', authenticateToken, (req, res) => {
+  try {
+    const behaviorLog = {
+      id: Date.now().toString(),
+      ...req.body,
+      educatorId: req.user.id,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    behaviorLogs.push(behaviorLog);
+    res.status(201).json({ behaviorLog });
+  } catch (error) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+app.get('/api/classroom-logs', authenticateToken, (req, res) => {
+  try {
+    const userClassroomLogs = classroomLogs.filter(log => log.educatorId === req.user.id);
+    res.json({ classroomLogs: userClassroomLogs });
+  } catch (error) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+app.post('/api/classroom-logs', authenticateToken, (req, res) => {
+  try {
+    const classroomLog = {
+      id: Date.now().toString(),
+      ...req.body,
+      educatorId: req.user.id,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    classroomLogs.push(classroomLog);
+    res.status(201).json({ classroomLog });
+  } catch (error) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// AI Strategy Routes
+app.post('/api/ai/child-strategy', authenticateToken, (req, res) => {
+  try {
+    // Mock AI response for development
+    const aiResponse = {
+      warmAcknowledgment: "Thank you for sharing this with me. This child needs your support, and I'm glad they have you to help.",
+      observedBehavior: req.body.behaviorDescription,
+      contextTrigger: `${req.body.context}, ${req.body.timeOfDay || 'during the day'}`,
+      conceptualization: "This behavior is a normal part of child development. The child is working through important developmental tasks.",
+      coreNeedsAndDevelopment: "This child is expressing a need for connection, predictability, and support. This aligns with typical development for their age.",
+      attachmentSupport: "Get down to their eye level, use a calm voice, and acknowledge their feelings with simple words like 'I see you're having a hard time.'",
+      practicalStrategies: [
+        "**Connection First**: Prioritize emotional safety before any directions",
+        "**Choice Within Structure**: Offer two good choices that both lead to positive outcomes",
+        "**Calm Partnership**: Stay physically close and breathe calmly yourself"
+      ],
+      implementationGuidance: "Start with connection and safety first. Once the child is calm, then try the practical strategies.",
+      whyStrategiesWork: "These approaches address the child's underlying needs for safety and connection rather than just the surface behavior.",
+      futureReadinessBenefit: "These strategies help develop emotional regulation, problem-solving skills, and trust in relationships."
+    };
+
+    res.json({ aiResponse });
+  } catch (error) {
+    console.error('AI strategy error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+app.post('/api/ai/classroom-strategy', authenticateToken, (req, res) => {
+  try {
+    // Mock AI response for development
+    const aiResponse = {
+      conceptualization: "Group challenges often reflect the collective needs of developing children navigating social learning together.",
+      alignedStrategy: "Implement a 'Calm Down Together' routine: Use a visual cue to signal the whole group to take three deep breaths together.",
+      testOption: "Try 'Silent Signals': Develop hand gestures for common needs to reduce verbal disruptions.",
+      futureReadinessBenefit: "These strategies build classroom community and teach children to be aware of collective energy."
+    };
+
+    res.json({ aiResponse });
+  } catch (error) {
+    console.error('AI strategy error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Audit logging endpoint
+app.post('/api/audit/log', authenticateToken, (req, res) => {
+  try {
+    const auditEntry = req.body;
+    
+    // Validate audit entry
+    if (!auditEntry.action || !auditEntry.resourceType) {
+      return res.status(400).json({ error: 'Invalid audit entry: action and resourceType required' });
+    }
+
+    // In production, this would save to a secure audit database
+    // For development, we'll log to console and store in memory
+    console.log('📋 AUDIT LOG:', {
+      timestamp: auditEntry.timestamp,
+      user: auditEntry.userEmail,
+      action: auditEntry.action,
+      resource: auditEntry.resourceType,
+      success: auditEntry.success,
+      riskLevel: auditEntry.riskLevel
+    });
+
+    // Store audit log (in production, this would be a secure database)
+    const auditLogs = global.auditLogs || [];
+    auditLogs.push(auditEntry);
+    global.auditLogs = auditLogs;
+
+    res.status(201).json({ 
+      message: 'Audit log recorded successfully',
+      logId: auditEntry.id 
+    });
+  } catch (error) {
+    console.error('Audit logging error:', error);
+    res.status(500).json({ error: 'Failed to record audit log' });
   }
 });
 
@@ -638,292 +403,6 @@ app.put('/api/children/:id', authenticateToken, (req, res) => {
     res.json({ child: children[childIndex] });
   } catch (error) {
     res.status(500).json({ error: 'Server error' });
-  }
-});
-
-// Classrooms Routes
-app.get('/api/classrooms', authenticateToken, (req, res) => {
-  const userClassrooms = classrooms.filter(c => c.educatorId === req.user.id);
-  res.json({ classrooms: userClassrooms });
-});
-
-app.post('/api/classrooms', authenticateToken, (req, res) => {
-  try {
-    const classroom = {
-      id: Date.now().toString(),
-      ...req.body,
-      educatorId: req.user.id,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
-
-    classrooms.push(classroom);
-    res.status(201).json({ classroom });
-  } catch (error) {
-    res.status(500).json({ error: 'Server error' });
-  }
-});
-
-// Update classroom
-app.put('/api/classrooms/:id', authenticateToken, (req, res) => {
-  try {
-    const classroomIndex = classrooms.findIndex(c => c.id === req.params.id && c.educatorId === req.user.id);
-    if (classroomIndex === -1) {
-      return res.status(404).json({ error: 'Classroom not found' });
-    }
-
-    classrooms[classroomIndex] = {
-      ...classrooms[classroomIndex],
-      ...req.body,
-      updatedAt: new Date().toISOString()
-    };
-
-    res.json({ classroom: classrooms[classroomIndex] });
-  } catch (error) {
-    res.status(500).json({ error: 'Server error' });
-  }
-});
-
-// Behavior Logs Routes
-app.get('/api/behavior-logs', authenticateToken, (req, res) => {
-  // Log data access
-  logAuditEvent(req, 'READ', 'behavior_logs', null, { count: behaviorLogs.length });
-  
-  const userLogs = behaviorLogs.filter(log => log.educatorId === req.user.id).map(log => ({
-    ...log,
-    // Decrypt sensitive data for response
-    behaviorDescription: log.behaviorDescription?.startsWith('enc_') 
-      ? decryptSensitiveData(log.behaviorDescription)
-      : log.behaviorDescription,
-    developmentalNotes: log.developmentalNotes?.startsWith('enc_')
-      ? decryptSensitiveData(log.developmentalNotes)
-      : log.developmentalNotes
-  }));
-  
-  res.json({ behaviorLogs: userLogs });
-});
-
-app.post('/api/behavior-logs', authenticateToken, (req, res) => {
-  try {
-    // Log behavior log creation
-    logAuditEvent(req, 'CREATE', 'behavior_logs', null, { 
-      childId: req.body.childId,
-      containsPHI: req.body.phiFlag?.containsPHI || false 
-    });
-    
-    // Encrypt sensitive fields
-    const encryptedBody = { ...req.body };
-    if (encryptedBody.behaviorDescription && !encryptedBody.behaviorDescription.startsWith('enc_')) {
-      encryptedBody.behaviorDescription = encryptSensitiveData(encryptedBody.behaviorDescription);
-    }
-    if (encryptedBody.developmentalNotes && !encryptedBody.developmentalNotes.startsWith('enc_')) {
-      encryptedBody.developmentalNotes = encryptSensitiveData(encryptedBody.developmentalNotes);
-    }
-    
-    const behaviorLog = {
-      id: Date.now().toString(),
-      ...encryptedBody,
-      educatorId: req.user.id,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
-
-    behaviorLogs.push(behaviorLog);
-    
-    // Return decrypted data for response
-    const responseLog = {
-      ...behaviorLog,
-      behaviorDescription: decryptSensitiveData(behaviorLog.behaviorDescription),
-      developmentalNotes: behaviorLog.developmentalNotes 
-        ? decryptSensitiveData(behaviorLog.developmentalNotes)
-        : behaviorLog.developmentalNotes
-    };
-    
-    res.status(201).json({ behaviorLog: responseLog });
-  } catch (error) {
-    res.status(500).json({ error: 'Server error' });
-  }
-});
-
-// Classroom Logs Routes
-app.get('/api/classroom-logs', authenticateToken, (req, res) => {
-  const userLogs = classroomLogs.filter(log => log.educatorId === req.user.id);
-  res.json({ classroomLogs: userLogs });
-});
-
-app.post('/api/classroom-logs', authenticateToken, (req, res) => {
-  try {
-    const classroomLog = {
-      id: Date.now().toString(),
-      ...req.body,
-      educatorId: req.user.id,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
-
-    classroomLogs.push(classroomLog);
-    res.status(201).json({ classroomLog });
-  } catch (error) {
-    res.status(500).json({ error: 'Server error' });
-  }
-});
-
-// Profile photo upload route
-app.post('/api/user/photo', authenticateToken, (req, res) => {
-  try {
-    // For MVP, simulate file upload processing
-    // In production, this would:
-    // 1. Validate file type and size
-    // 2. Upload to cloud storage (AWS S3, Cloudinary, etc.)
-    // 3. Generate thumbnails/optimized versions
-    // 4. Return secure URLs
-    
-    const user = users.find(u => u.id === req.user.id);
-    if (!user) {
-      return res.status(404).json({ error: 'User not found' });
-    }
-    
-    // Generate avatar URL based on user name
-    const photoUrl = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(user.fullName)}&backgroundColor=C44E38&color=ffffff`;
-    
-    // Update user profile
-    user.profilePhotoUrl = photoUrl;
-    user.updatedAt = new Date().toISOString();
-    
-    console.log('Profile photo updated for:', user.fullName);
-    
-    res.json({ photoUrl });
-  } catch (error) {
-    console.error('Photo upload error:', error);
-    res.status(500).json({ error: 'Upload failed' });
-  }
-});
-
-// Profile update route
-app.put('/api/user/profile', authenticateToken, (req, res) => {
-  try {
-    const userIndex = users.findIndex(u => u.id === req.user.id);
-    if (userIndex === -1) {
-      return res.status(404).json({ error: 'User not found' });
-    }
-
-    const { fullName, email, preferredLanguage, learningStyle, teachingStyle, profilePhotoUrl } = req.body;
-
-    // Update user profile
-    users[userIndex] = {
-      ...users[userIndex],
-      fullName: fullName || users[userIndex].fullName,
-      email: email || users[userIndex].email,
-      preferredLanguage: preferredLanguage || users[userIndex].preferredLanguage,
-      learningStyle: learningStyle || users[userIndex].learningStyle,
-      teachingStyle: teachingStyle || users[userIndex].teachingStyle,
-      profilePhotoUrl: profilePhotoUrl || users[userIndex].profilePhotoUrl,
-      updatedAt: new Date().toISOString()
-    };
-
-    console.log('User profile updated:', users[userIndex].fullName);
-    
-    res.json({ user: { ...users[userIndex], password: undefined } });
-  } catch (error) {
-    console.error('Profile update error:', error);
-    res.status(500).json({ error: 'Server error' });
-  }
-});
-
-// Password change route
-app.put('/api/user/password', authenticateToken, async (req, res) => {
-  try {
-    const { currentPassword, newPassword } = req.body;
-    
-    if (!currentPassword || !newPassword) {
-      return res.status(400).json({ error: 'Current and new passwords are required' });
-    }
-
-    const user = users.find(u => u.id === req.user.id);
-    if (!user) {
-      return res.status(404).json({ error: 'User not found' });
-    }
-
-    // Verify current password
-    const validPassword = await bcrypt.compare(currentPassword, user.password);
-    if (!validPassword) {
-      return res.status(400).json({ error: 'Current password is incorrect' });
-    }
-
-    // Validate new password
-    if (newPassword.length < 8) {
-      return res.status(400).json({ error: 'Password must be at least 8 characters' });
-    }
-    
-    const hasUppercase = /[A-Z]/.test(newPassword);
-    const hasNumber = /\d/.test(newPassword);
-    if (!hasUppercase || !hasNumber) {
-      return res.status(400).json({ error: 'Password must include a capital letter and number' });
-    }
-
-    // Hash new password
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
-    user.password = hashedPassword;
-    user.updatedAt = new Date().toISOString();
-
-    console.log('Password changed for user:', user.fullName);
-    
-    res.json({ message: 'Password updated successfully' });
-  } catch (error) {
-    console.error('Password change error:', error);
-    res.status(500).json({ error: 'Server error' });
-  }
-});
-
-// AI Strategy Routes
-app.post('/api/ai/child-strategy', authenticateToken, async (req, res) => {
-  try {
-    // Simulate AI processing delay
-    await new Promise(resolve => setTimeout(resolve, 2000));
-
-    const { behaviorDescription, context, severity, educatorMood } = req.body;
-
-    // Generate contextual response based on input
-    const response = {
-      warmAcknowledgment: `Thank you for sharing this with me. This child needs your support, and I'm glad they have you to help. ${educatorMood === 'overwhelmed' ? 'I can see this was overwhelming for you too.' : ''}`,
-      observedBehavior: behaviorDescription,
-      contextTrigger: `${context}, during classroom activities`,
-      conceptualization: `This behavior is a normal part of child development. When children ${behaviorDescription.toLowerCase()}, they're often communicating important needs or working through developmental challenges.`,
-      coreNeedsAndDevelopment: `**Core Needs:** Based on what you've described, this child needs safety and emotional regulation support, connection and reassurance from trusted adults, and opportunities to practice the skills they're still developing.\n\n**Developmental Context:** This behavior is very typical for children this age, as their executive function and emotional regulation systems are still developing rapidly.`,
-      attachmentSupport: `To help this child feel safe and connected, you can get down to their eye level and use a calm, warm voice. Acknowledge their feelings with simple words like "I see you're having a hard time." Stay physically close and breathe calmly yourself - your regulation helps them regulate.`,
-      practicalStrategies: [
-        "**Connection First**: Get down to the child's eye level and acknowledge their feelings with simple, warm words like 'I see you're having a hard time.' Then, offer two simple choices that both lead to the same positive outcome.",
-        "**Quiet Partnership**: Stand or sit near the child without immediately speaking. Sometimes your calm, supportive presence alone can help them regulate.",
-        "**First-Then Structure**: Use clear, visual 'first-then' language: 'First we clean up the blocks, then we go outside.' Consider using pictures or gestures to support understanding."
-      ],
-      implementationGuidance: `Start with connection and safety first. Once the child is calm, then try the practical strategies. Try one strategy at a time and give it a few days to see if it's working. Remember, consistency is more important than perfection.`,
-      whyStrategiesWork: `**Why These Strategies Work:** These approaches are grounded in attachment theory and developmental neuroscience. They work because they address the underlying need rather than just the surface behavior, helping children build lasting skills for emotional regulation and social connection.`,
-      futureReadinessBenefit: `These strategies help build emotional regulation skills, develop trust in adult relationships, strengthen problem-solving abilities, and support resilience and confidence - all essential for success in school and life.`
-    };
-
-    res.json({ aiResponse: response });
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to generate strategy' });
-  }
-});
-
-app.post('/api/ai/classroom-strategy', authenticateToken, async (req, res) => {
-  try {
-    // Simulate AI processing delay
-    await new Promise(resolve => setTimeout(resolve, 2000));
-
-    const { challengeDescription, context, severity } = req.body;
-
-    const response = {
-      conceptualization: `Group challenges often reflect the collective needs of developing children navigating social learning together. When ${challengeDescription.toLowerCase()}, the classroom community is working through important developmental tasks like cooperation, turn-taking, and emotional co-regulation.`,
-      alignedStrategy: `Implement a 'Calm Down Together' routine: Use a visual cue (like dimming lights or playing soft music) to signal the whole group to take three deep breaths together. This creates collective regulation and teaches children that everyone sometimes needs to reset. Follow with a simple, engaging activity that rebuilds positive group energy.`,
-      testOption: `Try 'Silent Signals': Develop hand gestures or visual cues that the whole class learns for common needs (bathroom, water, help). This reduces verbal disruptions while giving children agency to communicate their needs appropriately.`,
-      futureReadinessBenefit: `These group strategies build classroom community, teach children to be aware of collective energy, and develop skills for collaboration and mutual support - critical abilities for thriving in our interconnected world.`
-    };
-
-    res.json({ aiResponse: response });
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to generate strategy' });
   }
 });
 
@@ -1044,24 +523,16 @@ app.post('/api/organizations', authenticateToken, (req, res) => {
 // Organization invitations route
 app.post('/api/organizations/invitations', authenticateToken, (req, res) => {
   try {
-    const { educators, emails } = req.body;
+    const { educators } = req.body;
     
-    // Handle both formats: educators array or emails array
-    let validEducators = [];
-    
-    if (educators && Array.isArray(educators)) {
-      validEducators = educators.filter(educator => 
-        educator.email && educator.firstName && educator.lastName
-      );
-    } else if (emails && Array.isArray(emails)) {
-      validEducators = emails.map(email => ({
-        email,
-        firstName: 'Invited',
-        lastName: 'Educator'
-      }));
-    } else {
-      return res.status(400).json({ error: 'Educators or emails list required' });
+    if (!educators || !Array.isArray(educators)) {
+      return res.status(400).json({ error: 'Educators list required' });
     }
+
+    // Validate educator data
+    const validEducators = educators.filter(educator => 
+      educator.email && educator.firstName && educator.lastName
+    );
 
     if (validEducators.length === 0) {
       return res.status(400).json({ error: 'No valid educators to invite' });
@@ -1087,74 +558,6 @@ app.post('/api/organizations/invitations', authenticateToken, (req, res) => {
     });
   } catch (error) {
     console.error('Invitation error:', error);
-    res.status(500).json({ error: 'Server error' });
-  }
-});
-
-// Check seat availability route
-app.get('/api/subscriptions/check-seats', authenticateToken, (req, res) => {
-  try {
-    const { requestedSeats = 1 } = req.query;
-    
-    // Mock seat check for MVP
-    const mockData = {
-      activeSeats: 12,
-      maxSeats: 15,
-      availableSeats: 3,
-      canAddSeats: parseInt(requestedSeats) <= 3
-    };
-    
-    res.json(mockData);
-  } catch (error) {
-    console.error('Seat check error:', error);
-    res.status(500).json({ error: 'Server error' });
-  }
-});
-
-// Organization members route
-app.get('/api/organizations/members', authenticateToken, (req, res) => {
-  try {
-    // Mock members for MVP
-    const mockMembers = [
-      {
-        id: 'educator-1',
-        fullName: 'Sarah Johnson',
-        email: 'sarah.johnson@school.edu',
-        role: 'educator',
-        status: 'active',
-        joinedAt: '2024-01-15'
-      },
-      {
-        id: 'educator-2',
-        fullName: 'Mike Chen',
-        email: 'mike.chen@school.edu',
-        role: 'educator',
-        status: 'active',
-        joinedAt: '2024-01-20'
-      }
-    ];
-    
-    res.json({ members: mockMembers });
-  } catch (error) {
-    console.error('Get members error:', error);
-    res.status(500).json({ error: 'Server error' });
-  }
-});
-
-// Remove organization member route
-app.delete('/api/organizations/members', authenticateToken, (req, res) => {
-  try {
-    const { memberId } = req.query;
-    
-    if (!memberId) {
-      return res.status(400).json({ error: 'Member ID required' });
-    }
-    
-    console.log('Removing member:', memberId);
-    
-    res.json({ message: 'Member removed successfully' });
-  } catch (error) {
-    console.error('Remove member error:', error);
     res.status(500).json({ error: 'Server error' });
   }
 });
@@ -1213,38 +616,78 @@ app.post('/api/invitations/accept', (req, res) => {
   }
 });
 
-// Cancel invitation route
-app.delete('/api/organizations/invitations', authenticateToken, (req, res) => {
+// Profile update route
+app.put('/api/user/profile', authenticateToken, (req, res) => {
   try {
-    const { invitationId } = req.query;
-    
-    if (!invitationId) {
-      return res.status(400).json({ error: 'Invitation ID required' });
+    const userIndex = users.findIndex(u => u.id === req.user.id);
+    if (userIndex === -1) {
+      return res.status(404).json({ error: 'User not found' });
     }
+
+    const { fullName, email, preferredLanguage, learningStyle, teachingStyle, profilePhotoUrl } = req.body;
+
+    // Update user profile
+    users[userIndex] = {
+      ...users[userIndex],
+      fullName: fullName || users[userIndex].fullName,
+      email: email || users[userIndex].email,
+      preferredLanguage: preferredLanguage || users[userIndex].preferredLanguage,
+      learningStyle: learningStyle || users[userIndex].learningStyle,
+      teachingStyle: teachingStyle || users[userIndex].teachingStyle,
+      profilePhotoUrl: profilePhotoUrl || users[userIndex].profilePhotoUrl,
+      updatedAt: new Date().toISOString()
+    };
+
+    console.log('User profile updated:', users[userIndex].fullName);
     
-    console.log('Cancelling invitation:', invitationId);
-    
-    res.json({ message: 'Invitation cancelled successfully' });
+    res.json({ user: { ...users[userIndex], password: undefined } });
   } catch (error) {
-    console.error('Cancel invitation error:', error);
+    console.error('Profile update error:', error);
     res.status(500).json({ error: 'Server error' });
   }
 });
 
-// Resend invitation route
-app.post('/api/organizations/invitations/resend', authenticateToken, (req, res) => {
+// Password change route
+app.put('/api/user/password', authenticateToken, async (req, res) => {
   try {
-    const { invitationId } = req.body;
+    const { currentPassword, newPassword } = req.body;
     
-    if (!invitationId) {
-      return res.status(400).json({ error: 'Invitation ID required' });
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ error: 'Current and new passwords are required' });
+    }
+
+    const user = users.find(u => u.id === req.user.id);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Verify current password
+    const validPassword = await bcrypt.compare(currentPassword, user.password);
+    if (!validPassword) {
+      return res.status(400).json({ error: 'Current password is incorrect' });
+    }
+
+    // Validate new password
+    if (newPassword.length < 8) {
+      return res.status(400).json({ error: 'Password must be at least 8 characters' });
     }
     
-    console.log('Resending invitation:', invitationId);
+    const hasUppercase = /[A-Z]/.test(newPassword);
+    const hasNumber = /\d/.test(newPassword);
+    if (!hasUppercase || !hasNumber) {
+      return res.status(400).json({ error: 'Password must include a capital letter and number' });
+    }
+
+    // Hash new password
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    user.password = hashedPassword;
+    user.updatedAt = new Date().toISOString();
+
+    console.log('Password changed for user:', user.fullName);
     
-    res.json({ message: 'Invitation resent successfully' });
+    res.json({ message: 'Password updated successfully' });
   } catch (error) {
-    console.error('Resend invitation error:', error);
+    console.error('Password change error:', error);
     res.status(500).json({ error: 'Server error' });
   }
 });
@@ -1267,29 +710,6 @@ app.get('/api/organizations/stats', authenticateToken, (req, res) => {
     
     res.json(stats);
   } catch (error) {
-    res.status(500).json({ error: 'Server error' });
-  }
-});
-
-// Organization route
-app.get('/api/organizations', authenticateToken, (req, res) => {
-  try {
-    // Mock organization data for MVP
-    const mockOrganization = {
-      id: 'org-1',
-      name: 'Sunshine Elementary School',
-      type: 'school',
-      ownerId: req.user.id,
-      maxSeats: 15,
-      activeSeats: 12,
-      plan: 'organization_annual',
-      status: 'active',
-      createdAt: new Date('2024-01-01').toISOString()
-    };
-    
-    res.json({ organization: mockOrganization });
-  } catch (error) {
-    console.error('Get organization error:', error);
     res.status(500).json({ error: 'Server error' });
   }
 });
@@ -1380,382 +800,69 @@ app.post('/api/subscriptions/add-seats', authenticateToken, (req, res) => {
   }
 });
 
-// Microsoft OAuth routes
-app.post('/api/auth/microsoft', async (req, res) => {
+// Email verification routes
+app.post('/api/auth/verify-email', authenticateToken, (req, res) => {
   try {
-    const { accessToken, userInfo } = req.body;
-    
-    if (!accessToken || !userInfo) {
-      return res.status(400).json({ error: 'Microsoft access token and user info required' });
-    }
-    
-    // Validate Microsoft token (in production, verify with Microsoft Graph API)
-    const { email, name, given_name, family_name } = userInfo;
-    
-    if (!email || !name) {
-      return res.status(400).json({ error: 'Invalid Microsoft user data' });
-    }
-    
-    // Check if user exists
-    let user = users.find(u => u.email === email);
+    const { code } = req.body;
+    const user = users.find(u => u.id === req.user.id);
     
     if (!user) {
-      // Create new user from Microsoft account
-      user = {
-        id: Date.now().toString(),
-        fullName: name,
-        firstName: given_name || name.split(' ')[0],
-        lastName: family_name || name.split(' ').slice(1).join(' '),
-        email,
-        password: '', // OAuth users don't have passwords
-        role: 'educator',
-        preferredLanguage: 'english',
-        onboardingStatus: 'incomplete',
-        authProvider: 'microsoft',
-        microsoftId: userInfo.id,
-        profilePhotoUrl: userInfo.picture || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(name)}&backgroundColor=C44E38&color=ffffff`,
-        createdAt: new Date().toISOString()
-      };
-      
-      users.push(user);
-      console.log('Microsoft user created:', user.fullName);
-    } else {
-      // Update existing user with Microsoft info if needed
-      if (!user.microsoftId) {
-        user.microsoftId = userInfo.id;
-        user.authProvider = 'microsoft';
-        user.updatedAt = new Date().toISOString();
-      }
+      return res.status(404).json({ error: 'User not found' });
     }
     
-    // Generate JWT token
-    const token = jwt.sign(
-      { id: user.id, email: user.email, role: user.role },
-      JWT_SECRET,
-      { expiresIn: '7d' }
-    );
+    const storedCode = verificationCodes.get(user.email);
+    if (!storedCode || storedCode !== code) {
+      return res.status(400).json({ error: 'Invalid verification code' });
+    }
     
-    res.json({
-      user: { ...user, password: undefined },
-      token,
-      isNewUser: !users.find(u => u.email === email && u.onboardingStatus === 'complete')
-    });
+    // Mark email as verified
+    user.emailVerified = true;
+    verificationCodes.delete(user.email);
+    
+    res.json({ user: { ...user, password: undefined } });
   } catch (error) {
-    console.error('Microsoft OAuth error:', error);
-    res.status(500).json({ error: 'Microsoft authentication failed' });
-  }
-});
-
-// Google OAuth routes
-app.post('/api/auth/google', async (req, res) => {
-  try {
-    const { accessToken, userInfo } = req.body;
-    
-    if (!accessToken || !userInfo) {
-      return res.status(400).json({ error: 'Google access token and user info required' });
-    }
-    
-    // Validate Google token (in production, verify with Google API)
-    const { email, name, given_name, family_name, picture } = userInfo;
-    
-    if (!email || !name) {
-      return res.status(400).json({ error: 'Invalid Google user data' });
-    }
-    
-    // Check if user exists
-    let user = users.find(u => u.email === email);
-    
-    if (!user) {
-      // Create new user from Google account
-      user = {
-        id: Date.now().toString(),
-        fullName: name,
-        firstName: given_name || name.split(' ')[0],
-        lastName: family_name || name.split(' ').slice(1).join(' '),
-        email,
-        password: '', // OAuth users don't have passwords
-        role: 'educator',
-        preferredLanguage: 'english',
-        onboardingStatus: 'incomplete',
-        authProvider: 'google',
-        googleId: userInfo.id,
-        profilePhotoUrl: picture || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(name)}&backgroundColor=C44E38&color=ffffff`,
-        createdAt: new Date().toISOString()
-      };
-      
-      users.push(user);
-      console.log('Google user created:', user.fullName);
-    } else {
-      // Update existing user with Google info if needed
-      if (!user.googleId) {
-        user.googleId = userInfo.id;
-        user.authProvider = 'google';
-        user.updatedAt = new Date().toISOString();
-      }
-    }
-    
-    // Generate JWT token
-    const token = jwt.sign(
-      { id: user.id, email: user.email, role: user.role },
-      JWT_SECRET,
-      { expiresIn: '7d' }
-    );
-    
-    res.json({
-      user: { ...user, password: undefined },
-      token,
-      isNewUser: !users.find(u => u.email === email && u.onboardingStatus === 'complete')
-    });
-  } catch (error) {
-    console.error('Google OAuth error:', error);
-    res.status(500).json({ error: 'Google authentication failed' });
-  }
-});
-
-// Apple OAuth routes
-app.post('/api/auth/apple', async (req, res) => {
-  try {
-    const { identityToken, userInfo } = req.body;
-    
-    if (!identityToken || !userInfo) {
-      return res.status(400).json({ error: 'Apple identity token and user info required' });
-    }
-    
-    // Validate Apple token (in production, verify with Apple's public keys)
-    const { email, name } = userInfo;
-    
-    if (!email) {
-      return res.status(400).json({ error: 'Invalid Apple user data' });
-    }
-    
-    // Check if user exists
-    let user = users.find(u => u.email === email);
-    
-    if (!user) {
-      // Create new user from Apple account
-      const fullName = name ? `${name.firstName} ${name.lastName}` : email.split('@')[0];
-      user = {
-        id: Date.now().toString(),
-        fullName,
-        firstName: name?.firstName || email.split('@')[0],
-        lastName: name?.lastName || '',
-        email,
-        password: '', // OAuth users don't have passwords
-        role: 'educator',
-        preferredLanguage: 'english',
-        onboardingStatus: 'incomplete',
-        authProvider: 'apple',
-        appleId: userInfo.sub,
-        profilePhotoUrl: `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(fullName)}&backgroundColor=C44E38&color=ffffff`,
-        createdAt: new Date().toISOString()
-      };
-      
-      users.push(user);
-      console.log('Apple user created:', user.fullName);
-    } else {
-      // Update existing user with Apple info if needed
-      if (!user.appleId) {
-        user.appleId = userInfo.sub;
-        user.authProvider = 'apple';
-        user.updatedAt = new Date().toISOString();
-      }
-    }
-    
-    // Generate JWT token
-    const token = jwt.sign(
-      { id: user.id, email: user.email, role: user.role },
-      JWT_SECRET,
-      { expiresIn: '7d' }
-    );
-    
-    res.json({
-      user: { ...user, password: undefined },
-      token,
-      isNewUser: !users.find(u => u.email === email && u.onboardingStatus === 'complete')
-    });
-  } catch (error) {
-    console.error('Apple OAuth error:', error);
-    res.status(500).json({ error: 'Apple authentication failed' });
-  }
-});
-
-app.post('/api/audit/log', authenticateToken, (req, res) => {
-  try {
-    const auditEntry = {
-      ...req.body,
-      id: Date.now().toString(),
-      timestamp: new Date().toISOString(),
-      ipAddress: req.ip || req.connection.remoteAddress || 'unknown',
-      userAgent: req.get('User-Agent') || 'unknown'
-    };
-    
-    auditLogs.unshift(auditEntry);
-    
-    // Keep only last 10000 entries
-    if (auditLogs.length > 10000) {
-      auditLogs = auditLogs.slice(0, 10000);
-    }
-    
-    res.status(201).json({ success: true, auditId: auditEntry.id });
-  } catch (error) {
-    console.error('Audit logging error:', error);
-    res.status(500).json({ error: 'Audit logging failed' });
-  }
-});
-
-// Get audit logs endpoint
-app.get('/api/audit/logs', authenticateToken, (req, res) => {
-  try {
-    // Only admins can view all audit logs
-    if (req.user.role !== 'admin') {
-      // Regular users can only see their own audit logs
-      const userLogs = auditLogs.filter(log => log.userId === req.user.id);
-      return res.json({ auditLogs: userLogs });
-    }
-    
-    // Apply filters if provided
-    let filteredLogs = auditLogs;
-    
-    if (req.query.resourceType) {
-      filteredLogs = filteredLogs.filter(log => log.resourceType === req.query.resourceType);
-    }
-    
-    if (req.query.riskLevel) {
-      filteredLogs = filteredLogs.filter(log => log.riskLevel === req.query.riskLevel);
-    }
-    
-    if (req.query.dateRange) {
-      const days = parseInt(req.query.dateRange);
-      const cutoff = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
-      filteredLogs = filteredLogs.filter(log => new Date(log.timestamp) >= cutoff);
-    }
-    
-    res.json({ auditLogs: filteredLogs.slice(0, 1000) }); // Limit to 1000 entries
-  } catch (error) {
-    console.error('Get audit logs error:', error);
-    res.status(500).json({ error: 'Failed to retrieve audit logs' });
-  }
-});
-
-// Parent portal endpoints
-app.post('/api/parent-portal/request-access', (req, res) => {
-  try {
-    const { childName, parentName, parentEmail } = req.body;
-    
-    if (!childName || !parentName || !parentEmail) {
-      return res.status(400).json({ error: 'Missing required fields' });
-    }
-    
-    // Find child
-    const child = children.find(c => c.name.toLowerCase() === childName.toLowerCase());
-    if (!child) {
-      return res.status(404).json({ error: 'Child not found' });
-    }
-    
-    // Generate access token and verification code
-    const accessToken = 'parent_' + Date.now().toString(36) + '_' + Math.random().toString(36).substr(2, 9);
-    const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
-    
-    // Store parent access request (in production, use database)
-    const accessRequest = {
-      id: Date.now().toString(),
-      childId: child.id,
-      childName: child.name,
-      parentName,
-      parentEmail,
-      accessToken,
-      verificationCode,
-      verified: false,
-      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-      createdAt: new Date().toISOString()
-    };
-    
-    // Log FERPA access request
-    auditLogs.unshift({
-      id: Date.now().toString(),
-      timestamp: new Date().toISOString(),
-      userId: 'parent',
-      userEmail: parentEmail,
-      userRole: 'parent',
-      action: 'FERPA_ACCESS_REQUESTED',
-      resourceType: 'educational_record',
-      resourceId: child.id,
-      ipAddress: req.ip || 'unknown',
-      userAgent: req.get('User-Agent') || 'unknown',
-      success: true,
-      riskLevel: 'medium',
-      complianceFlags: ['FERPA_PARENT_REQUEST'],
-      details: { childName, parentName, parentEmail }
-    });
-    
-    console.log(`📧 Parent portal verification code for ${parentEmail}: ${verificationCode}`);
-    
-    res.status(201).json({
-      message: 'Access request created. Verification code sent to email.',
-      accessToken,
-      expiresAt: accessRequest.expiresAt
-    });
-  } catch (error) {
-    console.error('Parent portal access request error:', error);
     res.status(500).json({ error: 'Server error' });
   }
 });
 
-// Health check
-app.get('/api/health', (req, res) => {
-  res.json({ 
-    status: 'OK', 
-    timestamp: new Date().toISOString(),
-    version: '1.0.0',
-    environment: process.env.NODE_ENV || 'development',
-    uptime: process.uptime(),
-    memory: process.memoryUsage()
-  });
+app.post('/api/auth/resend-verification', authenticateToken, (req, res) => {
+  try {
+    const user = users.find(u => u.id === req.user.id);
+    
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    if (user.emailVerified) {
+      return res.status(400).json({ error: 'Email already verified' });
+    }
+    
+    // Generate new verification code
+    const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+    verificationCodes.set(user.email, verificationCode);
+    
+    console.log(`📧 New verification code for ${user.email}: ${verificationCode}`);
+    
+    res.json({ message: 'Verification code sent' });
+  } catch (error) {
+    res.status(500).json({ error: 'Server error' });
+  }
 });
 
-// System status endpoint
-app.get('/api/status', (req, res) => {
-  res.json({
-    database: 'connected',
-    auth: 'operational',
-    ai: 'operational',
+// Start server
+app.listen(PORT, '127.0.0.1', () => {
+  console.log(`🚀 Backend server running on http://127.0.0.1:${PORT}`);
+  console.log('📊 Test data loaded:', {
     users: users.length,
-    behaviorLogs: behaviorLogs.length,
-    classroomLogs: classroomLogs.length,
     children: children.length,
-    classrooms: classrooms.length
+    classrooms: classrooms.length,
+    behaviorLogs: behaviorLogs.length,
+    classroomLogs: classroomLogs.length
   });
 });
 
-// Error handling middleware
+// Error handling
 app.use((err, req, res, next) => {
   console.error('Server error:', err);
-  res.status(500).json({ 
-    error: 'Internal server error',
-    message: process.env.NODE_ENV === 'development' ? err.message : 'Something went wrong'
-  });
-});
-
-// 404 handler
-app.use((req, res) => {
-  res.status(404).json({ error: 'Endpoint not found' });
-});
-
-const server = app.listen(PORT, '127.0.0.1', () => {
-  console.log(`🚀 Lumi Core API server running on port ${PORT}`);
-  console.log(`📡 Server accessible at http://127.0.0.1:${PORT}`);
-  console.log(`📊 Mock data initialized:`);
-  console.log(`   - Users: ${users.length}`);
-  console.log(`   - Children: ${children.length}`);
-  console.log(`   - Classrooms: ${classrooms.length}`);
-  console.log(`   - Behavior Logs: ${behaviorLogs.length}`);
-  console.log(`   - Classroom Logs: ${classroomLogs.length}`);
-});
-
-server.on('error', (error) => {
-  console.error('❌ Server failed to start:', error);
-  if (error.code === 'EADDRINUSE') {
-    console.error(`Port ${PORT} is already in use. Please try a different port.`);
-  }
-  process.exit(1);
+  res.status(500).json({ error: 'Internal server error' });
 });
