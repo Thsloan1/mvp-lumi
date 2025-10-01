@@ -641,52 +641,6 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
 
   const createBehaviorLog = async (data: any) => {
     try {
-      // Try Supabase first
-      const { data: behaviorLogData, error } = await supabase
-        .from('behavior_logs')
-        .insert({
-          educator_id: currentUser?.id,
-          child_id: data.childId,
-          classroom_id: data.classroomId,
-          behavior_description: data.behaviorDescription,
-          context: data.context,
-          time_of_day: data.timeOfDay,
-          severity: data.severity,
-          educator_mood: data.educatorMood,
-          stressors: data.stressors,
-          ai_response: data.aiResponse,
-          selected_strategy: data.selectedStrategy,
-          confidence_rating: data.confidenceRating,
-          phi_flag: data.phiFlag
-        })
-        .select()
-        .single();
-
-      if (!error && behaviorLogData) {
-        const newLog = {
-          id: behaviorLogData.id,
-          educatorId: behaviorLogData.educator_id,
-          childId: behaviorLogData.child_id,
-          classroomId: behaviorLogData.classroom_id,
-          behaviorDescription: behaviorLogData.behavior_description,
-          context: behaviorLogData.context,
-          timeOfDay: behaviorLogData.time_of_day,
-          severity: behaviorLogData.severity as 'low' | 'medium' | 'high',
-          educatorMood: behaviorLogData.educator_mood,
-          stressors: behaviorLogData.stressors || [],
-          aiResponse: behaviorLogData.ai_response,
-          selectedStrategy: behaviorLogData.selected_strategy,
-          confidenceRating: behaviorLogData.confidence_rating,
-          phiFlag: behaviorLogData.phi_flag,
-          createdAt: new Date(behaviorLogData.created_at)
-        };
-        
-        setBehaviorLogs(prev => [newLog, ...prev]);
-        success('Behavior logged!', 'Strategy saved to your dashboard');
-        return newLog;
-      }
-
-      // Fallback to existing mock logic
       // Encrypt sensitive data before sending to API
       const encryptedData = await EncryptionService.encryptBehaviorLog(data);
       
@@ -699,88 +653,64 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         { containsPHI: data.phiFlag?.containsPHI || false }
       );
       
-      const result = await AuthService.apiRequest('/api/behavior-logs', {
-        method: 'POST',
-        body: JSON.stringify(encryptedData)
-      });
-      
-      // Decrypt for local state
-      const decryptedResult = {
-        ...result.behaviorLog,
-        behaviorDescription: await EncryptionService.decryptText(result.behaviorLog.behaviorDescription)
+      // For demo, create mock behavior log
+      const newLog = {
+        id: Date.now().toString(),
+        educatorId: currentUser?.id || '',
+        childId: data.childId,
+        classroomId: data.classroomId,
+        behaviorDescription: data.behaviorDescription,
+        context: data.context,
+        timeOfDay: data.timeOfDay,
+        severity: data.severity as 'low' | 'medium' | 'high',
+        educatorMood: data.educatorMood,
+        stressors: data.stressors || [],
+        aiResponse: data.aiResponse,
+        selectedStrategy: data.selectedStrategy,
+        confidenceRating: data.confidenceRating,
+        phiFlag: data.phiFlag,
+        createdAt: new Date()
       };
       
-      setBehaviorLogs(prev => [decryptedResult, ...prev]);
+      setBehaviorLogs(prev => [newLog, ...prev]);
       success('Behavior logged!', 'Strategy saved to your dashboard');
-      return decryptedResult;
+      return newLog;
     } catch (err: any) {
-      error('Failed to save', err.message);
+      error('Failed to save', err?.message || 'Unknown error');
       throw err;
     }
   };
 
   const createClassroomLog = async (data: any) => {
     try {
-      const result = await AuthService.apiRequest('/api/classroom-logs', {
-        method: 'POST',
-        body: JSON.stringify(data)
-      });
-      setClassroomLogs(prev => [result.classroomLog, ...prev]);
+      // For demo, create mock classroom log
+      const newLog = {
+        id: Date.now().toString(),
+        educatorId: currentUser?.id || '',
+        classroomId: data.classroomId,
+        challengeDescription: data.challengeDescription,
+        context: data.context,
+        severity: data.severity as 'low' | 'medium' | 'high',
+        educatorMood: data.educatorMood,
+        stressors: data.stressors || [],
+        aiResponse: data.aiResponse,
+        selectedStrategy: data.selectedStrategy,
+        confidenceSelfRating: data.confidenceSelfRating,
+        confidenceStrategyRating: data.confidenceStrategyRating,
+        createdAt: new Date()
+      };
+      
+      setClassroomLogs(prev => [newLog, ...prev]);
       success('Classroom strategy saved!', 'Challenge logged to your dashboard');
-      return result.classroomLog;
+      return newLog;
     } catch (err: any) {
-      error('Failed to save', err.message);
+      error('Failed to save', err?.message || 'Unknown error');
       throw err;
     }
   };
 
   const createChild = async (data: any) => {
     try {
-      // Try Supabase first
-      const { data: childData, error } = await supabase
-        .from('children')
-        .insert({
-          name: data.name,
-          grade_band: data.gradeBand,
-          classroom_id: data.classroomId || classrooms[0]?.id,
-          developmental_notes: data.developmentalNotes,
-          has_iep: data.hasIEP,
-          has_ifsp: data.hasIFSP,
-          language_ability: data.languageAbility,
-          self_regulation_skills: data.selfRegulationSkills,
-          home_language: data.homeLanguage,
-          family_context: data.familyContext
-        })
-        .select()
-        .single();
-
-      if (!error && childData) {
-        const newChild = {
-          id: childData.id,
-          name: childData.name,
-          age: childData.age,
-          gradeBand: childData.grade_band,
-          classroomId: childData.classroom_id,
-          developmentalNotes: childData.developmental_notes,
-          languageAbility: childData.language_ability,
-          selfRegulationSkills: childData.self_regulation_skills,
-          sensorySensitivities: childData.sensory_sensitivities || [],
-          hasIEP: childData.has_iep || false,
-          hasIFSP: childData.has_ifsp || false,
-          supportPlans: childData.support_plans || [],
-          knownTriggers: childData.known_triggers || [],
-          homeLanguage: childData.home_language,
-          familyContext: childData.family_context,
-          createdAt: new Date(childData.created_at),
-          updatedAt: new Date(childData.updated_at)
-        };
-        
-        setApiChildren(prev => [...prev, newChild]);
-        success('Child added!', `${data.name} has been added to your classroom`);
-        return newChild;
-      }
-
-      // Fallback to existing mock logic
       // Encrypt sensitive child data
       const encryptedData = await EncryptionService.encryptChildProfile(data);
       
@@ -792,104 +722,80 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         false
       );
       
-      const result = await AuthService.apiRequest('/api/children', {
-        method: 'POST',
-        body: JSON.stringify(encryptedData)
-      });
-      
-      // Decrypt for local state
-      const decryptedResult = {
-        ...result.child,
-        developmentalNotes: result.child.developmentalNotes 
-          ? await EncryptionService.decryptText(result.child.developmentalNotes)
-          : result.child.developmentalNotes
+      // For demo, create mock child
+      const newChild = {
+        id: Date.now().toString(),
+        name: data.name,
+        age: data.age,
+        gradeBand: data.gradeBand || 'Preschool (4-5 years old)',
+        classroomId: data.classroomId || classrooms[0]?.id || 'default-classroom',
+        developmentalNotes: data.developmentalNotes,
+        languageAbility: data.languageAbility,
+        selfRegulationSkills: data.selfRegulationSkills,
+        sensorySensitivities: data.sensorySensitivities || [],
+        hasIEP: data.hasIEP || false,
+        hasIFSP: data.hasIFSP || false,
+        supportPlans: data.supportPlans || [],
+        knownTriggers: data.knownTriggers || [],
+        homeLanguage: data.homeLanguage,
+        familyContext: data.familyContext,
+        createdAt: new Date(),
+        updatedAt: new Date()
       };
       
-      setApiChildren(prev => [...prev, decryptedResult]);
+      setApiChildren(prev => [...prev, newChild]);
       success('Child added!', `${data.name} has been added to your classroom`);
-      return decryptedResult;
+      return newChild;
     } catch (err: any) {
-      error('Failed to add child', err.message);
+      error('Failed to add child', err?.message || 'Unknown error');
       throw err;
     }
   };
 
   const createClassroom = async (data: any) => {
     try {
-      // Try Supabase first
-      const { data: classroomData, error } = await supabase
-        .from('classrooms')
-        .insert({
-          name: data.name,
-          grade_band: data.gradeBand,
-          student_count: data.studentCount,
-          teacher_student_ratio: data.teacherStudentRatio,
-          iep_count: data.iepCount,
-          ifsp_count: data.ifspCount,
-          stressors: data.stressors,
-          educator_id: currentUser?.id
-        })
-        .select()
-        .single();
-
-      if (!error && classroomData) {
-        const newClassroom = {
-          id: classroomData.id,
-          name: classroomData.name,
-          gradeBand: classroomData.grade_band,
-          studentCount: classroomData.student_count,
-          teacherStudentRatio: classroomData.teacher_student_ratio || '1:8',
-          iepCount: classroomData.iep_count,
-          ifspCount: classroomData.ifsp_count,
-          stressors: classroomData.stressors || [],
-          educatorId: classroomData.educator_id
-        };
-        
-        setClassrooms(prev => [...prev, newClassroom]);
-        success('Classroom created!', `${data.name} has been set up`);
-        return newClassroom;
-      }
-
-      // Fallback to existing mock logic
-      const result = await AuthService.apiRequest('/api/classrooms', {
-        method: 'POST',
-        body: JSON.stringify(data)
-      });
-      setClassrooms(prev => [...prev, result.classroom]);
+      // For demo, create mock classroom
+      const newClassroom = {
+        id: Date.now().toString(),
+        name: data.name,
+        gradeBand: data.gradeBand || 'Preschool (4-5 years old)',
+        studentCount: data.studentCount || 15,
+        teacherStudentRatio: data.teacherStudentRatio || '1:8',
+        iepCount: data.iepCount || 0,
+        ifspCount: data.ifspCount || 0,
+        stressors: data.stressors || [],
+        educatorId: currentUser?.id || ''
+      };
+      
+      setClassrooms(prev => [...prev, newClassroom]);
       success('Classroom created!', `${data.name} has been set up`);
-      return result.classroom;
+      return newClassroom;
     } catch (err: any) {
-      error('Failed to create classroom', err.message);
+      error('Failed to create classroom', err?.message || 'Unknown error');
       throw err;
     }
   };
 
   const updateClassroom = async (id: string, data: any) => {
     try {
-      const result = await AuthService.apiRequest(`/api/classrooms/${id}`, {
-        method: 'PUT',
-        body: JSON.stringify(data)
-      });
-      setClassrooms(prev => prev.map(c => c.id === id ? result.classroom : c));
+      // For demo, update classroom locally
+      setClassrooms(prev => prev.map(c => c.id === id ? { ...c, ...data } : c));
       success('Classroom updated!', 'Your changes have been saved');
-      return result.classroom;
+      return { ...classrooms.find(c => c.id === id), ...data };
     } catch (err: any) {
-      error('Failed to update classroom', err.message);
+      error('Failed to update classroom', err?.message || 'Unknown error');
       throw err;
     }
   };
 
   const updateChild = async (id: string, data: any) => {
     try {
-      const result = await AuthService.apiRequest(`/api/children/${id}`, {
-        method: 'PUT',
-        body: JSON.stringify(data)
-      });
-      setApiChildren(prev => prev.map(c => c.id === id ? result.child : c));
+      // For demo, update child locally
+      setApiChildren(prev => prev.map(c => c.id === id ? { ...c, ...data, updatedAt: new Date() } : c));
       success('Child profile updated!', 'Changes have been saved');
-      return result.child;
+      return { ...apiChildren.find(c => c.id === id), ...data };
     } catch (err: any) {
-      error('Failed to update child', err.message);
+      error('Failed to update child', err?.message || 'Unknown error');
       throw err;
     }
   };
